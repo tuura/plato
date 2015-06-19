@@ -8,7 +8,7 @@ allTransitions =
     [Transition a b | a <- [minBound .. maxBound], b <- [False .. True]]
 
 enabledTransitions :: (Enum a, Bounded a) => State a -> CircuitConcept a -> [Transition a]
-enabledTransitions s c = filter (\t -> enabled c t s) allTransitions
+enabledTransitions s c = filter (\t -> excited c t s) allTransitions
 
 fire :: Eq a => Transition a -> State a -> State a
 fire t (State value) =

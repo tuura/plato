@@ -3,7 +3,7 @@
 module Concept (
     module Data.Monoid,
     Concept (..),
-    initialConcept, excitedConcept,
+    initialConcept, excitedConcept, invariantConcept,
     (.&&.), (.||.),
     quiescent
     ) where
@@ -17,8 +17,8 @@ import Control.Applicative
 data Concept s e = Concept
                    {
                        initial   :: s -> Bool,
-                       excited   :: e -> s -> Bool
-                       invariant :: s -> Bool,
+                       excited   :: e -> s -> Bool,
+                       invariant :: s -> Bool
                    }
 
 -- Concepts form a monoid:
@@ -28,14 +28,14 @@ instance Monoid (Concept s e) where
     mempty = Concept
              {
                  initial   = const True,
-                 excited   = const $ const True
-                 invariant = const True,
+                 excited   = const $ const True,
+                 invariant = const True
              }
     mappend a b = Concept
                   {
                       initial   =       initial a   .&&. initial b,
-                      excited   = \e -> excited a e .&&. excited b e
-                      invariant =       invariant a .&&. invariant b,
+                      excited   = \e -> excited a e .&&. excited b e,
+                      invariant =       invariant a .&&. invariant b
                   }
 
 excitedConcept :: (e -> s -> Bool) -> Concept s e
@@ -43,6 +43,9 @@ excitedConcept f = mempty { excited = f }
 
 initialConcept :: (s -> Bool) -> Concept s e
 initialConcept f = mempty { initial = f }
+
+invariantConcept :: (s -> Bool) -> Concept s e
+invariantConcept f = mempty { invariant = f }
 
 (.&&.) :: (a -> Bool) -> (a -> Bool) -> a -> Bool
 (.&&.) = liftA2 (&&)
