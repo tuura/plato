@@ -5,7 +5,7 @@ import Circuit.Concept
 
 allTransitions :: (Enum a, Bounded a) => [Transition a]
 allTransitions =
-    [Transition a b | a <- [minBound .. maxBound], b <- [False .. True]]
+    [Transition a b | a <- [minBound .. maxBound], b <- [False, True]]
 
 enabledTransitions :: (Enum a, Bounded a) => State a -> CircuitConcept a -> [Transition a]
 enabledTransitions s c = filter (\t -> excited c t s) allTransitions

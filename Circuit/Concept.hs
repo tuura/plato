@@ -15,21 +15,39 @@ consistency = excitedConcept before
 
 causality :: Eq a => Transition a -> Transition a -> CircuitConcept a
 causality cause effect =
-    excitedConcept $ \t -> if t /= effect
-                           then const True
-                           else after cause .&&. before effect
+    excitedConcept $ \t -> if t == effect
+                           then after cause .&&. before effect
+                           else const True
 
 (~>) :: Eq a => Transition a -> Transition a -> CircuitConcept a
 (~>) = causality
 
+andCausalities :: Eq a => [Transition a] -> Transition a -> CircuitConcept a
+andCausalities causes effect =
+    excitedConcept $ \t -> if t == effect
+                           then foldr (.&&.) (before effect) (map after causes)
+                           else const True
+
 orCausality :: Eq a => Transition a -> Transition a -> Transition a -> CircuitConcept a
 orCausality cause1 cause2 effect =
-    excitedConcept $ \t -> if t /= effect
-                           then const True
-                           else (after cause1 .||. after cause2) .&&. before effect
+    excitedConcept $ \t -> if t == effect
+                           then (after cause1 .||. after cause2) .&&. before effect
+                           else const True
+
+orCausalities :: Eq a => [Transition a] -> Transition a -> CircuitConcept a
+orCausalities causes effect =
+    excitedConcept $ \t -> if t == effect
+                           then (foldr (.||.) (const True) (map after causes)) .&&. before effect
+                           else const True
+
+(~&&~>) :: Eq a => [Transition a] -> Transition a -> CircuitConcept a
+(~&&~>) = andCausalities
+
+(~||~>) :: Eq a => [Transition a] -> Transition a -> CircuitConcept a
+(~||~>) = orCausalities
 
 silent :: Eq a => Transition a -> CircuitConcept a
-silent t = excitedConcept $ const . (/= t)
+silent t = excitedConcept $ \e _ -> e /= t
 
 -- Gate-level concepts
 buffer :: Eq a => a -> a -> CircuitConcept a
@@ -45,10 +63,10 @@ meElement :: Eq a => a -> a -> a -> a -> CircuitConcept a
 meElement r1 r2 g1 g2 = buffer r1 g1 <> buffer r2 g2 <> me g1 g2
 
 andGate :: Eq a => a -> a -> a -> CircuitConcept a
-andGate a b c = rise a ~> rise c <> rise b ~> rise c <> orCausality (fall a) (fall b) (fall c)
+andGate a b c = [rise a, rise b] ~&&~> rise c <> [fall a, fall b] ~||~> fall c
 
 orGate :: Eq a => a -> a -> a -> CircuitConcept a
-orGate a b c = orCausality (rise a) (rise b) (rise c) <> fall a ~> fall c <> fall b ~> fall c
+orGate a b c = [rise a, rise b] ~||~> rise c <> [fall a, fall b] ~&&~> fall c
 
 -- Protocol-level concepts
 handshake :: Eq a => a -> a -> CircuitConcept a

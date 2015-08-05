@@ -39,4 +39,3 @@ main = do
 	let afterC = fire (rise C) afterB
 	print afterC
 	print $ enabledTransitions afterC example
-
