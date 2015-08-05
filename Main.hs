@@ -7,11 +7,11 @@ data Signal = A | B | C deriving (Eq, Show, Enum, Bounded)
 
 -- Example circuit described using gate-level concepts
 example :: CircuitConcept Signal
-example = cElement A B C <> inverter C A <> inverter C B
+example = consistency <> cElement A B C <> inverter C A <> inverter C B
 
 -- Example circuit described using protocol-level concepts
 example' :: CircuitConcept Signal
-example' = handshake00 A C <> handshake00 B C
+example' = consistency <> handshake00 A C <> handshake00 B C
 
 initialState :: State Signal
 initialState = State $ const False
