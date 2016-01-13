@@ -14,7 +14,7 @@ consistency :: CircuitConcept a
 consistency = excitedConcept before
 
 initialise :: Eq a => a -> Int -> CircuitConcept a
-initialise a v = if v == 0 then initialConcept (before (rise a)) else initialConcept (before (fall a))
+initialise a v = initialConcept . before $ if v == 0 then rise a else fall a
 
 causality :: Eq a => Transition a -> Transition a -> CircuitConcept a
 causality cause effect =
@@ -76,14 +76,10 @@ handshake :: Eq a => a -> a -> CircuitConcept a
 handshake a b = buffer a b <> inverter b a
 
 handshake00 :: Eq a => a -> a -> CircuitConcept a
-handshake00 a b = handshake a b <> both00
-  where
-    both00 = initialise a 0 <> initialise b 0
+handshake00 a b = handshake a b <> initialise a 0 <> initialise b 0
 
 handshake11 :: Eq a => a -> a -> CircuitConcept a
-handshake11 a b = handshake a b <> both11
-  where
-    both11 = initialise a 1 <> initialise b 1
+handshake11 a b = handshake a b <> initialise a 1 <> initialise b 1
 
 me :: Eq a => a -> a -> CircuitConcept a
 me a b = fall a ~> rise b <> fall b ~> rise a <> initialise a 0 <> initialise b 0 <> invariantConcept notBoth11
