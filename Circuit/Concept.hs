@@ -1,6 +1,6 @@
 module Circuit.Concept (
     CircuitConcept (..),
-    consistency, causality, andCausalities, orCausalities,
+    consistency, initialise, causality, andCausalities, orCausalities,
     (~>), (~&~>), (~|~>),
     buffer, inverter, cElement, meElement, andGate, orGate,
     silent, me, handshake, handshake00, handshake11
@@ -13,6 +13,9 @@ type CircuitConcept a = Concept (State a) (Transition a)
 -- Event-based concepts
 consistency :: CircuitConcept a
 consistency = excitedConcept before
+
+initialise :: Eq a => a -> Int -> CircuitConcept a
+initialise a v = initialConcept . before $ if v == 0 then rise a else fall a
 
 causality :: Eq a => Transition a -> Transition a -> CircuitConcept a
 causality cause effect =
@@ -66,16 +69,12 @@ handshake :: Eq a => a -> a -> CircuitConcept a
 handshake a b = buffer a b <> inverter b a
 
 handshake00 :: Eq a => a -> a -> CircuitConcept a
-handshake00 a b = handshake a b <> initialConcept both00
-  where
-    both00 = before (rise a) .&&. before (rise b)
+handshake00 a b = handshake a b <> initialise a 0 <> initialise b 0
 
 handshake11 :: Eq a => a -> a -> CircuitConcept a
-handshake11 a b = handshake a b <> initialConcept both11
-  where
-    both11 = before (fall a) .&&. before (fall b)
+handshake11 a b = handshake a b <> initialise a 1 <> initialise b 1
 
 me :: Eq a => a -> a -> CircuitConcept a
-me a b = fall a ~> rise b <> fall b ~> rise a <> initialConcept notBoth11 <> invariantConcept notBoth11
+me a b = fall a ~> rise b <> fall b ~> rise a <> initialise a 0 <> initialise b 0 <> invariantConcept notBoth11
   where
     notBoth11 = before (rise a) .||. before (rise b)
