@@ -27,15 +27,15 @@ initialState = State $ const False
 -- 111
 -- [A-,B-]
 main = do
-	print initialState
-	print $ initial example initialState
-	print $ enabledTransitions initialState example
-	let afterA = fire (rise A) initialState
-	print afterA
-	print $ enabledTransitions afterA example
-	let afterB = fire (rise B) afterA
-	print afterB
-	print $ enabledTransitions afterB example
-	let afterC = fire (rise C) afterB
-	print afterC
-	print $ enabledTransitions afterC example
+    print initialState
+    print $ initial example initialState
+    print $ enabledTransitions initialState example
+    let afterA = fire (rise A) initialState
+    print afterA
+    print $ enabledTransitions afterA example
+    let afterB = fire (rise B) afterA
+    print afterB
+    print $ enabledTransitions afterB example
+    let afterC = fire (rise C) afterB
+    print afterC
+    print $ enabledTransitions afterC example
