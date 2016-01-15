@@ -14,8 +14,13 @@ type CircuitConcept a = Concept (State a) (Transition a)
 consistency :: CircuitConcept a
 consistency = excitedConcept before
 
-initialise :: Eq a => a -> Int -> CircuitConcept a
-initialise a v = initialConcept . before $ if v == 0 then rise a else fall a
+initialise :: Eq a => a -> Bool -> CircuitConcept a
+initialise a = initialConcept . after . Transition a
+
+never :: Eq a => [(a, Bool)] -> CircuitConcept a
+never = invariantConcept . foldr (.||.) (const False) . map notEqual
+  where
+    notEqual (a, v) = before $ Transition a v
 
 causality :: Eq a => Transition a -> Transition a -> CircuitConcept a
 causality cause effect =
@@ -69,12 +74,12 @@ handshake :: Eq a => a -> a -> CircuitConcept a
 handshake a b = buffer a b <> inverter b a
 
 handshake00 :: Eq a => a -> a -> CircuitConcept a
-handshake00 a b = handshake a b <> initialise a 0 <> initialise b 0
+handshake00 a b = handshake a b <> initialise a False <> initialise b False
 
 handshake11 :: Eq a => a -> a -> CircuitConcept a
-handshake11 a b = handshake a b <> initialise a 1 <> initialise b 1
+handshake11 a b = handshake a b <> initialise a True <> initialise b True
 
 me :: Eq a => a -> a -> CircuitConcept a
-me a b = fall a ~> rise b <> fall b ~> rise a <> initialise a 0 <> initialise b 0 <> invariantConcept notBoth11
-  where
-    notBoth11 = before (rise a) .||. before (rise b)
+me a b = fall a ~> rise b <> fall b ~> rise a
+      <> initialise a False <> initialise b False
+      <> never [(a, True), (b, True)]
