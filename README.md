@@ -8,3 +8,7 @@ concepts.
 ### Build
 
 	cabal build
+
+### Test
+
+	cabal test --show-details=always
