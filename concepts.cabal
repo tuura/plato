@@ -11,3 +11,11 @@ executable concept-simulate
 
     default-language: Haskell2010
     GHC-options:      -Wall -fwarn-tabs
+
+test-suite concepts-test
+    type:    exitcode-stdio-1.0
+    main-is: Tests.hs
+
+    build-depends: base
+
+    default-language: Haskell2010
