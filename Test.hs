@@ -59,5 +59,5 @@ inverterSimulation = do
     fire $ fall B
     enabledTransitions circuit `shouldReturn` [fall A]
   where
-    initialState = State $ (== B)
+    initialState = State (== B)
     circuit      = consistency <> inverter A B <> silent C
