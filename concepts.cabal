@@ -9,6 +9,7 @@ executable concept-simulate
 
     build-depends: base
                  , mtl
+                 , transformers
 
     default-language: Haskell2010
     GHC-options:      -Wall -fwarn-tabs
@@ -19,5 +20,6 @@ test-suite concepts-test
 
     build-depends: base
                  , mtl
+                 , transformers
 
     default-language: Haskell2010
