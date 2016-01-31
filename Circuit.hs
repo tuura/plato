@@ -27,8 +27,8 @@ data Transition a = Transition
     deriving Eq
 
 instance Show a => Show (Transition a) where
-    show (Transition signal True ) = show signal ++ "+"
-    show (Transition signal False) = show signal ++ "-"
+    show (Transition s True ) = show s ++ "+"
+    show (Transition s False) = show s ++ "-"
 
 rise :: a -> Transition a
 rise a = Transition a True
