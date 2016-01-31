@@ -1,5 +1,5 @@
 module Circuit.Concept (
-    CircuitConcept (..),
+    CircuitConcept,
     consistency, initialise, causality, andCausalities, orCausalities,
     (~>), (~&~>), (~|~>),
     buffer, inverter, cElement, meElement, andGate, orGate,
@@ -47,8 +47,8 @@ orCausalities causes effect =
 (~|~>) :: Eq a => [Transition a] -> Transition a -> CircuitConcept a
 (~|~>) = orCausalities
 
-silent :: Eq a => Transition a -> CircuitConcept a
-silent t = excitedConcept $ \e _ -> e /= t
+silent :: Eq a => a -> CircuitConcept a
+silent s = excitedConcept $ \e _ -> signal e /= s
 
 -- Gate-level concepts
 buffer :: Eq a => a -> a -> CircuitConcept a
