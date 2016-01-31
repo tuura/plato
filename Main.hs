@@ -16,6 +16,29 @@ example' = consistency <> handshake00 A C <> handshake00 B C
 initialState :: State Signal
 initialState = State $ const False
 
+printState :: Simulation Signal IO ()
+printState = (lift . print) =<< get
+
+printEnabledTransitions :: CircuitConcept Signal -> Simulation Signal IO ()
+printEnabledTransitions c = do
+    ts <- enabledTransitions c
+    lift $ print ts
+
+simulation :: CircuitConcept Signal -> Simulation Signal IO ()
+simulation c = do
+    s <- get
+    lift $ print $ initial c s
+    printEnabledTransitions c
+    fire $ rise A
+    printState
+    printEnabledTransitions c
+    fire $ rise B
+    printState
+    printEnabledTransitions c
+    fire $ rise C
+    printState
+    printEnabledTransitions c
+
 -- This program prints the folloing when executed:
 -- 000
 -- True
@@ -26,16 +49,8 @@ initialState = State $ const False
 -- [C+]
 -- 111
 -- [A-,B-]
+main :: IO ()
 main = do
-    print initialState
-    print $ initial example initialState
-    print $ enabledTransitions initialState example
-    let afterA = fire (rise A) initialState
-    print afterA
-    print $ enabledTransitions afterA example
-    let afterB = fire (rise B) afterA
-    print afterB
-    print $ enabledTransitions afterB example
-    let afterC = fire (rise C) afterB
-    print afterC
-    print $ enabledTransitions afterC example
+    putStrLn $ "Initial state = " ++ show initialState
+    (_, finalState) <- runSimulation (simulation example) initialState
+    putStrLn $ "Final state = " ++ show finalState
