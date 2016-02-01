@@ -8,6 +8,7 @@ main = do
     testBuffer
     testInverter
     testCElementGateLevel
+    testCElementProtocolLevel
 
 testBuffer :: IO ()
 testBuffer = do
@@ -23,6 +24,11 @@ testCElementGateLevel :: IO ()
 testCElementGateLevel = do
     putStrLn "=== testCElementGateLevel"
     void $ runSimulation cElementGateLevelSimulation undefined
+
+testCElementProtocolLevel :: IO ()
+testCElementProtocolLevel = do
+    putStrLn "=== testCElementProtocolLevel"
+    void $ runSimulation cElementProtocolLevelSimulation undefined
 
 assertEq :: (Eq a, Show a) => a -> a -> IO ()
 assertEq have need
@@ -81,3 +87,18 @@ cElementGateLevelSimulation = do
   where
     initialState = State $ const False
     circuit      = consistency <> cElement A B C <> inverter C A <> inverter C B
+
+cElementProtocolLevelSimulation :: Simulation Signal IO ()
+cElementProtocolLevelSimulation = do
+    put initialState
+    initial circuit initialState `shouldBe` True
+    enabledTransitions circuit `shouldReturn` [rise A, rise B]
+    fire $ rise A
+    enabledTransitions circuit `shouldReturn` [rise B]
+    fire $ rise B
+    enabledTransitions circuit `shouldReturn` [rise C]
+    fire $ rise C
+    enabledTransitions circuit `shouldReturn` [fall A, fall B]
+  where
+    initialState = State $ const False
+    circuit      = consistency <> handshake00 A C <> handshake00 B C
