@@ -1,11 +1,11 @@
-module Circuit.Dynamics (
+module Hardware.Concepts.Simulation (
     module Control.Monad.State,
     Simulation, PureSimulation, runSimulation, runPureSimulation,
     enabledTransitions, enabled, fire
     ) where
 
-import Circuit
-import Circuit.Concept
+import Hardware.Concepts.Abstract
+import Hardware.Concepts.Circuit
 import Control.Monad.State hiding (State)
 import Data.Functor.Identity
 

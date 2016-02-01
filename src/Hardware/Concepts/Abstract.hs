@@ -1,7 +1,6 @@
 {-# LANGUAGE TypeFamilies #-}
 
-module Concept (
-    module Data.Monoid,
+module Hardware.Concepts.Abstract (
     Concept (..),
     initialConcept, excitedConcept, invariantConcept,
     (.&&.), (.||.),

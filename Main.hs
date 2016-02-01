@@ -1,6 +1,7 @@
-import Circuit
-import Circuit.Concept
-import Circuit.Dynamics
+module Main (main) where
+
+import Hardware.Concepts
+import Hardware.Concepts.Simulation
 
 -- Signals
 data Signal = A | B | C deriving (Eq, Show, Enum, Bounded)

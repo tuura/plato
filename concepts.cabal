@@ -1,25 +1,51 @@
-name:    concepts
-version: 0.0.1
-
+name:          concepts
+version:       0.0.1
+synopsis:      Hardware concepts
+license:       BSD3
+license-file:  LICENSE
+author:        Tuura authors (see AUTHORS file)
+maintainer:    Andrey Mokhov <andrey.mokhov@gmail.com>, github: @snowleopard
+copyright:     Tuura authors (see AUTHORS file), 2015
+homepage:      https://github.com/tuura/concepts
+category:      Hardware
 build-type:    Simple
 cabal-version: >=1.10
 
-executable concept-simulate
-    main-is: Main.hs
+source-repository head
+    type:     git
+    location: https://github.com/tuura/concepts.git
 
-    build-depends: base
-                 , mtl
-                 , transformers
-
+library
+    hs-source-dirs:   src
+    exposed-modules:  Hardware.Concepts,
+                      Hardware.Concepts.Examples.SimpleBuck,
+                      Hardware.Concepts.Simulation
+    other-modules:    Hardware.Concepts.Abstract,
+                      Hardware.Concepts.Circuit
+    build-depends:    base >= 4.8 && < 5,
+                      mtl == 2.2.*,
+                      transformers >= 0.4 && < 0.6
     default-language: Haskell2010
+    other-extensions: TypeFamilies
+    GHC-options:      -Wall -fwarn-tabs
+    
+executable concept-simulate
+    main-is:          Main.hs
+    build-depends:    base >= 4.8 && < 5,
+                      concepts,
+                      mtl == 2.2.*,
+                      transformers >= 0.4 && < 0.6
+    default-language: Haskell2010
+    other-extensions: TypeFamilies
     GHC-options:      -Wall -fwarn-tabs
 
 test-suite concepts-test
-    type:    exitcode-stdio-1.0
-    main-is: Test.hs
-
-    build-depends: base
-                 , mtl
-                 , transformers
-
+    type:             exitcode-stdio-1.0
+    main-is:          Test.hs
+    build-depends:    base >= 4.8 && < 5,
+                      concepts,
+                      mtl == 2.2.*,
+                      transformers >= 0.4 && < 0.6
+    other-extensions: TypeFamilies
     default-language: Haskell2010
+    GHC-options:      -Wall -fwarn-tabs

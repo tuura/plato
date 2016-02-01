@@ -1,8 +1,7 @@
 import System.Exit (exitFailure)
 
-import Circuit
-import Circuit.Concept
-import Circuit.Dynamics
+import Hardware.Concepts
+import Hardware.Concepts.Simulation
 
 main :: IO ()
 main = do
