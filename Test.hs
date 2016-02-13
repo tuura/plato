@@ -36,8 +36,7 @@ assertEq have need
         putStrLn $ "--- FAIL:\nneed: " ++ show need
         putStrLn $ "have: " ++ show have
         exitFailure
-    | otherwise = do
-        putStrLn $ "OK " ++ show need
+    | otherwise = putStrLn $ "OK " ++ show need
 
 data Signal = A | B | C deriving (Eq, Show, Enum, Bounded)
 
@@ -45,7 +44,7 @@ shouldBe :: (Eq a, Show a) => a -> a -> Simulation Signal IO ()
 shouldBe x y = lift $ assertEq x y
 
 shouldReturn :: (Eq a, Show a) => Simulation Signal IO a -> a -> Simulation Signal IO ()
-shouldReturn x y = (flip shouldBe y) =<< x
+shouldReturn x y = x >>= (`shouldBe` y)
 
 bufferSimulation :: Simulation Signal IO ()
 bufferSimulation = do
