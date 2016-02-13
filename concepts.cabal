@@ -17,11 +17,11 @@ source-repository head
 
 library
     hs-source-dirs:   src
-    exposed-modules:  Hardware.Concepts,
-                      Hardware.Concepts.Examples.SimpleBuck,
-                      Hardware.Concepts.Simulation
-    other-modules:    Hardware.Concepts.Abstract,
-                      Hardware.Concepts.Circuit
+    exposed-modules:  Tuura.Concepts,
+                      Tuura.Concepts.Examples.SimpleBuck,
+                      Tuura.Concepts.Simulation
+    other-modules:    Tuura.Concepts.Abstract,
+                      Tuura.Concepts.Circuit
     build-depends:    base >= 4.7 && < 5,
                       mtl == 2.2.*,
                       transformers >= 0.4 && < 0.6

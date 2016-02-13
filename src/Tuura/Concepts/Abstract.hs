@@ -1,13 +1,11 @@
 {-# LANGUAGE TypeFamilies #-}
-
-module Hardware.Concepts.Abstract (
+module Tuura.Concepts.Abstract (
     Concept (..),
     initialConcept, excitedConcept, invariantConcept,
     (.&&.), (.||.),
     quiescent
     ) where
 
-import Data.Monoid
 import Control.Applicative
 
 -- Abstract concepts
