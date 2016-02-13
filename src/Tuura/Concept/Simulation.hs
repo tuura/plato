@@ -1,11 +1,11 @@
-module Tuura.Concepts.Simulation (
+module Tuura.Concept.Simulation (
     module Control.Monad.State,
     Simulation, PureSimulation, runSimulation, runPureSimulation,
     enabledTransitions, enabled, fire
     ) where
 
-import Tuura.Concepts.Abstract
-import Tuura.Concepts.Circuit
+import Tuura.Concept.Abstract
+import Tuura.Concept.Circuit
 import Control.Monad.State hiding (State)
 import Data.Functor.Identity
 

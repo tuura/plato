@@ -1,7 +1,7 @@
 import System.Exit (exitFailure)
 
-import Tuura.Concepts
-import Tuura.Concepts.Simulation
+import Tuura.Concept
+import Tuura.Concept.Simulation
 
 main :: IO ()
 main = do

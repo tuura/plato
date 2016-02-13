@@ -1,9 +1,9 @@
-module Tuura.Concepts.Examples.SimpleBuck (
+module Tuura.Concept.Examples.SimpleBuck (
     zcAbsentScenario
     ) where
 
 import Data.Monoid
-import Tuura.Concepts
+import Tuura.Concept
 
 zcAbsentScenario :: Eq a => a -> a -> a -> a -> a -> a -> a -> CircuitConcept a
 zcAbsentScenario uv oc zc gp gp_ack gn gn_ack =

@@ -1,4 +1,4 @@
-module Tuura.Concepts.Circuit (
+module Tuura.Concept.Circuit (
     State (..), Transition (..),
     rise, fall, toggle, oldValue, before, after,
     CircuitConcept,
@@ -8,7 +8,7 @@ module Tuura.Concepts.Circuit (
     silent, me, handshake, handshake00, handshake11
     ) where
 
-import Tuura.Concepts.Abstract
+import Tuura.Concept.Abstract
 import Data.Monoid
 
 -- Circuit primitives

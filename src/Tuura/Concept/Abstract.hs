@@ -1,5 +1,5 @@
 {-# LANGUAGE TypeFamilies #-}
-module Tuura.Concepts.Abstract (
+module Tuura.Concept.Abstract (
     Concept (..),
     initialConcept, excitedConcept, invariantConcept,
     (.&&.), (.||.),
