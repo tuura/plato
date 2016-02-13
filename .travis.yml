@@ -1,9 +1,42 @@
-language: haskell
+sudo: false
 
-ghc:
-  - 7.8
+matrix:
+    include:
+        - os: linux
+          env: CABALVER=1.22 GHCVER=7.10.3
+          addons:
+              apt:
+                  packages:
+                      - ghc-7.10.3
+                      - cabal-install-1.22
+                  sources: hvr-ghc
+          before_install:
+              - PATH="/opt/ghc/$GHCVER/bin:$PATH"
+              - PATH="/opt/cabal/$CABALVER/bin:$PATH"
+              - PATH="$HOME/.cabal/bin:$PATH"
+              - export PATH
+              - cabal update
+
+        - os: osx
+          before_install:
+              - brew update
+              - brew install ghc cabal-install
+              - cabal update
+              - PATH="$HOME/.cabal/bin:$PATH"
+              - export PATH
+
+install:
+    - env
+    - ghc --version
+    - cabal --version
+    - cabal install --only-dependencies
 
 script:
-  - cabal configure --enable-tests
-  - cabal build
-  - cabal test --show-details=always
+    - cabal configure --enable-tests
+    - cabal build
+    - cabal test --show-details=always
+
+cache:
+    directories:
+        - $HOME/.cabal
+        - $HOME/.ghc
