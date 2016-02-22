@@ -16,4 +16,3 @@ test_script:
   - stack exec -- ghc --version
   - echo "" | stack --no-terminal build
   - stack test
-  
