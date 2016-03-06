@@ -19,11 +19,15 @@ type Input    = Signal I
 type Output   = Signal O
 type Internal = Signal T
 
-data DependencyType = Causality | TimingAssumption | ConcurrencyReduction
+data DependencyType = Causality
+                    | TimingAssumption
+                    | ConcurrencyReduction
+                    | Telepathy
 
 type family Dependency (a :: SignalTag) (b :: SignalTag) where
     Dependency I I = TimingAssumption
     Dependency O O = ConcurrencyReduction
+    Dependency T I = Telepathy
     Dependency a b = Causality
 
 (~>) :: (Dependency t1 t2 ~ Causality) => Signal t1 a -> Signal t2 a -> (a, a)
