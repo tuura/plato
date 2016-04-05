@@ -2,7 +2,7 @@
 module Tuura.Concept.Abstract (
     Concept (..),
     initialConcept, excitedConcept, invariantConcept,
-    (.&&.), (.||.),
+    true, false, (.&&.), (.||.),
     quiescent
     ) where
 
@@ -17,6 +17,12 @@ data Concept s e = Concept
                        excited   :: e -> s -> Bool,
                        invariant :: s -> Bool
                    }
+
+true :: a -> Bool
+true = const True
+
+false :: a -> Bool
+false = const False
 
 -- Concepts form a monoid:
 -- * the empty concept permits everything
