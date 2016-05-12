@@ -29,6 +29,18 @@ library
     other-extensions: TypeFamilies
     GHC-options:      -Wall -fwarn-tabs
 
+executable simulate
+    hs-source-dirs:   simulate
+    main-is:          Main.hs
+    build-depends:    base >= 4.7 && < 5,
+                      text,
+                      directory,
+                      hint >= 0.5.1,
+                      concepts
+    default-language: Haskell2010
+    other-extensions: TypeFamilies
+    GHC-options:      -Wall -fwarn-tabs
+
 test-suite concepts-test
     type:             exitcode-stdio-1.0
     main-is:          Test.hs
