@@ -1,7 +1,7 @@
+{-# LANGUAGE FlexibleInstances, DeriveFunctor #-}
 module Tuura.Concept.Circuit (
-    State (..), Transition (..),
+    State (..), Transition (..), wrap, CircuitConcept,
     rise, fall, toggle, oldValue, before, after,
-    CircuitConcept,
     consistency, initialise, causality, andCausalities, orCausalities,
     (~>), (~&~>), (~|~>),
     buffer, inverter, cElement, meElement, andGate, orGate,
@@ -13,26 +13,40 @@ import Data.Monoid
 
 -- Circuit primitives
 -- Parameter a stands for the alphabet of signals
-newtype State a = State (a -> Bool)
-
-instance Bounded (State a) where
-    minBound = State $ const False
-    maxBound = State $ const True
-
-instance (Enum a, Bounded a) => Show (State a) where
-    show (State value) =
-        map (\a -> if value a then '1' else '0') [minBound..maxBound]
+newtype State a = State { getState :: a -> Bool }
 
 data Transition a = Transition
     {
         signal   :: a,
         newValue :: Bool -- Transition x True corresponds to x+
     }
-    deriving Eq
+    deriving (Eq, Functor)
 
 instance Show a => Show (Transition a) where
     show (Transition s True ) = show s ++ "+"
     show (Transition s False) = show s ++ "-"
+
+-- TODO: get rid of these instances
+instance Bounded (State a) where
+    minBound = State $ true
+    maxBound = State $ false
+
+instance (Enum a, Bounded a) => Show (State a) where
+    show s =
+        map (\a -> if getState s a then '1' else '0') [minBound..maxBound]
+
+type CircuitConcept a = Concept (State a) (Transition a)
+
+-- wrap is actuall invmap from Data.Functor.Invariant
+wrap :: (a -> b) -> (b -> a) -> CircuitConcept a -> CircuitConcept b
+wrap to from c = Concept
+                 {
+                     initial   = wrapSpace $ initial c,
+                     excited   = \e -> wrapSpace $ excited c (fmap from e),
+                     invariant = wrapSpace $ invariant c
+                 }
+  where
+    wrapSpace p = \s -> p (State $ getState s . to)
 
 rise :: a -> Transition a
 rise a = Transition a True
@@ -47,12 +61,10 @@ oldValue :: Transition a -> Bool
 oldValue (Transition _ v) = not v
 
 before :: Transition a -> State a -> Bool
-before t (State value) = value (signal t) == oldValue t
+before t s = getState s (signal t) == oldValue t
 
 after :: Transition a -> State a -> Bool
-after t (State value) = value (signal t) == newValue t
-
-type CircuitConcept a = Concept (State a) (Transition a)
+after t s = getState s (signal t) == newValue t
 
 -- Event-based concepts
 consistency :: CircuitConcept a
@@ -62,25 +74,25 @@ initialise :: Eq a => a -> Bool -> CircuitConcept a
 initialise a = initialConcept . after . Transition a
 
 never :: Eq a => [(a, Bool)] -> CircuitConcept a
-never = invariantConcept . foldr (.||.) (const False) . map notEqual
+never = invariantConcept . foldr (.||.) false . map notEqual
   where
     notEqual (a, v) = before $ Transition a v
 
 causality :: Eq a => Transition a -> Transition a -> CircuitConcept a
 causality cause effect =
-    excitedConcept $ \t -> if t == effect then after cause else const True
+    excitedConcept $ \t -> if t == effect then after cause else true
 
 andCausalities :: Eq a => [Transition a] -> Transition a -> CircuitConcept a
 andCausalities causes effect =
     excitedConcept $ \t -> if t == effect
-                           then foldr (.&&.) (const True) (map after causes)
-                           else const True
+                           then foldr (.&&.) true (map after causes)
+                           else false
 
 orCausalities :: Eq a => [Transition a] -> Transition a -> CircuitConcept a
 orCausalities causes effect =
     excitedConcept $ \t -> if t == effect
-                           then foldr (.||.) (const False) (map after causes)
-                           else const True
+                           then foldr (.||.) false (map after causes)
+                           else true
 
 (~>) :: Eq a => Transition a -> Transition a -> CircuitConcept a
 (~>) = causality
@@ -92,7 +104,7 @@ orCausalities causes effect =
 (~|~>) = orCausalities
 
 silent :: Eq a => a -> CircuitConcept a
-silent s = excitedConcept $ \e _ -> signal e /= s
+silent s = excitedConcept $ \e -> const $ signal e /= s
 
 -- Gate-level concepts
 buffer :: Eq a => a -> a -> CircuitConcept a
