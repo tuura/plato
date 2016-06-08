@@ -58,10 +58,10 @@ type CircuitConcept a = Concept (State a) (Transition a)
 consistency :: CircuitConcept a
 consistency = excitedConcept before
 
-initialise :: Eq a => a -> Bool -> CircuitConcept a
+initialise :: a -> Bool -> CircuitConcept a
 initialise a = initialConcept . after . Transition a
 
-never :: Eq a => [(a, Bool)] -> CircuitConcept a
+never :: [(a, Bool)] -> CircuitConcept a
 never = invariantConcept . foldr (.||.) (const False) . map notEqual
   where
     notEqual (a, v) = before $ Transition a v
