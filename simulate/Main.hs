@@ -1,7 +1,6 @@
 module Main (main) where
 
 import Data.Char
-import Data.List
 import qualified Data.Text as Text
 import System.Directory
 import Control.Exception
@@ -22,16 +21,8 @@ main = do
         else do
             r <- GHC.runInterpreter $ doWork (head args)
             case r of
-               Left err -> putStrLn $ errorString err
+               Left err -> putStrLn $ displayException err
                Right () -> return ()
-
-{- Print a human-readable error string. -}
-errorString :: GHC.InterpreterError -> String
-errorString (GHC.WontCompile es) = intercalate "\n" (header : map unbox es)
-    where
-      header = "ERROR: Won't compile:"
-      unbox (GHC.GhcError e) = e
-errorString e = show e
 
 {- Our own Signal type. Contains the signal index, from 0 to x-1 if
  - there are x signals. -}
