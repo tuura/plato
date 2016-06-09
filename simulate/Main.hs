@@ -45,7 +45,7 @@ signalsApply num = [
 writeTmpFile :: [String] -> IO ()
 writeTmpFile ls =
     writeFile tmpModuleFile $ unlines withModule
-      where withModule = ("module " ++ tmpModuleName ++ " where") : ls
+      where withModule = "module Helper where" : ls
 
 removeIfExists :: FilePath -> IO ()
 removeIfExists fileName = removeFile fileName `catch` handleExists
@@ -54,10 +54,8 @@ removeIfExists fileName = removeFile fileName `catch` handleExists
           | otherwise = throwIO e
 
 {- Exported names in the user's haskell module (file) -}
-moduleName, circuitName, tmpModuleName, tmpModuleFile :: String
-moduleName    = "Concept"
+circuitName, tmpModuleFile :: String
 circuitName   = "circuit"
-tmpModuleName = "Helper"
 tmpModuleFile = ".Helper.hs"
 
 {- Helper functions because we deal with String, not Text. -}
@@ -67,25 +65,27 @@ count sub str = Text.count (Text.pack sub) (Text.pack str)
 strRepeat :: Int -> String -> String
 strRepeat n str = Text.unpack $ Text.replicate n (Text.pack str)
 
+loadModulesTopLevel :: [String] -> GHC.Interpreter ()
+loadModulesTopLevel paths = do
+    GHC.loadModules paths
+    mods <- GHC.getLoadedModules
+    GHC.setTopLevelModules mods
+
 doWork :: String -> GHC.Interpreter ()
 doWork path = do
     {- Load user's module to gather info. -}
-    GHC.loadModules [path]
-    GHC.setTopLevelModules [moduleName]
-    --
+    loadModulesTopLevel [path]
     {- Use the circuit's type to gather how many signals it takes. -}
     t <- GHC.typeOf circuitName
     let numSigns = count "->" t
     liftIO $ putStrLn $ "Circuit signal count: " ++ show numSigns
     {- Load the generated module too. -}
     liftIO $ writeTmpFile $ signalsApply numSigns
-    GHC.loadModules [path, tmpModuleFile]
+    loadModulesTopLevel [path, tmpModuleFile]
     liftIO $ removeIfExists tmpModuleFile
-    GHC.setTopLevelModules [moduleName, tmpModuleName]
     {- Fetch our signals. -}
     signs <- GHC.interpret "signs" (GHC.as :: [DynSignal])
     liftIO $ putStrLn $ "Circuit signal names: " ++ show signs
-    --
     {- Obtain the circuit in terms of any signal (takes them as args). -}
     let ctype = strRepeat numSigns "DynSignal ->" ++ "CircuitConcept DynSignal"
     circuit <- GHC.unsafeInterpret circuitName ctype
