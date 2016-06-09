@@ -10,23 +10,29 @@ matrix:
                       - cabal-install-1.22
                   sources: hvr-ghc
           before_install:
-              - export PATH="/opt/ghc/7.10.3/bin:$PATH"
-              - export PATH="/opt/cabal/1.22/bin:$PATH"
-              - export PATH="$HOME/.cabal/bin:$PATH"
-              - cabal update
+              - export PATH="/opt/ghc/7.10.3/bin:/opt/cabal/1.22/bin:$PATH"
+
+        - os: linux
+          addons:
+              apt:
+                  packages:
+                      - ghc-8.0.1
+                      - cabal-install-1.24
+                  sources: hvr-ghc
+          before_install:
+              - export PATH="/opt/ghc/8.0.1/bin:/opt/cabal/1.24/bin:$PATH"
 
         - os: osx
           before_install:
               - brew update
               - brew install ghc cabal-install
-              - cabal update
-              - export PATH="$HOME/.cabal/bin:$PATH"
 
 install:
     - env
     - ghc --version
     - cabal --version
-    - cabal install --only-dependencies
+    - travis_retry cabal update
+    - cabal install --only-dependencies --enable-tests
 
 script:
     - cabal configure --enable-tests

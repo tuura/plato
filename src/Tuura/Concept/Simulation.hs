@@ -13,7 +13,7 @@ type Simulation a m = StateT (State a) m
 
 type PureSimulation a = Simulation a Identity
 
-runSimulation :: Monad m => Simulation a m r -> State a -> m (r, State a)
+runSimulation :: Simulation a m r -> State a -> m (r, State a)
 runSimulation = runStateT
 
 runPureSimulation :: PureSimulation a r -> State a -> (r, State a)

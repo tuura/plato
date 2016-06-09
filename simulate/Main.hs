@@ -63,20 +63,13 @@ removeIfExists fileName = removeFile fileName `catch` handleExists
           | otherwise = throwIO e
 
 {- Exported names in the user's haskell module (file) -}
-moduleName :: String
-moduleName = "Concept"
-
-circuitName :: String
-circuitName = "circuit"
-
-tmpModuleName :: String
+moduleName, circuitName, tmpModuleName, tmpModuleFile :: String
+moduleName    = "Concept"
+circuitName   = "circuit"
 tmpModuleName = "Helper"
-
-tmpModuleFile :: String
 tmpModuleFile = ".Helper.hs"
 
 {- Helper functions because we deal with String, not Text. -}
-
 count :: String -> String -> Int
 count sub str = Text.count (Text.pack sub) (Text.pack str)
 
@@ -132,7 +125,6 @@ readState num = do
         else return $ State (\(Signal i) -> '1' == word !! i)
 
 {- Helper functions to avoid needing SignalWrapper to be Enum/Bounded -}
-
 showState :: State t -> [t] -> String
 showState (State v) = map (\s -> if v s then '1' else '0')
 
