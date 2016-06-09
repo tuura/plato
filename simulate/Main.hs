@@ -33,12 +33,11 @@ instance Show DynSignal where show (Signal i) = [chr (ord 'A' + i)]
 {- Temporary module to help us use any number of signals in the user's
  - circuit. Otherwise, we would be bound to a number of arguments
  - (signals) known at compile time.
- - Keep the DynSignal code in sync with above! -}
+ - Keep the data DynSignal line in sync with the one above! -}
 signalsApply :: Int -> [String]
 signalsApply num = [
     "import Data.Char",
     "data DynSignal = Signal Int deriving Eq",
-    "instance Show DynSignal where show (Signal i) = [chr (ord 'A' + i)]",
     "signs = [Signal i | i <- [0.." ++ show (num-1) ++ "]]",
     "apply c = c " ++ unwords ["(signs !! " ++ show i ++ ")" | i <- [0..num-1]]]
 
