@@ -1,7 +1,6 @@
 module Main (main) where
 
 import Data.Char
-import Data.List
 import qualified Data.Text as Text
 import System.Directory
 import Control.Exception
@@ -22,16 +21,8 @@ main = do
         else do
             r <- GHC.runInterpreter $ doWork (head args)
             case r of
-               Left err -> putStrLn $ errorString err
+               Left err -> putStrLn $ displayException err
                Right () -> return ()
-
-{- Print a human-readable error string. -}
-errorString :: GHC.InterpreterError -> String
-errorString (GHC.WontCompile es) = intercalate "\n" (header : map unbox es)
-    where
-      header = "ERROR: Won't compile:"
-      unbox (GHC.GhcError e) = e
-errorString e = show e
 
 {- Our own Signal type. Contains the signal index, from 0 to x-1 if
  - there are x signals. -}
@@ -42,19 +33,18 @@ instance Show DynSignal where show (Signal i) = [chr (ord 'A' + i)]
 {- Temporary module to help us use any number of signals in the user's
  - circuit. Otherwise, we would be bound to a number of arguments
  - (signals) known at compile time.
- - Keep the DynSignal code in sync with above! -}
+ - Keep the data DynSignal line in sync with the one above! -}
 signalsApply :: Int -> [String]
 signalsApply num = [
     "import Data.Char",
     "data DynSignal = Signal Int deriving Eq",
-    "instance Show DynSignal where show (Signal i) = [chr (ord 'A' + i)]",
     "signs = [Signal i | i <- [0.." ++ show (num-1) ++ "]]",
     "apply c = c " ++ unwords ["(signs !! " ++ show i ++ ")" | i <- [0..num-1]]]
 
 writeTmpFile :: [String] -> IO ()
 writeTmpFile ls =
     writeFile tmpModuleFile $ unlines withModule
-      where withModule = ("module " ++ tmpModuleName ++ " where") : ls
+      where withModule = "module Helper where" : ls
 
 removeIfExists :: FilePath -> IO ()
 removeIfExists fileName = removeFile fileName `catch` handleExists
@@ -63,10 +53,8 @@ removeIfExists fileName = removeFile fileName `catch` handleExists
           | otherwise = throwIO e
 
 {- Exported names in the user's haskell module (file) -}
-moduleName, circuitName, tmpModuleName, tmpModuleFile :: String
-moduleName    = "Concept"
+circuitName, tmpModuleFile :: String
 circuitName   = "circuit"
-tmpModuleName = "Helper"
 tmpModuleFile = ".Helper.hs"
 
 {- Helper functions because we deal with String, not Text. -}
@@ -76,25 +64,27 @@ count sub str = Text.count (Text.pack sub) (Text.pack str)
 strRepeat :: Int -> String -> String
 strRepeat n str = Text.unpack $ Text.replicate n (Text.pack str)
 
+loadModulesTopLevel :: [String] -> GHC.Interpreter ()
+loadModulesTopLevel paths = do
+    GHC.loadModules paths
+    mods <- GHC.getLoadedModules
+    GHC.setTopLevelModules mods
+
 doWork :: String -> GHC.Interpreter ()
 doWork path = do
     {- Load user's module to gather info. -}
-    GHC.loadModules [path]
-    GHC.setTopLevelModules [moduleName]
-    --
+    loadModulesTopLevel [path]
     {- Use the circuit's type to gather how many signals it takes. -}
     t <- GHC.typeOf circuitName
     let numSigns = count "->" t
     liftIO $ putStrLn $ "Circuit signal count: " ++ show numSigns
     {- Load the generated module too. -}
     liftIO $ writeTmpFile $ signalsApply numSigns
-    GHC.loadModules [path, tmpModuleFile]
+    loadModulesTopLevel [path, tmpModuleFile]
     liftIO $ removeIfExists tmpModuleFile
-    GHC.setTopLevelModules [moduleName, tmpModuleName]
     {- Fetch our signals. -}
     signs <- GHC.interpret "signs" (GHC.as :: [DynSignal])
     liftIO $ putStrLn $ "Circuit signal names: " ++ show signs
-    --
     {- Obtain the circuit in terms of any signal (takes them as args). -}
     let ctype = strRepeat numSigns "DynSignal ->" ++ "CircuitConcept DynSignal"
     circuit <- GHC.unsafeInterpret circuitName ctype
