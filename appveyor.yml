@@ -5,7 +5,6 @@ before_test:
   - 7z x stack.zip stack.exe
 
 test_script:
-  - stack init
   - stack setup > nul
   - stack exec -- ghc --version
   - stack build
