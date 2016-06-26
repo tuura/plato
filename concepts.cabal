@@ -19,9 +19,13 @@ library
     hs-source-dirs:   src
     exposed-modules:  Tuura.Concept,
                       Tuura.Concept.Examples.SimpleBuck,
-                      Tuura.Concept.Simulation
+                      Tuura.Concept.Simulation,
+                      Tuura.ConceptConcat,
+                      Tuura.Concept.Concat.Simulation
     other-modules:    Tuura.Concept.Abstract,
-                      Tuura.Concept.Circuit
+                      Tuura.Concept.Circuit,
+                      Tuura.Concept.Concat.Abstract,
+                      Tuura.Concept.Concat.Circuit
     build-depends:    base >= 4.8 && < 5,
                       mtl == 2.2.*,
                       transformers >= 0.4 && < 0.6
@@ -31,6 +35,17 @@ library
 
 executable simulate
     hs-source-dirs:   simulate
+    main-is:          Main.hs
+    build-depends:    base >= 4.8 && < 5,
+                      text,
+                      directory,
+                      hint >= 0.6.0,
+                      concepts
+    default-language: Haskell2010
+    GHC-options:      -Wall -fwarn-tabs
+
+executable translate
+    hs-source-dirs:   translate
     main-is:          Main.hs
     build-depends:    base >= 4.8 && < 5,
                       text,
