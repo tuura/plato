@@ -62,7 +62,7 @@ initialise :: a -> Bool -> CircuitConcept a
 initialise a = initialConcept . after . Transition a
 
 never :: [(a, Bool)] -> CircuitConcept a
-never = invariantConcept . foldr (.||.) (const False) . map notEqual
+never = invariantConcept . foldr ((.||.) . notEqual) (const False)
   where
     notEqual (a, v) = before $ Transition a v
 
@@ -73,13 +73,13 @@ causality cause effect =
 andCausalities :: Eq a => [Transition a] -> Transition a -> CircuitConcept a
 andCausalities causes effect =
     excitedConcept $ \t -> if t == effect
-                           then foldr (.&&.) (const True) (map after causes)
+                           then foldr ((.&&.) . after) (const True) causes
                            else const True
 
 orCausalities :: Eq a => [Transition a] -> Transition a -> CircuitConcept a
 orCausalities causes effect =
     excitedConcept $ \t -> if t == effect
-                           then foldr (.||.) (const False) (map after causes)
+                           then foldr ((.||.) . after) (const False) causes
                            else const True
 
 (~>) :: Eq a => Transition a -> Transition a -> CircuitConcept a
