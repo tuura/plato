@@ -1,16 +1,18 @@
 {-# LANGUAGE RecordWildCards, MultiParamTypeClasses, FlexibleInstances #-}
 module Tuura.PetriNet (
-    Capacity, Weight, PetriNet (..), Preset (..), Postset (..), Readset (..),
-    Tokens, Marking, Fire (..), Enabled (..), disabled,
-    mapPlaces, mapTransitions, mapMarking
+    Capacity, Weight, Tokens, Marking, PetriNet (..), presetP, postsetP,
+    readsetP, presetT, postsetT, readsetT, mapP, mapT, mapPT, mapMarking,
+    enabled, disabled, fire
     ) where
 
 import Data.Bifunctor
 import Data.Set
 import Data.Map
 
-type Capacity = Int
-type Weight   = Int
+type Capacity  = Int
+type Weight    = Int
+type Tokens    = Int
+type Marking p = Map p Tokens
 
 data PetriNet p t = PetriNet
     { places        :: Map p Capacity
@@ -18,77 +20,50 @@ data PetriNet p t = PetriNet
     , producingArcs :: Map (p, t) Weight
     , consumingArcs :: Map (p, t) Weight
     , readArcs      :: Map (p, t) Weight }
+    deriving Show
 
-class Preset m p t a b where
-    preset :: a -> m p t -> Map b Weight
+presetP, postsetP, readsetP :: Ord p => PetriNet p t -> p -> Map t Weight
+presetP  net p = matchFst p $ producingArcs net
+postsetP net p = matchFst p $ consumingArcs net
+readsetP net p = matchFst p $ readArcs      net
 
-instance Ord p => Preset PetriNet p t p t where
-    preset p = mapKeysMonotonic snd
-             . filterWithKey (\(p', _) _ -> p == p') . producingArcs
+presetT, postsetT, readsetT :: Ord t => PetriNet p t -> t -> Map p Weight
+presetT  net t = matchSnd t $ consumingArcs net
+postsetT net t = matchSnd t $ producingArcs net
+readsetT net t = matchSnd t $ readArcs      net
 
-instance Ord t => Preset PetriNet p t t p where
-    preset t = mapKeysMonotonic fst
-             . filterWithKey (\(_, t') _ -> t == t') . consumingArcs
+matchFst :: Eq p => p -> Map (p, t) w -> Map t w
+matchFst p = mapKeysMonotonic snd . filterWithKey (\(p', _) _ -> p == p')
 
-class Postset m p t a b where
-    postset :: a -> m p t -> Map b Weight
+matchSnd :: Eq t => t -> Map (p, t) w -> Map p w
+matchSnd t = mapKeysMonotonic fst . filterWithKey (\(_, t') _ -> t == t')
 
-instance Ord p => Postset PetriNet p t p t where
-    postset p = mapKeysMonotonic snd
-              . filterWithKey (\(p', _) _ -> p == p') . consumingArcs
-
-instance Ord t => Postset PetriNet p t t p where
-    postset t = mapKeysMonotonic fst
-              . filterWithKey (\(_, t') _ -> t == t') . producingArcs
-
-class Readset m p t a b where
-    readset :: a -> m p t -> Map b Weight
-
-instance Ord p => Readset PetriNet p t p t where
-    readset p = mapKeysMonotonic snd
-              . filterWithKey (\(p', _) _ -> p == p') . readArcs
-
-instance Ord t => Readset PetriNet p t t p where
-    readset t = mapKeysMonotonic fst
-              . filterWithKey (\(_, t') _ -> t == t') . readArcs
-
-mapPlaces :: (Ord p', Ord t) => (p -> p') -> PetriNet p t -> PetriNet p' t
-mapPlaces f PetriNet {..} = PetriNet
+mapPT :: (Ord q, Ord u) => (p -> q) -> (t -> u) -> PetriNet p t -> PetriNet q u
+mapPT f g PetriNet {..} = PetriNet
     (mapKeys f places)
-    transitions
-    (mapKeys (first f) producingArcs)
-    (mapKeys (first f) consumingArcs)
-    (mapKeys (first f) readArcs     )
+    (Data.Set.map g transitions)
+    (mapKeys (bimap f g) producingArcs)
+    (mapKeys (bimap f g) consumingArcs)
+    (mapKeys (bimap f g) readArcs     )
 
-mapTransitions :: (Ord p, Ord t') => (t -> t') -> PetriNet p t -> PetriNet p t'
-mapTransitions f PetriNet {..} = PetriNet
-    places
-    (Data.Set.map f transitions)
-    (mapKeys (second f) producingArcs)
-    (mapKeys (second f) consumingArcs)
-    (mapKeys (second f) readArcs     )
+mapP :: (Ord q, Ord t) => (p -> q) -> PetriNet p t -> PetriNet q t
+mapP f = mapPT f id
+mapT :: (Ord p, Ord u) => (t -> u) -> PetriNet p t -> PetriNet p u
+mapT = mapPT id
 
-type Tokens    = Int
-type Marking p = Map p Tokens
-
-mapMarking :: Ord p' => (p -> p') -> Marking p -> Marking p'
+mapMarking :: Ord q => (p -> q) -> Marking p -> Marking q
 mapMarking = Data.Map.mapKeys
 
-class Enabled m p t where
-    enabled :: t -> m p t -> Marking p -> Bool
+enabled :: (Ord p, Ord t) => PetriNet p t -> Marking p -> t -> Bool
+enabled net m t = foldrWithKey (\p w -> (&& enough p w)) test (presetT net t)
+  where
+    test = foldrWithKey (\p w -> (&& enough p w)) True (readsetT net t)
+    enough p w = findWithDefault 0 p m >= w
 
-instance (Ord p, Ord t) => Enabled PetriNet p t where
-    enabled t net m = foldrWithKey (\p k -> (&& enough p k)) True (preset t net)
-      where
-        enough p k = findWithDefault 0 p m >= k
+disabled :: (Ord p, Ord t) => PetriNet p t -> Marking p -> t -> Bool
+disabled net m t = not $ enabled net m t
 
-disabled :: Enabled m p t => t -> m p t -> Marking p -> Bool
-disabled t net m = not $ enabled t net m
-
-class Fire m p t where
-    fire :: t -> m p t -> Marking p -> Marking p
-
-instance (Ord p, Ord t) => Fire PetriNet p t where
-    fire t net m = foldrWithKey (\p k -> adjust (+k) p) m' (postset t net)
-      where
-        m' = foldrWithKey (\p k -> adjust (subtract k) p) m (preset t net)
+fire :: (Ord p, Ord t) => PetriNet p t -> t -> Marking p -> Marking p
+fire net t m = foldrWithKey (\p w -> adjust (+w) p) m' (postsetT net t)
+  where
+    m' = foldrWithKey (\p w -> adjust (subtract w) p) m (presetT net t)
