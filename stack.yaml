@@ -1,5 +1,3 @@
-flags: {}
 packages:
 - '.'
-extra-deps: []
 resolver: nightly-2016-06-21
