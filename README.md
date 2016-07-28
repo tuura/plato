@@ -12,3 +12,14 @@ A DSL for asynchronous circuits specification.
 ### Test
 
 	cabal test --show-details=always
+
+### Translate to STG
+
+You first need `hint` and `concepts` installed:
+
+	cabal install hint
+	cabal install
+
+Then invoke the translate executable with a concept circuit file:
+
+	runghc translate/Main.hs examples/celement-concept-concat.hs
