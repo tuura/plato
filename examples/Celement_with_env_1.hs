@@ -4,11 +4,11 @@ import Tuura.ConceptConcat
 
 -- C-element with environment circuit described using signal-level concepts
 circuit :: (Eq a) => a -> a -> a -> CircuitConcept a 
-circuit a b c = <> interface <> outputRise <> inputFall <> outputFall <> inputRise <> initialState 
+circuit a b c = interface <> outputRise <> inputFall <> outputFall <> inputRise <> initialState 
   where
-  	interface = inputs [a, b] <> outputs [c]
+    interface = inputs [a, b] <> outputs [c]
 
-    outputRise = rise a ~> rise c <> rise b ~> rise c 
+    outputRise = rise a ~> rise c <> rise b ~> rise c
 
     inputFall = rise c ~> fall a <> rise c ~> fall b 
 
@@ -17,3 +17,4 @@ circuit a b c = <> interface <> outputRise <> inputFall <> outputFall <> inputRi
     inputRise = fall c ~> rise a <> fall c ~> rise b
   
     initialState = initialise a False <> initialise b False <> initialise c False
+
