@@ -4,9 +4,11 @@ import Tuura.ConceptConcat
 
 --ZC early scenario definition using concepts
 circuit :: Eq a => a -> a -> a -> a -> a -> a -> a -> CircuitConcept a
-circuit uv oc zc gp_ack gn_ack gp gn =
+circuit uv oc zc gp_ack gn_ack gp gn = signals <>
     chargeFunc <> zcFunc <> zcReact <> uvFunc' <> uvReact' <> initialise zc False
   where
+    signals = inputs [uv, oc, zc, gp_ack, gn_ack] <> outputs [gp, gn]
+
     zcFunc = rise zc ~> fall gn 
     zcReact = fall oc ~> rise zc <> rise gp ~> fall zc
 

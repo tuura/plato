@@ -4,9 +4,11 @@ import Tuura.ConceptConcat
 
 --ZC absent scenario definition using concepts
 circuit :: Eq a => a -> a -> a -> a -> a -> a -> a -> CircuitConcept a
-circuit uv oc zc gp_ack gn_ack gp gn =
+circuit uv oc zc gp_ack gn_ack gp gn = signals <> 
     chargeFunc <> uvFunc <> uvReact -- <> zcAbsent
   where
+    signals = inputs [uv, oc, zc, gp_ack, gn_ack] <> outputs [gp, gn]
+
     uvFunc = rise uv ~> rise gp <> rise uv ~> fall gn
     ocFunc = rise oc ~> fall gp <> rise oc ~> rise gn
 
