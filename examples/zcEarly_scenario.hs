@@ -4,10 +4,10 @@ import Tuura.ConceptConcat
 
 --ZC early scenario definition using concepts
 circuit :: Eq a => a -> a -> a -> a -> a -> a -> a -> CircuitConcept a
-circuit uv oc zc gp_ack gn_ack gp gn = signals <>
+circuit uv oc zc gp_ack gn_ack gp gn =
     chargeFunc <> zcFunc <> zcReact <> uvFunc' <> uvReact' <> initialise zc False
   where
-    signals = inputs [uv, oc, zc, gp_ack, gn_ack] <> outputs [gp, gn]
+    interface = inputs [uv, oc, zc, gp_ack, gn_ack] <> outputs [gp, gn]
 
     zcFunc = rise zc ~> fall gn 
     zcReact = fall oc ~> rise zc <> rise gp ~> fall zc
@@ -27,6 +27,6 @@ circuit uv oc zc gp_ack gn_ack gp gn = signals <>
     gnHandshake = handshake gn gn_ack
 
     initialState = initialise uv False <> initialise oc False
-
-    chargeFunc = ocFunc <> ocReact <> environmentConstraint <> circuitConstraint 
-                 <> gpHandshake <> gnHandshake <> initialState
+    
+    chargeFunc = interface <> ocFunc <> ocReact <> environmentConstraint 
+                <> circuitConstraint <> gpHandshake <> gnHandshake <> initialState

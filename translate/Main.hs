@@ -148,3 +148,8 @@ genSTG inputSigns outputSigns internalSigns initStrs arcStrs =
         ints = signalLists internalSigns
         trans = concatMap symbLoop allSigns ++ concatMap transition arcStrs
         marks = initVals allSigns initStrs
+
+data ValidationResult a = Valid | UnusedSignal [a] | SomethingElseToBeAddedLater
+
+validate :: [a] -> CircuitConcept a -> ValidationResult a
+validate a = 
