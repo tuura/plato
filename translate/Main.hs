@@ -98,11 +98,11 @@ doTranslate :: MonadIO m => [DynSignal] -> Concept (State DynSignal) (Transition
 doTranslate signs circuit = do
     let initStrs = map (\s -> (show s, False)) signs {- TODO: don't hard-code to false -}
     let arcStrs = map (\(from, to) -> (show from, show to)) (arcs circuit)
-    let typeStr = \s -> show $ signalType circuit s
-    let inputs = filter ((==Input) . signalType circuit) signs
-    let outputs = filter ((==Output) . signalType circuit) signs
-    let internals = filter ((==Internal) . signalType circuit) signs
-    liftIO $ putStr $ genSTG inputs outputs internals initStrs arcStrs
+    --let typeStr = \s -> show $ interface circuit s
+    let inputSigns = filter ((==Input) . interface circuit) signs
+    let outputSigns = filter ((==Output) . interface circuit) signs
+    let internalSigns = filter ((==Internal) . interface circuit) signs
+    liftIO $ putStr $ genSTG inputSigns outputSigns internalSigns initStrs arcStrs
     --liftIO $ putStr $ genSTG initStrs arcStrs
     return ()
 
@@ -139,12 +139,12 @@ tmpl :: String
 tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internals %s", ".graph", "%s.marking {%s}", ".end"]
 
 genSTG :: [DynSignal] -> [DynSignal] -> [DynSignal] -> [(String, Bool)] -> [(String, String)] -> String
-genSTG inputs outputs internals initStrs arcStrs = 
+genSTG inputSigns outputSigns internalSigns initStrs arcStrs = 
     printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines trans) (unwords marks)
     where
         allSigns = output initStrs
-        outs = signalLists outputs
-        ins = signalLists inputs
-        ints = signalLists internals
+        outs = signalLists outputSigns
+        ins = signalLists inputSigns
+        ints = signalLists internalSigns
         trans = concatMap symbLoop allSigns ++ concatMap transition arcStrs
         marks = initVals allSigns initStrs

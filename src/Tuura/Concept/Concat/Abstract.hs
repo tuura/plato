@@ -1,8 +1,8 @@
 module Tuura.Concept.Concat.Abstract (
-    SignalType (..),
+    Interface (..),
     Concept (..),
     initialConcept, arcConcept,
-    signalTypeConcept,
+    interfaceConcept,
     (.&&.), (.||.),
     ) where
 
@@ -12,13 +12,13 @@ import Control.Applicative
 -- * s is the type of states
 -- * e is the type of events
 
-data SignalType = Unused | Input | Internal | Output deriving (Ord, Eq, Show)
+data Interface = Unused | Input | Internal | Output deriving (Ord, Eq, Show)
 
 data Concept s e a = Concept
                    {
                        initial :: s -> Bool,
                        arcs    :: [(e, e)],
-                       signalType :: a -> SignalType
+                       interface :: a -> Interface
                    }
 
 instance Monoid (Concept s e a) where
@@ -26,13 +26,13 @@ instance Monoid (Concept s e a) where
              {
                  initial = const True,
                  arcs    = [],
-                 signalType = const Unused
+                 interface = const Unused
              }
     mappend a b = Concept
                   {
                       initial = initial a .&&. initial b,
                       arcs    = arcs a     ++  arcs b,
-                      signalType = \s -> signalType a s `max` signalType b s
+                      interface = \s -> interface a s `max` interface b s
                   }
 
 arcConcept :: e -> e -> Concept s e a
@@ -41,8 +41,8 @@ arcConcept from to = mempty { arcs = [(from, to)] }
 initialConcept :: (s -> Bool) -> Concept s e a
 initialConcept f = mempty { initial = f }
 
-signalTypeConcept :: (a -> SignalType) -> Concept s e a
-signalTypeConcept f = mempty {signalType = f}
+interfaceConcept :: (a -> Interface) -> Concept s e a
+interfaceConcept f = mempty {interface = f}
 
 (.&&.) :: (a -> Bool) -> (a -> Bool) -> a -> Bool
 (.&&.) = liftA2 (&&)

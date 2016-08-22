@@ -93,10 +93,10 @@ me a b = fall a ~> rise b <> fall b ~> rise a
 
 -- Signal type declaration concepts
 inputs :: Eq a => [a] -> CircuitConcept a
-inputs ins = signalTypeConcept $ \s -> if s `elem` ins then Input else Unused
+inputs ins = interfaceConcept $ \s -> if s `elem` ins then Input else Unused
 
 outputs :: Eq a => [a] -> CircuitConcept a
-outputs outs = signalTypeConcept $ \s -> if s `elem` outs then Output else Unused
+outputs outs = interfaceConcept $ \s -> if s `elem` outs then Output else Unused
 
 internals :: Eq a => [a] -> CircuitConcept a
-internals ints = signalTypeConcept $ \s -> if s `elem` ints then Internal else Unused
+internals ints = interfaceConcept $ \s -> if s `elem` ints then Internal else Unused
