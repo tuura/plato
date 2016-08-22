@@ -94,15 +94,20 @@ doWork path = do
     (_, _) <- liftIO $ runSimulation (doTranslate signs fullCircuit) (State $ const False)
     return ()
 
-doTranslate :: MonadIO m => [DynSignal] -> Concept (State DynSignal) (Transition DynSignal) -> StateT (State DynSignal) m ()
+doTranslate :: MonadIO m => [DynSignal] -> Concept (State DynSignal) (Transition DynSignal) DynSignal -> StateT (State DynSignal) m ()
 doTranslate signs circuit = do
     let initStrs = map (\s -> (show s, False)) signs {- TODO: don't hard-code to false -}
     let arcStrs = map (\(from, to) -> (show from, show to)) (arcs circuit)
-    liftIO $ putStr $ genSTG initStrs arcStrs
+    let typeStr = \s -> show $ signalType circuit s
+    let inputs = filter ((==Input) . signalType circuit) signs
+    let outputs = filter ((==Output) . signalType circuit) signs
+    let internals = filter ((==Internal) . signalType circuit) signs
+    liftIO $ putStr $ genSTG inputs outputs internals initStrs arcStrs
+    --liftIO $ putStr $ genSTG initStrs arcStrs
     return ()
 
-outputs :: [(String, Bool)] -> [String]
-outputs = sort . nub . map fst
+output :: [(String, Bool)] -> [String]
+output = sort . nub . map fst
 
 symbLoop :: String -> [String]
 symbLoop s = map (\f -> printf f s s) ["%s0 %s+", "%s+ %s1", "%s1 %s-", "%s- %s0"]
@@ -127,12 +132,19 @@ initVal s ((ls,v):l)
         | otherwise = initVal s l
 initVal _ _ = 0
 
-tmpl :: String
-tmpl = unlines [".model out", ".outputs %s", ".graph", "%s.marking {%s}", ".end"]
+signalLists :: [DynSignal] -> [String]
+signalLists xs = map (\s -> show s) xs
 
-genSTG :: [(String, Bool)] -> [(String, String)] -> String
-genSTG initStrs arcStrs = printf tmpl (unwords outs) (unlines trans) (unwords marks)
+tmpl :: String
+tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internals %s", ".graph", "%s.marking {%s}", ".end"]
+
+genSTG :: [DynSignal] -> [DynSignal] -> [DynSignal] -> [(String, Bool)] -> [(String, String)] -> String
+genSTG inputs outputs internals initStrs arcStrs = 
+    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines trans) (unwords marks)
     where
-        outs = outputs initStrs
-        trans = concatMap symbLoop outs ++ concatMap transition arcStrs
-        marks = initVals outs initStrs
+        allSigns = output initStrs
+        outs = signalLists outputs
+        ins = signalLists inputs
+        ints = signalLists internals
+        trans = concatMap symbLoop allSigns ++ concatMap transition arcStrs
+        marks = initVals allSigns initStrs
