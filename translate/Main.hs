@@ -94,15 +94,22 @@ doWork path = do
     (_, _) <- liftIO $ runSimulation (doTranslate signs fullCircuit) (State $ const False)
     return ()
 
-doTranslate :: MonadIO m => [DynSignal] -> Concept (State DynSignal) (Transition DynSignal) -> StateT (State DynSignal) m ()
+doTranslate :: MonadIO m => [DynSignal] -> Concept (State DynSignal) (Transition DynSignal) DynSignal -> StateT (State DynSignal) m ()
 doTranslate signs circuit = do
-    let initStrs = map (\s -> (show s, False)) signs {- TODO: don't hard-code to false -}
-    let arcStrs = map (\(from, to) -> (show from, show to)) (arcs circuit)
-    liftIO $ putStr $ genSTG initStrs arcStrs
-    return ()
+    case validate signs circuit of
+        Valid -> do
+            let initStrs = map (\s -> (show s, False)) signs {- TODO: don't hard-code to false -}
+            let arcStrs = map (\(from, to) -> (show from, show to)) (arcs circuit)
+            let inputSigns = filter ((==Input) . interface circuit) signs
+            let outputSigns = filter ((==Output) . interface circuit) signs
+            let internalSigns = filter ((==Internal) . interface circuit) signs
+            liftIO $ putStr $ genSTG inputSigns outputSigns internalSigns initStrs arcStrs
+            return ()
+        UnusedSignal ss -> liftIO $ putStr $ "Error. The following signals are not declared as input, output or internal: \n"
+            ++ unlines (map show ss)
 
-outputs :: [(String, Bool)] -> [String]
-outputs = sort . nub . map fst
+output :: [(String, Bool)] -> [String]
+output = sort . nub . map fst
 
 symbLoop :: String -> [String]
 symbLoop s = map (\f -> printf f s s) ["%s0 %s+", "%s+ %s1", "%s1 %s-", "%s- %s0"]
@@ -128,11 +135,22 @@ initVal s ((ls,v):l)
 initVal _ _ = 0
 
 tmpl :: String
-tmpl = unlines [".model out", ".outputs %s", ".graph", "%s.marking {%s}", ".end"]
+tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internals %s", ".graph", "%s.marking {%s}", ".end"]
 
-genSTG :: [(String, Bool)] -> [(String, String)] -> String
-genSTG initStrs arcStrs = printf tmpl (unwords outs) (unlines trans) (unwords marks)
+genSTG :: [DynSignal] -> [DynSignal] -> [DynSignal] -> [(String, Bool)] -> [(String, String)] -> String
+genSTG inputSigns outputSigns internalSigns initStrs arcStrs = 
+    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines trans) (unwords marks)
     where
-        outs = outputs initStrs
-        trans = concatMap symbLoop outs ++ concatMap transition arcStrs
-        marks = initVals outs initStrs
+        allSigns = output initStrs
+        outs = map show outputSigns
+        ins = map show inputSigns
+        ints = map show internalSigns
+        trans = concatMap symbLoop allSigns ++ concatMap transition arcStrs
+        marks = initVals allSigns initStrs
+
+data ValidationResult a = Valid | UnusedSignal [a] deriving Eq
+
+validate :: [a] -> CircuitConcept a -> ValidationResult a
+validate signs circuit = case filter ((==Unused) . interface circuit) signs of
+    []     -> Valid
+    unused -> UnusedSignal unused

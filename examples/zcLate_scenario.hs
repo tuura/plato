@@ -7,6 +7,8 @@ circuit :: Eq a => a -> a -> a -> a -> a -> a -> a -> CircuitConcept a
 circuit uv oc zc gp_ack gn_ack gp gn =
     chargeFunc <> uvFunc <> uvReact <> zcLate <> initialise zc False
   where
+    interface = inputs [uv, oc, zc, gp_ack, gn_ack] <> outputs [gp, gn]
+
     zcLate = rise uv ~> rise zc <> fall zc ~> fall uv
 
 --Must be redefined as auto re-use of concepts is yet to be implemented
@@ -24,5 +26,5 @@ circuit uv oc zc gp_ack gn_ack gp gn =
 
     initialState = initialise uv False <> initialise oc False
 
-    chargeFunc = ocFunc <> ocReact <> environmentConstraint <> circuitConstraint 
-                 <> gpHandshake <> gnHandshake <> initialState
+    chargeFunc = interface <> ocFunc <> ocReact <> environmentConstraint 
+                <> circuitConstraint <> gpHandshake <> gnHandshake <> initialState

@@ -5,7 +5,8 @@ module Tuura.Concept.Concat.Circuit (
     consistency, initialise,
     (~>),
     buffer, inverter, cElement, meElement,
-    me, handshake, handshake00, handshake11
+    me, handshake, handshake00, handshake11,
+    inputs, outputs, internals
     ) where
 
 import Tuura.Concept.Concat.Abstract
@@ -52,7 +53,7 @@ before t (State value) = value (signal t) == oldValue t
 after :: Transition a -> State a -> Bool
 after t (State value) = value (signal t) == newValue t
 
-type CircuitConcept a = Concept (State a) (Transition a)
+type CircuitConcept a = Concept (State a) (Transition a) a
 
 consistency :: CircuitConcept a
 consistency = mempty
@@ -89,3 +90,13 @@ handshake11 a b = handshake a b <> initialise a True <> initialise b True
 me :: a -> a -> CircuitConcept a
 me a b = fall a ~> rise b <> fall b ~> rise a
       <> initialise a False <> initialise b False
+
+-- Signal type declaration concepts
+inputs :: Eq a => [a] -> CircuitConcept a
+inputs ins = interfaceConcept $ \s -> if s `elem` ins then Input else Unused
+
+outputs :: Eq a => [a] -> CircuitConcept a
+outputs outs = interfaceConcept $ \s -> if s `elem` outs then Output else Unused
+
+internals :: Eq a => [a] -> CircuitConcept a
+internals ints = interfaceConcept $ \s -> if s `elem` ints then Internal else Unused
