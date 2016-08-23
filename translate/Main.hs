@@ -96,18 +96,17 @@ doWork path = do
 
 doTranslate :: MonadIO m => [DynSignal] -> Concept (State DynSignal) (Transition DynSignal) DynSignal -> StateT (State DynSignal) m ()
 doTranslate signs circuit = do
-    if (validate signs circuit) == Valid then do
-        let initStrs = map (\s -> (show s, False)) signs {- TODO: don't hard-code to false -}
-        let arcStrs = map (\(from, to) -> (show from, show to)) (arcs circuit)
-        --let typeStr = \s -> show $ interface circuit s
-        let inputSigns = filter ((==Input) . interface circuit) signs
-        let outputSigns = filter ((==Output) . interface circuit) signs
-        let internalSigns = filter ((==Internal) . interface circuit) signs
-        liftIO $ putStr $ genSTG inputSigns outputSigns internalSigns initStrs arcStrs
-        --liftIO $ putStr $ genSTG initStrs arcStrs
-        return ()
-    else
-        liftIO $ putStrLn $ "Error. One or more signals has not been type declared"
+    case validate signs circuit of
+        Valid -> do
+            let initStrs = map (\s -> (show s, False)) signs {- TODO: don't hard-code to false -}
+            let arcStrs = map (\(from, to) -> (show from, show to)) (arcs circuit)
+            let inputSigns = filter ((==Input) . interface circuit) signs
+            let outputSigns = filter ((==Output) . interface circuit) signs
+            let internalSigns = filter ((==Internal) . interface circuit) signs
+            liftIO $ putStr $ genSTG inputSigns outputSigns internalSigns initStrs arcStrs
+            return ()
+        UnusedSignal ss -> liftIO $ putStr $ "Error. The following signals have not been declared as a type: \n"
+            ++ unlines (signalLists ss)
 
 output :: [(String, Bool)] -> [String]
 output = sort . nub . map fst
@@ -155,7 +154,6 @@ genSTG inputSigns outputSigns internalSigns initStrs arcStrs =
 data ValidationResult a = Valid | UnusedSignal [a] deriving Eq
 
 validate :: [a] -> CircuitConcept a -> ValidationResult a
-validate signs circuit = do
-    let unused = filter ((==Unused) . interface circuit) signs
-    if (null unused) then Valid
-        else UnusedSignal signs
+validate signs circuit = case filter ((==Unused) . interface circuit) signs of
+    []     -> Valid
+    unused -> UnusedSignal unused
