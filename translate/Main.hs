@@ -105,8 +105,8 @@ doTranslate signs circuit = do
             let internalSigns = filter ((==Internal) . interface circuit) signs
             liftIO $ putStr $ genSTG inputSigns outputSigns internalSigns initStrs arcStrs
             return ()
-        UnusedSignal ss -> liftIO $ putStr $ "Error. The following signals have not been declared as a type: \n"
-            ++ unlines (signalLists ss)
+        UnusedSignal ss -> liftIO $ putStr $ "Error. The following signals are not declared as input, output or internal: \n"
+            ++ unlines (map show ss)
 
 output :: [(String, Bool)] -> [String]
 output = sort . nub . map fst
@@ -134,9 +134,6 @@ initVal s ((ls,v):l)
         | otherwise = initVal s l
 initVal _ _ = 0
 
-signalLists :: [DynSignal] -> [String]
-signalLists xs = map (\s -> show s) xs
-
 tmpl :: String
 tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internals %s", ".graph", "%s.marking {%s}", ".end"]
 
@@ -145,9 +142,9 @@ genSTG inputSigns outputSigns internalSigns initStrs arcStrs =
     printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines trans) (unwords marks)
     where
         allSigns = output initStrs
-        outs = signalLists outputSigns
-        ins = signalLists inputSigns
-        ints = signalLists internalSigns
+        outs = map show outputSigns
+        ins = map show inputSigns
+        ints = map show internalSigns
         trans = concatMap symbLoop allSigns ++ concatMap transition arcStrs
         marks = initVals allSigns initStrs
 
