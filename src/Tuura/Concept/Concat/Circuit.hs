@@ -2,7 +2,7 @@ module Tuura.Concept.Concat.Circuit (
     State (..), Transition (..),
     rise, fall, toggle, oldValue, before, after,
     CircuitConcept,
-    consistency, initialise,
+    consistency, initialise, initials,
     (~>),
     buffer, inverter, cElement, meElement,
     me, handshake, handshake00, handshake11,
@@ -60,6 +60,9 @@ consistency = mempty
 
 initialise :: Eq a => a -> Bool -> CircuitConcept a
 initialise a v = initialConcept $ \s -> if s == a then Defined v else Undefined
+
+initials :: Eq a => [a] -> Bool -> CircuitConcept a
+initials as v = if (as /= []) then initialise (head as) v <> initials (tail as) v else mempty
 
 (~>) :: Transition a -> Transition a -> CircuitConcept a
 (~>) = arcConcept
