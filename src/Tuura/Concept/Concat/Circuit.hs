@@ -58,8 +58,8 @@ type CircuitConcept a = Concept (State a) (Transition a) a
 consistency :: CircuitConcept a
 consistency = mempty
 
-initialise :: a -> Bool -> CircuitConcept a
-initialise a = initialConcept . after . Transition a
+initialise :: Eq a => a -> Bool -> CircuitConcept a
+initialise a v = initialConcept $ \s -> if s == a then Defined v else Undefined
 
 (~>) :: Transition a -> Transition a -> CircuitConcept a
 (~>) = arcConcept
@@ -74,20 +74,20 @@ inverter a b = rise a ~> fall b <> fall a ~> rise b
 cElement :: a -> a -> a -> CircuitConcept a
 cElement a b c = buffer a c <> buffer b c
 
-meElement :: a -> a -> a -> a -> CircuitConcept a
+meElement :: Eq a => a -> a -> a -> a -> CircuitConcept a
 meElement r1 r2 g1 g2 = buffer r1 g1 <> buffer r2 g2 <> me g1 g2
 
 -- Protocol-level concepts
 handshake :: a -> a -> CircuitConcept a
 handshake a b = buffer a b <> inverter b a
 
-handshake00 :: a -> a -> CircuitConcept a
+handshake00 :: Eq a => a -> a -> CircuitConcept a
 handshake00 a b = handshake a b <> initialise a False <> initialise b False
 
-handshake11 :: a -> a -> CircuitConcept a
+handshake11 :: Eq a => a -> a -> CircuitConcept a
 handshake11 a b = handshake a b <> initialise a True <> initialise b True
 
-me :: a -> a -> CircuitConcept a
+me :: Eq a => a -> a -> CircuitConcept a
 me a b = fall a ~> rise b <> fall b ~> rise a
       <> initialise a False <> initialise b False
 

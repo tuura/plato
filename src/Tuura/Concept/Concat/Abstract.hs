@@ -1,12 +1,12 @@
 module Tuura.Concept.Concat.Abstract (
     Interface (..),
+    InitialValue (..),
     Concept (..),
     initialConcept, arcConcept,
     interfaceConcept,
-    (.&&.), (.||.),
     ) where
 
-import Control.Applicative
+import Data.Monoid
 
 -- Abstract concepts
 -- * s is the type of states
@@ -14,9 +14,21 @@ import Control.Applicative
 
 data Interface = Unused | Input | Internal | Output deriving (Ord, Eq, Show)
 
+data InitialValue = Undefined | Defined { getDefined :: Bool } | Inconsistent deriving (Eq, Show)
+
+instance Monoid InitialValue where
+    mempty = Undefined
+
+    mappend Inconsistent _ = Inconsistent
+    mappend _ Inconsistent = Inconsistent
+    mappend Undefined x = x
+    mappend x Undefined = x
+    mappend (Defined x) (Defined y) = if x == y then Defined x else Inconsistent
+
+
 data Concept s e a = Concept
                    {
-                       initial :: s -> Bool,
+                       initial :: a -> InitialValue,
                        arcs    :: [(e, e)],
                        interface :: a -> Interface
                    }
@@ -24,13 +36,13 @@ data Concept s e a = Concept
 instance Monoid (Concept s e a) where
     mempty = Concept
              {
-                 initial = const True,
+                 initial = const mempty,
                  arcs    = [],
                  interface = const Unused
              }
     mappend a b = Concept
                   {
-                      initial = initial a .&&. initial b,
+                      initial = \s -> initial a s <> initial b s,
                       arcs    = arcs a     ++  arcs b,
                       interface = \s -> interface a s `max` interface b s
                   }
@@ -38,14 +50,8 @@ instance Monoid (Concept s e a) where
 arcConcept :: e -> e -> Concept s e a
 arcConcept from to = mempty { arcs = [(from, to)] }
 
-initialConcept :: (s -> Bool) -> Concept s e a
+initialConcept :: (a -> InitialValue) -> Concept s e a
 initialConcept f = mempty { initial = f }
 
 interfaceConcept :: (a -> Interface) -> Concept s e a
 interfaceConcept f = mempty {interface = f}
-
-(.&&.) :: (a -> Bool) -> (a -> Bool) -> a -> Bool
-(.&&.) = liftA2 (&&)
-
-(.||.) :: (a -> Bool) -> (a -> Bool) -> a -> Bool
-(.||.) = liftA2 (||)
