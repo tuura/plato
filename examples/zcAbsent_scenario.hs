@@ -4,7 +4,7 @@ import Tuura.ConceptConcat
 
 --ZC absent scenario definition using concepts
 circuit :: Eq a => a -> a -> a -> a -> a -> a -> a -> CircuitConcept a
-circuit uv oc zc gp_ack gn_ack gp gn = 
+circuit uv oc zc gp_ack gn_ack gp gn =
     chargeFunc <> uvFunc <> uvReact -- <> zcAbsent
   where
     interface = inputs [uv, oc, zc, gp_ack, gn_ack] <> outputs [gp, gn]
@@ -21,9 +21,9 @@ circuit uv oc zc gp_ack gn_ack gp gn =
     gpHandshake = handshake gp gp_ack
     gnHandshake = handshake gn gn_ack
 
-    initialState = initialise uv False <> initialise oc False
+    initialState = initialise0 [uv, oc, zc, gp_ack, gn_ack, gp, gn]
 
-    chargeFunc = interface <> ocFunc <> ocReact <> environmentConstraint 
+    chargeFunc = interface <> ocFunc <> ocReact <> environmentConstraint
                 <> circuitConstraint <> gpHandshake <> gnHandshake <> initialState
 
 --    zcAbsent = silent zc

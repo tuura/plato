@@ -9,7 +9,7 @@ circuit uv oc zc gp_ack gn_ack gp gn =
   where
     interface = inputs [uv, oc, zc, gp_ack, gn_ack] <> outputs [gp, gn]
 
-    zcFunc = rise zc ~> fall gn 
+    zcFunc = rise zc ~> fall gn
     zcReact = fall oc ~> rise zc <> rise gp ~> fall zc
 
     uvFunc' = rise uv ~> rise gp
@@ -26,7 +26,7 @@ circuit uv oc zc gp_ack gn_ack gp gn =
     gpHandshake = handshake gp gp_ack
     gnHandshake = handshake gn gn_ack
 
-    initialState = initialise uv False <> initialise oc False
-    
-    chargeFunc = interface <> ocFunc <> ocReact <> environmentConstraint 
+    initialState = initialise0 [uv, oc, zc, gp_ack, gn_ack, gp, gn]
+
+    chargeFunc = interface <> ocFunc <> ocReact <> environmentConstraint
                 <> circuitConstraint <> gpHandshake <> gnHandshake <> initialState

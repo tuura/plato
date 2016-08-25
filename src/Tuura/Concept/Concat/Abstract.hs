@@ -1,51 +1,58 @@
 module Tuura.Concept.Concat.Abstract (
     Interface (..),
+    InitialValue (..),
     Concept (..),
     initialConcept, arcConcept,
     interfaceConcept,
-    (.&&.), (.||.),
     ) where
 
-import Control.Applicative
+import Data.Monoid
 
 -- Abstract concepts
 -- * s is the type of states
 -- * e is the type of events
 
-data Interface = Unused | Input | Internal | Output deriving (Ord, Eq, Show)
+data Interface = Unused | Input | Output | Internal deriving (Ord, Eq, Show)
 
+instance Monoid Interface where
+    mempty = Unused
+
+    mappend = max
+
+data InitialValue = Undefined | Defined { getDefined :: Bool } | Inconsistent deriving (Eq, Show)
+
+instance Monoid InitialValue where
+    mempty = Undefined
+
+    mappend Inconsistent _ = Inconsistent
+    mappend _ Inconsistent = Inconsistent
+    mappend Undefined x = x
+    mappend x Undefined = x
+    mappend (Defined x) (Defined y) = if x == y then Defined x else Inconsistent
+
+-- Note, type parameter s is unused in this implementation and may be removed later.
 data Concept s e a = Concept
                    {
-                       initial :: s -> Bool,
-                       arcs    :: [(e, e)],
+                       initial   :: a -> InitialValue,
+                       arcs      :: [(e, e)],
                        interface :: a -> Interface
                    }
 
 instance Monoid (Concept s e a) where
-    mempty = Concept
-             {
-                 initial = const True,
-                 arcs    = [],
-                 interface = const Unused
-             }
+    mempty = Concept mempty mempty mempty
+
     mappend a b = Concept
                   {
-                      initial = initial a .&&. initial b,
-                      arcs    = arcs a     ++  arcs b,
-                      interface = \s -> interface a s `max` interface b s
+                      initial   = initial a   <> initial b,
+                      arcs      = arcs a      <>  arcs b,
+                      interface = interface a <> interface b
                   }
 
 arcConcept :: e -> e -> Concept s e a
 arcConcept from to = mempty { arcs = [(from, to)] }
 
-initialConcept :: (s -> Bool) -> Concept s e a
+initialConcept :: (a -> InitialValue) -> Concept s e a
 initialConcept f = mempty { initial = f }
 
 interfaceConcept :: (a -> Interface) -> Concept s e a
 interfaceConcept f = mempty {interface = f}
-
-(.&&.) :: (a -> Bool) -> (a -> Bool) -> a -> Bool
-(.&&.) = liftA2 (&&)
-
-(.||.) :: (a -> Bool) -> (a -> Bool) -> a -> Bool
-(.||.) = liftA2 (||)
