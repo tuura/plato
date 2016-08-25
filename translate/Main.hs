@@ -105,14 +105,14 @@ doTranslate signs circuit = do
             let internalSigns = filter ((==Internal) . interface circuit) signs
             liftIO $ putStr $ genSTG inputSigns outputSigns internalSigns initStrs arcStrs
             return ()
-        Invalid ss is us -> liftIO $ do
+        Invalid unused incons undef -> liftIO $ do
             putStr $ "Error. \n"
-            when (ss /= []) (putStr $ "The following signals are not declared as input, output or internal: \n"
-                                    ++ unlines (map show ss) ++ "\n")
-            when (is /= []) $ putStr $ "The following signals have inconsistent inital states: \n"
-                                    ++ unlines (map show is) ++ "\n"
-            when (us /= []) $ putStr $ "The following signals have undefined initial states: \n"
-                                    ++ unlines (map show us) ++ "\n"
+            when (unused /= []) (putStr $ "The following signals are not declared as input, output or internal: \n"
+                                    ++ unlines (map show unused) ++ "\n")
+            when (incons /= []) $ putStr $ "The following signals have inconsistent inital states: \n"
+                                    ++ unlines (map show incons) ++ "\n"
+            when (undef  /= []) $ putStr $ "The following signals have undefined initial states: \n"
+                                    ++ unlines (map show undef) ++ "\n"
 
 output :: [(String, Bool)] -> [String]
 output = sort . nub . map fst
