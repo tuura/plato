@@ -14,6 +14,11 @@ import Data.Monoid
 
 data Interface = Unused | Input | Output | Internal deriving (Ord, Eq, Show)
 
+instance Monoid Interface where
+    mempty = Unused
+
+    mappend x y = x `max` y
+
 data InitialValue = Undefined | Defined { getDefined :: Bool } | Inconsistent deriving (Eq, Show)
 
 instance Monoid InitialValue where
@@ -28,8 +33,8 @@ instance Monoid InitialValue where
 -- Note, type parameter s is unused in this implementation and may be removed later.
 data Concept s e a = Concept
                    {
-                       initial :: a -> InitialValue,
-                       arcs    :: [(e, e)],
+                       initial   :: a -> InitialValue,
+                       arcs      :: [(e, e)],
                        interface :: a -> Interface
                    }
 
@@ -44,7 +49,7 @@ instance Monoid (Concept s e a) where
                   {
                       initial = \s -> initial a s <> initial b s,
                       arcs    = arcs a     ++  arcs b,
-                      interface = \s -> interface a s `max` interface b s
+                      interface = \s -> interface a s <> interface b s
                   }
 
 arcConcept :: e -> e -> Concept s e a
