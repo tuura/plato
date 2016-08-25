@@ -17,7 +17,7 @@ data Interface = Unused | Input | Output | Internal deriving (Ord, Eq, Show)
 instance Monoid Interface where
     mempty = Unused
 
-    mappend x y = x `max` y
+    mappend = max
 
 data InitialValue = Undefined | Defined { getDefined :: Bool } | Inconsistent deriving (Eq, Show)
 
