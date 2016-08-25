@@ -12,7 +12,7 @@ import Data.Monoid
 -- * s is the type of states
 -- * e is the type of events
 
-data Interface = Unused | Input | Internal | Output deriving (Ord, Eq, Show)
+data Interface = Unused | Input | Output | Internal deriving (Ord, Eq, Show)
 
 data InitialValue = Undefined | Defined { getDefined :: Bool } | Inconsistent deriving (Eq, Show)
 
@@ -25,7 +25,7 @@ instance Monoid InitialValue where
     mappend x Undefined = x
     mappend (Defined x) (Defined y) = if x == y then Defined x else Inconsistent
 
-
+-- Note, type parameter s is unused in this implementation and may be removed later.
 data Concept s e a = Concept
                    {
                        initial :: a -> InitialValue,
