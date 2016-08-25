@@ -39,17 +39,13 @@ data Concept s e a = Concept
                    }
 
 instance Monoid (Concept s e a) where
-    mempty = Concept
-             {
-                 initial = const mempty,
-                 arcs    = [],
-                 interface = const Unused
-             }
+    mempty = Concept mempty mempty mempty
+
     mappend a b = Concept
                   {
-                      initial = \s -> initial a s <> initial b s,
-                      arcs    = arcs a     ++  arcs b,
-                      interface = \s -> interface a s <> interface b s
+                      initial   = initial a   <> initial b,
+                      arcs      = arcs a      <>  arcs b,
+                      interface = interface a <> interface b
                   }
 
 arcConcept :: e -> e -> Concept s e a
