@@ -1,45 +1,32 @@
 sudo: false
 
+cache:
+  directories:
+  - $HOME/.ghc
+  - $HOME/.cabal
+  - $HOME/.stack
+
 matrix:
     include:
-        - os: linux
-          addons:
-              apt:
-                  packages:
-                      - ghc-7.10.3
-                      - cabal-install-1.22
-                  sources: hvr-ghc
-          before_install:
-              - export PATH="/opt/ghc/7.10.3/bin:/opt/cabal/1.22/bin:$PATH"
-
-        - os: linux
-          addons:
-              apt:
-                  packages:
-                      - ghc-8.0.1
-                      - cabal-install-1.24
-                  sources: hvr-ghc
-          before_install:
-              - export PATH="/opt/ghc/8.0.1/bin:/opt/cabal/1.24/bin:$PATH"
-
         - os: osx
           before_install:
               - brew update
-              - brew install ghc cabal-install
+              - brew install haskell-stack
 
-install:
-    - env
-    - ghc --version
-    - cabal --version
-    - travis_retry cabal update
-    - cabal install --only-dependencies --enable-tests
+        - os: linux
+          addons:
+              apt:
+                  packages:
+                      - libgmp-dev
+          before_install:
+          - mkdir -p ~/.local/bin
+          - export PATH=$HOME/.local/bin:$PATH
+          - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+
+before_script:
+    - stack setup
+    - stack exec -- ghc --version
+    - stack build
 
 script:
-    - cabal configure --enable-tests
-    - cabal build
-    - cabal test --show-details=always
-
-cache:
-    directories:
-        - $HOME/.cabal
-        - $HOME/.ghc
+    - stack test
