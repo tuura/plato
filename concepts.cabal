@@ -36,28 +36,6 @@ library
     other-extensions: TypeFamilies
     GHC-options:      -Wall -fwarn-tabs
 
-executable simulate
-    hs-source-dirs:   simulate
-    main-is:          Main.hs
-    build-depends:    base >= 4.8 && < 5,
-                      text,
-                      directory,
-                      hint >= 0.6.0,
-                      concepts
-    default-language: Haskell2010
-    GHC-options:      -Wall -fwarn-tabs
-
-executable translate
-    hs-source-dirs:   translate
-    main-is:          Main.hs
-    build-depends:    base >= 4.8 && < 5,
-                      text,
-                      directory,
-                      hint >= 0.6.0,
-                      concepts
-    default-language: Haskell2010
-    GHC-options:      -Wall -fwarn-tabs
-
 test-suite concepts-test
     type:             exitcode-stdio-1.0
     main-is:          Test.hs
