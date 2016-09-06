@@ -7,19 +7,15 @@ A DSL for asynchronous circuits specification.
 
 ### Build
 
-	cabal build
+	stack setup
+	stack build
 
 ### Test
 
-	cabal test --show-details=always
+	stack test
 
 ### Translate to STG
 
-You first need `hint` and `concepts` installed:
+Invoke the translate executable with a concept circuit file:
 
-	cabal install hint
-	cabal install
-
-Then invoke the translate executable with a concept circuit file:
-
-	runghc translate/Main.hs examples/celement-concept-concat.hs
+	stack runghc translate/Main.hs examples/celement_with_env_1.hs
