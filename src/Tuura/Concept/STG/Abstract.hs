@@ -1,4 +1,4 @@
-module Tuura.Concept.Concat.Abstract (
+module Tuura.Concept.STG.Abstract (
     Interface (..),
     InitialValue (..),
     Concept (..),

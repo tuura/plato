@@ -20,12 +20,12 @@ library
     exposed-modules:  Tuura.Concept,
                       Tuura.Concept.Examples.SimpleBuck,
                       Tuura.Concept.Simulation,
-                      Tuura.ConceptConcat,
-                      Tuura.Concept.Concat.Simulation
+                      Tuura.Concept.STG,
+                      Tuura.Concept.STG.Simulation
     other-modules:    Tuura.Concept.Abstract,
                       Tuura.Concept.Circuit,
-                      Tuura.Concept.Concat.Abstract,
-                      Tuura.Concept.Concat.Circuit,
+                      Tuura.Concept.STG.Abstract,
+                      Tuura.Concept.STG.Circuit,
                       Tuura.PetriNet
     build-depends:    base >= 4.8 && < 5,
                       bifunctors == 5.3,

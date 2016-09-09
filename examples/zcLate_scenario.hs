@@ -1,6 +1,6 @@
 module Concept where
 
-import Tuura.ConceptConcat
+import Tuura.Concept.STG
 
 --ZC late scenario definition using concepts
 circuit :: Eq a => a -> a -> a -> a -> a -> a -> a -> CircuitConcept a

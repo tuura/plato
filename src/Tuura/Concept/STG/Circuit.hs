@@ -1,4 +1,4 @@
-module Tuura.Concept.Concat.Circuit (
+module Tuura.Concept.STG.Circuit (
     State (..), Transition (..),
     rise, fall, toggle, oldValue, before, after,
     CircuitConcept,
@@ -10,7 +10,7 @@ module Tuura.Concept.Concat.Circuit (
     inputs, outputs, internals
     ) where
 
-import Tuura.Concept.Concat.Abstract
+import Tuura.Concept.STG.Abstract
 import Data.Monoid
 
 -- Circuit primitives
