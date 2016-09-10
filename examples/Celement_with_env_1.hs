@@ -1,9 +1,8 @@
 module Concept where
 
-import Tuura.ConceptConcat
+import Tuura.Concept.STG
 
 -- C-element with environment circuit described using signal-level concepts
-circuit :: (Eq a) => a -> a -> a -> CircuitConcept a
 circuit a b c = interface <> outputRise <> inputFall <> outputFall <> inputRise <> initialState
   where
     interface = inputs [a, b] <> outputs [c]

@@ -9,8 +9,8 @@ import Control.Exception
 import System.Environment
 import System.IO.Error
 
-import Tuura.ConceptConcat
-import Tuura.Concept.Concat.Simulation
+import Tuura.Concept.STG
+import Tuura.Concept.STG.Simulation
 
 import qualified Language.Haskell.Interpreter as GHC
 import qualified Language.Haskell.Interpreter.Unsafe as GHC

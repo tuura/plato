@@ -1,9 +1,9 @@
-module Tuura.Concept.Concat.Simulation (
+module Tuura.Concept.STG.Simulation (
     module Control.Monad.State,
     Simulation, PureSimulation, runSimulation, runPureSimulation
     ) where
 
-import Tuura.Concept.Concat.Circuit
+import Tuura.Concept.STG.Circuit
 import Control.Monad.State hiding (State)
 import Data.Functor.Identity
 
