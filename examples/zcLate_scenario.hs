@@ -3,7 +3,6 @@ module Concept where
 import Tuura.Concept.STG
 
 --ZC late scenario definition using concepts
-circuit :: Eq a => a -> a -> a -> a -> a -> a -> a -> CircuitConcept a
 circuit uv oc zc gp_ack gn_ack gp gn =
     chargeFunc <> uvFunc <> uvReact <> zcLate <> initialise zc False
   where
