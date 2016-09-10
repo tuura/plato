@@ -1,4 +1,4 @@
-#Concepts Manual	
+﻿#Concepts Manual	
 
 
 Introduction
@@ -352,8 +352,6 @@ Concepts file layout
 
 	import Tuura.Concept.STG
 
-	-- C-element with environment circuit described using signal-level concepts
-	circuit :: (Eq a) => a -> a -> a -> CircuitConcept a
 	circuit a b c = interface <> outputRise <> inputFall <> outputFall <> inputRise <> initialState
 	  where
     	interface = inputs [a, b] <> outputs [c]
@@ -380,25 +378,13 @@ This line must be included in all concept files, as the first line.
 This ensures that when translating, this is recognised as a
 concepts file.
 
-Line 3
+Line 2
 
 This must also remain in all concept files, before any concepts begin to
 be defined. Importing this module means that the standard operators
 and existing gates/protocols can be used.
 
-Line 6
-
-This is the function definintion of the circuit concepts. This must
-remain named “`circuit`” in order to be translated. “*(Eq a)*” must
-also remain to be translated correctly. Following this is
-“`a -> `”repeated several times. This needs to be repeated once for
-each signal in the system. In this example, we have three signals,
-`a`, `b` and `c`, and therefore “`a -> `” appears 3 times in this
-function definintion. Finally for this line, “*Circuit Concept* `a`”
-must remain at the end. This is the output of the function and this
-is what is translated.
-
-Line 7
+Line 3
 
 This is where a user can begin to define their concepts. “`circuit`” must
 begin the line, but after this, a user can choose what characters
@@ -411,7 +397,7 @@ define their own concepts below, following where, and include the
 names of these concepts here. This can allow for a more concise and
 easily understood definintion.
 
-Line 8
+Line 4
 
 This is simply “`where`”. This is used to separate the main concept
 definition from the user-defined concepts. If a concept definition
@@ -425,7 +411,7 @@ of the following lines in the context of the *Celement_with_env_1.hs*
 file, but the information can be applied to any concept files. More
 information on operators and built-in concepts can be found below.
 
-Line 9
+Line 5
 
 Interface is a concept defined to list the interfaces of the
 signals, in otherwords, their type. Signals in this can be defined
@@ -435,7 +421,7 @@ This can be done using the functions `inputs[x, y]` and
 “`[a]`”, or multiple signals in a comma separated list,
 “`[x, y, z]`”.
 
-Line 11
+Line 6
 
 This contains a composition of two signal-level concepts. This uses
 “`rise`” to signify a low-to-high signal transition.
@@ -443,7 +429,7 @@ This contains a composition of two signal-level concepts. This uses
 signal transitions. “`<>`” is the composition operator. This is used
 to compose any type of concepts.
 
-Line 13
+Line 7
 
 This also contains a composition of two signal-level concepts. Some are
 the same as in Line 11, however, this also features “`fall`”, which
@@ -451,11 +437,11 @@ signifies a high-to-low transition of the signal this function
 apllies to, in this case both `a` and `b` have included
 falling transitions.
 
-Lines 15 and 17
+Lines 8 and 9
 
 These are further concepts definitions.
 
-Line 19
+Line 10
 
 This is the definition of inital states for the signals in
 this system. This is done by using the “`initialise`” function. This
