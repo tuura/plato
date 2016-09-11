@@ -1,4 +1,4 @@
-module Concept where
+module BuckConverter where
 
 import Tuura.Concept.STG
 
