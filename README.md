@@ -22,4 +22,4 @@ Invoke the translate executable with a concept circuit file:
 	
 ### Manual
 
-The manual can be found at [doc/manual.md](http://github.com/tuura/concepts/doc/manual.md)
+The manual can be found at [doc/manual.md](https://github.com/tuura/concepts/blob/master/doc/manual.md)
