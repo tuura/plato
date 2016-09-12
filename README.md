@@ -19,3 +19,7 @@ A DSL for asynchronous circuits specification.
 Invoke the translate executable with a concept circuit file:
 
 	stack runghc translate/Main.hs examples/celement_with_env_1.hs
+	
+### Manual
+
+The manual can be found at [doc/manual.md](https://github.com/tuura/concepts/blob/master/doc/manual.md)
