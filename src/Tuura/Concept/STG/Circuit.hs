@@ -94,6 +94,7 @@ handshake00 a b = handshake a b <> initialise a False <> initialise b False
 handshake11 :: Eq a => a -> a -> CircuitConcept a
 handshake11 a b = handshake a b <> initialise a True <> initialise b True
 
+-- TODO: Restrict the initial state so that a=b=1 is not allowed.
 me :: Eq a => a -> a -> CircuitConcept a
 me a b = fall a ~> rise b <> fall b ~> rise a
 
