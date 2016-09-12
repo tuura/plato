@@ -96,7 +96,6 @@ handshake11 a b = handshake a b <> initialise a True <> initialise b True
 
 me :: Eq a => a -> a -> CircuitConcept a
 me a b = fall a ~> rise b <> fall b ~> rise a
-      <> initialise a False <> initialise b False
 
 -- Signal type declaration concepts
 inputs :: Eq a => [a] -> CircuitConcept a
