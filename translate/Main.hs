@@ -99,8 +99,8 @@ doTranslate signs circuit = do
     case validate signs circuit of
         Valid -> do
             let initStrs = map (\s -> (show s, (getDefined $ initial circuit s))) signs
-            let orStrs = manageOrs (ors circuit)
             let arcStrs = map (\(from, to) -> (show from, show to)) (arcs circuit)
+            let orStrs = manageOrs (ors circuit)
             let inputSigns = filter ((==Input) . interface circuit) signs
             let outputSigns = filter ((==Output) . interface circuit) signs
             let internalSigns = filter ((==Internal) . interface circuit) signs
@@ -115,7 +115,7 @@ doTranslate signs circuit = do
             when (undef  /= []) $ putStr $ "The following signals have undefined initial states: \n"
                                     ++ unlines (map show undef) ++ "\n"
 
-manageOrs :: [([Transition DynSignal], Transition DynSignal)] -> [(String, String)]
+manageOrs :: [([Transition DynSignal], Transition DynSignal)] -> [String]
 manageOrs ors = do
     let effect = snd (head ors)
     -- Filter for just one of the effects
@@ -126,10 +126,18 @@ manageOrs ors = do
     -- Remap these
     let mapped = mapOrs causesLists
     let n = length mapped
-    -- Create arc pairs for these
+    -- Create arc pairs for these ors
     let orArcs = arcOrs mapped effect n
-    if (remainder /= []) then orArcs ++ manageOrs remainder else orArcs
-    -- return ("11", "22")
+    -- Create read-arcs for these
+    let orStrs = concatMap transition orArcs
+    -- Add new transitions to consistency loop
+    addSymbTransition effect n ++ concatMap transition orArcs
+    --if (remainder /= []) then orArcs ++ manageOrs remainder else orArcs
+
+addSymbTransition :: Transition DynSignal -> Int -> [String]
+addSymbTransition effect n
+        | "+" `isSuffixOf` (show effect) = map (\x -> (printf "%s0 %s/%s\n" (init (show effect)) (show effect) (show x)) ++ (printf "%s/%s %s1" (show effect) (show x) (init (show effect)))) [1..n - 1]
+        | otherwise                      = map (\x -> (printf "%s1 %s/%s\n" (init (show effect)) (show effect) (show x)) ++ (printf "%s/%s %s0" (show effect) (show x) (init (show effect)))) [1..n - 1]
 
 mapOrs :: [[Transition DynSignal]] -> [[Transition DynSignal]]
 mapOrs causesLists = addOrs (head causesLists) (tail causesLists)
@@ -188,9 +196,9 @@ tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internals %s", ".gr
 printOrs :: (String, String) -> [String]
 printOrs (f, t) = [f ++ " " ++ t]
 
-genSTG :: [DynSignal] -> [DynSignal] -> [DynSignal] -> [(String, Bool)] -> [(String, String)] -> [(String, String)] -> String
+genSTG :: [DynSignal] -> [DynSignal] -> [DynSignal] -> [(String, Bool)] -> [(String, String)] -> [String] -> String
 genSTG inputSigns outputSigns internalSigns initStrs arcStrs orStrs =
-    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines trans) (unlines ors) (unwords marks)
+    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines trans) (unlines orStrs) (unwords marks)
     where
         allSigns = output initStrs
         outs = map show outputSigns
@@ -198,7 +206,7 @@ genSTG inputSigns outputSigns internalSigns initStrs arcStrs orStrs =
         ints = map show internalSigns
         trans = concatMap symbLoop allSigns ++ concatMap transition arcStrs
         marks = initVals allSigns initStrs
-        ors = concatMap transition orStrs
+        --ors = concatMap transition orStrs
 
 data ValidationResult a = Valid | Invalid [a] [a] [a] deriving Eq
 
