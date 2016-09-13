@@ -99,11 +99,12 @@ doTranslate signs circuit = do
     case validate signs circuit of
         Valid -> do
             let initStrs = map (\s -> (show s, (getDefined $ initial circuit s))) signs
+            let orStrs = manageOrs (ors circuit)
             let arcStrs = map (\(from, to) -> (show from, show to)) (arcs circuit)
             let inputSigns = filter ((==Input) . interface circuit) signs
             let outputSigns = filter ((==Output) . interface circuit) signs
             let internalSigns = filter ((==Internal) . interface circuit) signs
-            liftIO $ putStr $ genSTG inputSigns outputSigns internalSigns initStrs arcStrs
+            liftIO $ putStr $ genSTG inputSigns outputSigns internalSigns initStrs arcStrs orStrs
             return ()
         Invalid unused incons undef -> liftIO $ do
             putStr $ "Error. \n"
@@ -113,6 +114,47 @@ doTranslate signs circuit = do
                                     ++ unlines (map show incons) ++ "\n"
             when (undef  /= []) $ putStr $ "The following signals have undefined initial states: \n"
                                     ++ unlines (map show undef) ++ "\n"
+
+manageOrs :: [([Transition DynSignal], Transition DynSignal)] -> [(String, String)]
+manageOrs ors = do
+    let effect = snd (head ors)
+    -- Filter for just one of the effects
+    let orsForEffect = filter (\o -> snd o == effect) ors
+    let remainder = ors \\ orsForEffect
+    -- Get just the list of lists of causes
+    let causesLists = map (\l -> fst l) ors
+    -- Remap these
+    let mapped = mapOrs causesLists
+    let n = length mapped
+    -- Create arc pairs for these
+    let orArcs = arcOrs mapped effect n
+    if (remainder /= []) then orArcs ++ manageOrs remainder else orArcs
+    -- return ("11", "22")
+
+mapOrs :: [[Transition DynSignal]] -> [[Transition DynSignal]]
+mapOrs causesLists = addOrs (head causesLists) (tail causesLists)
+
+addOrs :: [Transition DynSignal] -> [[Transition DynSignal]] -> [[Transition DynSignal]]
+addOrs causes causesLists = do
+    concat (map (\c -> addOr c causesLists) causes)
+
+addOr :: Transition DynSignal -> [[Transition DynSignal]] -> [[Transition DynSignal]]
+addOr c causesLists
+        | causesLists == [] = [[c]]
+        | otherwise = do
+            let causes = head causesLists
+            let remainder = tail causesLists
+            concat (map (\d -> addOneToAll c (addOr d remainder)) causes)
+
+addOneToAll :: Transition DynSignal -> [[Transition DynSignal]] -> [[Transition DynSignal]]
+addOneToAll c causeLists
+        | causeLists == [] = []
+        | otherwise = [head causeLists ++ [c]] ++ addOneToAll c (tail causeLists)
+
+arcOrs :: [[Transition DynSignal]] -> Transition DynSignal -> Int -> [(String, String)]
+arcOrs causes effect n
+        | n == 1 = map (\c -> (show c, show effect)) (head causes)
+        | otherwise = (map (\c -> (show c, (show effect  ++ "/" ++ show (n - 1)))) (head causes)) ++ arcOrs (tail causes) effect (n - 1)
 
 output :: [(String, Bool)] -> [String]
 output = sort . nub . map fst
@@ -141,11 +183,14 @@ initVal s ((ls,v):l)
 initVal _ _ = 0
 
 tmpl :: String
-tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internals %s", ".graph", "%s.marking {%s}", ".end"]
+tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internals %s", ".graph", "%s%s.marking {%s}", ".end"]
 
-genSTG :: [DynSignal] -> [DynSignal] -> [DynSignal] -> [(String, Bool)] -> [(String, String)] -> String
-genSTG inputSigns outputSigns internalSigns initStrs arcStrs =
-    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines trans) (unwords marks)
+printOrs :: (String, String) -> [String]
+printOrs (f, t) = [f ++ " " ++ t]
+
+genSTG :: [DynSignal] -> [DynSignal] -> [DynSignal] -> [(String, Bool)] -> [(String, String)] -> [(String, String)] -> String
+genSTG inputSigns outputSigns internalSigns initStrs arcStrs orStrs =
+    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines trans) (unlines ors) (unwords marks)
     where
         allSigns = output initStrs
         outs = map show outputSigns
@@ -153,6 +198,7 @@ genSTG inputSigns outputSigns internalSigns initStrs arcStrs =
         ints = map show internalSigns
         trans = concatMap symbLoop allSigns ++ concatMap transition arcStrs
         marks = initVals allSigns initStrs
+        ors = concatMap transition orStrs
 
 data ValidationResult a = Valid | Invalid [a] [a] [a] deriving Eq
 

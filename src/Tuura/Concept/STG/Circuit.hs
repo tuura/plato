@@ -4,7 +4,7 @@ module Tuura.Concept.STG.Circuit (
     CircuitConcept,
     consistency, initialise,
     initialise0, initialise1,
-    (~>),
+    (~>), (~|~>),
     buffer, inverter, cElement, meElement,
     me, handshake, handshake00, handshake11,
     inputs, outputs, internals
@@ -70,6 +70,9 @@ initialise1 as = if (as /= []) then initialise (head as) True <> initialise1 (ta
 
 (~>) :: Transition a -> Transition a -> CircuitConcept a
 (~>) = arcConcept
+
+(~|~>) :: [Transition a] -> Transition a -> CircuitConcept a
+(~|~>) = orCausality
 
 -- Gate-level concepts
 buffer :: a -> a -> CircuitConcept a
