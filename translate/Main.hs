@@ -100,7 +100,7 @@ doTranslate signs circuit = do
         Valid -> do
             let initStrs = map (\s -> (show s, (getDefined $ initial circuit s))) signs
             let arcStrs = map (\(from, to) -> (show from, show to)) (arcs circuit)
-            let orStrs = manageOrs (ors circuit)
+            let orStrs = manageOrs (ors circuit) arcStrs
             let inputSigns = filter ((==Input) . interface circuit) signs
             let outputSigns = filter ((==Output) . interface circuit) signs
             let internalSigns = filter ((==Internal) . interface circuit) signs
@@ -115,8 +115,8 @@ doTranslate signs circuit = do
             when (undef  /= []) $ putStr $ "The following signals have undefined initial states: \n"
                                     ++ unlines (map show undef) ++ "\n"
 
-manageOrs :: [([Transition DynSignal], Transition DynSignal)] -> [String]
-manageOrs ors = do
+manageOrs :: [([Transition DynSignal], Transition DynSignal)] -> [(String, String)] -> [String]
+manageOrs ors andArcs = do
     let effect = snd (head ors)
     -- Filter for just one of the effects
     let orsForEffect = filter (\o -> snd o == effect) ors
@@ -131,8 +131,21 @@ manageOrs ors = do
     -- Create read-arcs for these
     let orStrs = concatMap transition orArcs
     -- Add new transitions to consistency loop
-    addSymbTransition effect n ++ concatMap transition orArcs
+    let consis = addSymbTransition effect n
+    -- Include arcs for and causality to all new transitions
+    let newAndArcs = updateAndArcs andArcs effect n
+    -- Combine all of these
+    let orStr = consis ++ orStrs ++ concatMap transition newAndArcs
+    if (remainder /= []) then orStr ++ manageOrs remainder andArcs else orStr
     --if (remainder /= []) then orArcs ++ manageOrs remainder else orArcs
+
+updateAndArcs :: [(String, String)] -> Transition DynSignal -> Int -> [(String, String)]
+updateAndArcs andArcs effect n = do
+    let andsForEffect = filter (\a -> snd a == (show effect)) andArcs
+    concat (map (\s -> addAndArcs s n) andsForEffect)
+
+addAndArcs :: (String, String) -> Int -> [(String, String)]
+addAndArcs a n = [a] ++ map (\s -> (fst a, (snd a) ++ "/" ++ (show s))) [1..n - 1]
 
 addSymbTransition :: Transition DynSignal -> Int -> [String]
 addSymbTransition effect n
