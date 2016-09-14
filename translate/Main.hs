@@ -114,35 +114,31 @@ doTranslate signs circuit = do
             when (undef  /= []) $ putStr $ "The following signals have undefined initial states: \n"
                                     ++ unlines (map show undef) ++ "\n"
 
+-- TODO: 1) Get rid of explicit recursion (use groupBy)? 2) Improve performance.
 handleArcs :: [([Transition DynSignal], Transition DynSignal)] -> [String]
 handleArcs arcLists
     | arcLists == [] = []
-    | otherwise = do
-    let effect = snd (head arcLists)
-    -- Filter for just one of the effects
-    let causesForEffect = filter (\o -> snd o == effect) arcLists
-    -- Get just the list of lists of causes
-    let causesLists = map (\l -> fst l) causesForEffect
-    -- Remap these
-    let mapped = sequence causesLists
-    -- Length of this list of lists is the number of extra transitions to be added
-    let n = length mapped
-    -- Create arc pairs for these arcs
-    let arcs = arcarcs mapped effect n
-    -- Get remaining arcs for other effects
-    let remainder = arcLists \\ causesForEffect
-    -- return [consistency loop additions] ++ [arc strings] ++ [the same result for other effects]
-    addSymbTransition effect n ++ concatMap transition arcs ++ handleArcs remainder
+    | otherwise = addSymbTransition effect n ++ concatMap transition arcs ++ handleArcs remainder
+        where
+            effect = snd (head arcLists)
+            causesForEffect = filter (\o -> snd o == effect) arcLists
+            causesLists = map fst causesForEffect
+            mapped = sequence causesLists
+            n = length mapped
+            arcs = arcPairs mapped effect n
+            remainder = arcLists \\ causesForEffect
 
 addSymbTransition :: Transition DynSignal -> Int -> [String]
 addSymbTransition effect n
-        | "+" `isSuffixOf` (show effect) = map (\x -> (printf "%s0 %s/%s\n" (init (show effect)) (show effect) (show x)) ++ (printf "%s/%s %s1" (show effect) (show x) (init (show effect)))) [1..n - 1]
-        | otherwise                      = map (\x -> (printf "%s1 %s/%s\n" (init (show effect)) (show effect) (show x)) ++ (printf "%s/%s %s0" (show effect) (show x) (init (show effect)))) [1..n - 1]
+        | newValue effect = map (\x -> (printf "%s0 %s/%s\n" (init (show effect)) (show effect) (show x))
+            ++ (printf "%s/%s %s1" (show effect) (show x) (init (show effect)))) [1..n - 1]
+        | otherwise = map (\x -> (printf "%s1 %s/%s\n" (init (show effect)) (show effect) (show x))
+            ++ (printf "%s/%s %s0" (show effect) (show x) (init (show effect)))) [1..n - 1]
 
-arcarcs :: [[Transition DynSignal]] -> Transition DynSignal -> Int -> [(String, String)]
-arcarcs causes effect n
+arcPairs :: [[Transition DynSignal]] -> Transition DynSignal -> Int -> [(String, String)]
+arcPairs causes effect n
         | n == 1 = map (\c -> (show c, show effect)) (head causes)
-        | otherwise = (map (\d -> (show d, (show effect  ++ "/" ++ show (n - 1)))) (head causes)) ++ arcarcs (tail causes) effect (n - 1)
+        | otherwise = (map (\d -> (show d, (show effect  ++ "/" ++ show (n - 1)))) (head causes)) ++ arcPairs (tail causes) effect (n - 1)
 
 output :: [(String, Bool)] -> [String]
 output = sort . nub . map fst
