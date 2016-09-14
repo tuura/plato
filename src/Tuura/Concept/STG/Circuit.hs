@@ -6,8 +6,9 @@ module Tuura.Concept.STG.Circuit (
     initialise0, initialise1,
     (~>), (~|~>),
     buffer, inverter, cElement, meElement,
-    me, handshake, handshake00, handshake11,
-    inputs, outputs, internals
+    andGate, orGate, me, handshake,
+    handshake00, handshake11, inputs,
+    outputs, internals
     ) where
 
 import Tuura.Concept.STG.Abstract
@@ -86,6 +87,12 @@ cElement a b c = buffer a c <> buffer b c
 
 meElement :: a -> a -> a -> a -> CircuitConcept a
 meElement r1 r2 g1 g2 = buffer r1 g1 <> buffer r2 g2 <> me g1 g2
+
+andGate :: a -> a -> a -> CircuitConcept a
+andGate a b c = rise a ~> rise c <> rise b ~> rise c <> [fall a, fall b] ~|~> fall c
+
+orGate :: a -> a -> a -> CircuitConcept a
+orGate a b c = [rise a, rise b] ~|~> rise c <> fall a ~> fall c <> fall b ~> fall c
 
 -- Protocol-level concepts
 handshake :: a -> a -> CircuitConcept a
