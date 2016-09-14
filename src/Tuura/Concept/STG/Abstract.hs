@@ -60,4 +60,4 @@ initialConcept :: (a -> InitialValue) -> Concept s e a
 initialConcept f = mempty { initial = f }
 
 interfaceConcept :: (a -> Interface) -> Concept s e a
-interfaceConcept f = mempty {interface = f}
+interfaceConcept f = mempty { interface = f }

@@ -122,7 +122,7 @@ manageOrs ors andArcs = do
     let orsForEffect = filter (\o -> snd o == effect) ors
     let remainder = ors \\ orsForEffect
     -- Get just the list of lists of causes
-    let causesLists = map (\l -> fst l) ors
+    let causesLists = map (\l -> fst l) orsForEffect
     -- Remap these
     let mapped = mapOrs causesLists
     let n = length mapped
@@ -137,7 +137,6 @@ manageOrs ors andArcs = do
     -- Combine all of these
     let orStr = consis ++ orStrs ++ concatMap transition newAndArcs
     if (remainder /= []) then orStr ++ manageOrs remainder andArcs else orStr
-    --if (remainder /= []) then orArcs ++ manageOrs remainder else orArcs
 
 updateAndArcs :: [(String, String)] -> Transition DynSignal -> Int -> [(String, String)]
 updateAndArcs andArcs effect n = do
@@ -145,7 +144,7 @@ updateAndArcs andArcs effect n = do
     concat (map (\s -> addAndArcs s n) andsForEffect)
 
 addAndArcs :: (String, String) -> Int -> [(String, String)]
-addAndArcs a n = [a] ++ map (\s -> (fst a, (snd a) ++ "/" ++ (show s))) [1..n - 1]
+addAndArcs a n = map (\s -> (fst a, (snd a) ++ "/" ++ (show s))) [1..n - 1]
 
 addSymbTransition :: Transition DynSignal -> Int -> [String]
 addSymbTransition effect n
@@ -175,7 +174,7 @@ addOneToAll c causeLists
 arcOrs :: [[Transition DynSignal]] -> Transition DynSignal -> Int -> [(String, String)]
 arcOrs causes effect n
         | n == 1 = map (\c -> (show c, show effect)) (head causes)
-        | otherwise = (map (\c -> (show c, (show effect  ++ "/" ++ show (n - 1)))) (head causes)) ++ arcOrs (tail causes) effect (n - 1)
+        | otherwise = (map (\d -> (show d, (show effect  ++ "/" ++ show (n - 1)))) (head causes)) ++ arcOrs (tail causes) effect (n - 1)
 
 output :: [(String, Bool)] -> [String]
 output = sort . nub . map fst
@@ -205,9 +204,6 @@ initVal _ _ = 0
 
 tmpl :: String
 tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internals %s", ".graph", "%s%s.marking {%s}", ".end"]
-
-printOrs :: (String, String) -> [String]
-printOrs (f, t) = [f ++ " " ++ t]
 
 genSTG :: [DynSignal] -> [DynSignal] -> [DynSignal] -> [(String, Bool)] -> [(String, String)] -> [String] -> String
 genSTG inputSigns outputSigns internalSigns initStrs arcStrs orStrs =
