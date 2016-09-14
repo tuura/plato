@@ -84,7 +84,7 @@ inverter a b = rise a ~> fall b <> fall a ~> rise b
 cElement :: a -> a -> a -> CircuitConcept a
 cElement a b c = buffer a c <> buffer b c
 
-meElement :: Eq a => a -> a -> a -> a -> CircuitConcept a
+meElement :: a -> a -> a -> a -> CircuitConcept a
 meElement r1 r2 g1 g2 = buffer r1 g1 <> buffer r2 g2 <> me g1 g2
 
 -- Protocol-level concepts
@@ -98,7 +98,7 @@ handshake11 :: Eq a => a -> a -> CircuitConcept a
 handshake11 a b = handshake a b <> initialise a True <> initialise b True
 
 -- TODO: Restrict the initial state so that a=b=1 is not allowed.
-me :: Eq a => a -> a -> CircuitConcept a
+me :: a -> a -> CircuitConcept a
 me a b = fall a ~> rise b <> fall b ~> rise a
 
 -- Signal type declaration concepts

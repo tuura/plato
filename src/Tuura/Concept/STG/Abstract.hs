@@ -34,27 +34,25 @@ instance Monoid InitialValue where
 data Concept s e a = Concept
                    {
                        initial   :: a -> InitialValue,
-                       arcs      :: [(e, e)],
-                       ors       :: [([e], e)],
+                       arcs      :: [([e], e)],
                        interface :: a -> Interface
                    }
 
 instance Monoid (Concept s e a) where
-    mempty = Concept mempty mempty mempty mempty
+    mempty = Concept mempty mempty mempty
 
     mappend a b = Concept
                   {
                       initial   = initial a   <> initial b,
                       arcs      = arcs a      <> arcs b,
-                      ors       = ors a       <> ors b,
                       interface = interface a <> interface b
                   }
 
 arcConcept :: e -> e -> Concept s e a
-arcConcept from to = mempty { arcs = [(from, to)] }
+arcConcept from to = mempty { arcs = [([from], to)] }
 
 orCausality :: [e] -> e -> Concept s e a
-orCausality from to = mempty { ors = [(from, to)] }
+orCausality from to = mempty { arcs = [(from, to)] }
 
 initialConcept :: (a -> InitialValue) -> Concept s e a
 initialConcept f = mempty { initial = f }
