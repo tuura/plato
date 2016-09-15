@@ -488,6 +488,15 @@ for the effect to occur, both causes must occur. For example:
 will form a concept where both `rise a` and `rise b` must occur
 before `rise c` can occur.
 
+`~|~>`
+
+This is used to show \emph{OR causality}. Similar to `~>`, however the 
+transitions on left side of this arrow can be a list of causes, 
+e.g `[rise a, rise b]`. The effect transition (on the right of the arrow)
+must be a single signal transition. This will imply that only one of the
+signal transitions in the cause list must occur in order for the effect 
+to occur. With the previous example, the `rise a` transition alone can cause the effect. 
+
 `<>`
 
 This is the composition operator. This is used between two concepts to
@@ -595,6 +604,23 @@ concept is to ensure that the request signals, `r1` and `r2`, cause
 their respective grant signals, `g1` and `g2`, to transition high
 but never at the same time.
 
+`andGate a b c`
+
+This is a gate-level concept, using OR-causality to implement a 
+standard AND gate. Signals `a` and `b`are inputs to the gate, 
+and `c` is the output. Both `rise a` and `rise b` must occur for
+`rise c` to occur. Following this, either `fall a` or `fall b` must 
+occur for `fall c` to occur.
+  
+`orGate a b c`
+
+This is a gate-level concept, using OR-causality to implement a 
+standard OR gate. Signals `a` and `b` are inputs to the gate, and 
+`c` is the output. Either `rise a` or `rise b` must occur for 
+`rise c` to occur. Following this, both `fall a`and `fall b` must 
+occur for `fall c` to occur. 
+  
+
 There are many operators and concepts. With these built-in concepts, we
 beleive that it is possible to generate STGs of various sizes and
 complexities using these, and user-defined concepts.
@@ -616,21 +642,6 @@ these features are implemented.
 Conversations on these features can be found [in the list of issues in
 the github repo](https://github.com/tuura/concepts/issues). Any further
 problems or ideas for features can also be reported here.
-
-OR-causality
-------------
-
-Github issue: <https://github.com/tuura/concepts/issues/34>
-
-OR-causality is useful for signal interactions where at least one of
-several signal transitions must occur in order for one other signal
-transition to occur. With OR-causality, we can then provide some
-standard gates, such as AND and OR gates.
-
-OR-causality has yet to be implemented, as it requires some specifics
-changes when translating. We do aim to implement it in the future.
-At this point there is no real work-around to include OR-causality to
-use with this version of the concepts tool.
 
 Define signal names for translated concepts
 -------------------------------------------

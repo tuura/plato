@@ -1,6 +1,7 @@
 module Main (main) where
 
 import Data.List
+import Data.List.Extra
 import Data.Char
 import Text.Printf
 import qualified Data.Text as Text
@@ -31,6 +32,15 @@ main = do
 data DynSignal = Signal Int deriving Eq
 
 instance Show DynSignal where show (Signal i) = [chr (ord 'A' + i)]
+
+instance Ord DynSignal
+    where
+        (<=) (Signal x) (Signal y)
+            | x <= y = True
+            | otherwise = False
+        (<) (Signal x) (Signal y)
+            | x < y = True
+            | otherwise = False
 
 {- Temporary module to help us use any number of signals in the user's
  - circuit. Otherwise, we would be bound to a number of arguments
@@ -99,7 +109,9 @@ doTranslate signs circuit = do
     case validate signs circuit of
         Valid -> do
             let initStrs = map (\s -> (show s, (getDefined $ initial circuit s))) signs
-            let arcStrs = handleArcs (arcs circuit)
+            --let test = groupOn snd (arcs circuit)
+            --let arcStrs = handleArcs (arcs circuit)
+            let arcStrs = concatMap handleArcs (groupSortOn snd (arcs circuit))
             let inputSigns = filter ((==Input) . interface circuit) signs
             let outputSigns = filter ((==Output) . interface circuit) signs
             let internalSigns = filter ((==Internal) . interface circuit) signs
@@ -116,17 +128,19 @@ doTranslate signs circuit = do
 
 -- TODO: 1) Get rid of explicit recursion (use groupBy)? 2) Improve performance.
 handleArcs :: [([Transition DynSignal], Transition DynSignal)] -> [String]
-handleArcs arcLists
-    | arcLists == [] = []
-    | otherwise = addSymbTransition effect n ++ concatMap transition arcs ++ handleArcs remainder
+handleArcs arcLists = map (\s -> (show (fst s)) ++ " " ++ show (snd s)) arcLists -- addSymbTransition effect n ++ concatMap transition arcs
+    -- | arcLists == [] = []
+    -- | otherwise = addSymbTransition effect n ++ concatMap transition arcs ++ handleArcs remainder
         where
             effect = snd (head arcLists)
-            causesForEffect = filter (\o -> snd o == effect) arcLists
-            causesLists = map fst causesForEffect
+    --        causesForEffect = filter (\o -> snd o == effect) arcLists
+    --        causesLists = map fst causesForEffect
+            causesLists = map fst arcLists
             mapped = sequence causesLists
             n = length mapped
+    --        arcs = arcPairs causesLists effect n
             arcs = arcPairs mapped effect n
-            remainder = arcLists \\ causesForEffect
+    --        remainder = arcLists \\ causesForEffect
 
 addSymbTransition :: Transition DynSignal -> Int -> [String]
 addSymbTransition effect n
@@ -178,6 +192,7 @@ genSTG inputSigns outputSigns internalSigns arcStrs initStrs =
         ins = map show inputSigns
         ints = map show internalSigns
         arcs = concatMap symbLoop allSigns ++ arcStrs
+        --arcs = arcStrs
         marks = initVals allSigns initStrs
 
 

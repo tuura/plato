@@ -31,7 +31,7 @@ data Transition a = Transition
         signal   :: a,
         newValue :: Bool -- Transition x True corresponds to x+
     }
-    deriving Eq
+    deriving (Eq, Ord)
 
 instance Show a => Show (Transition a) where
     show (Transition s True ) = show s ++ "+"
