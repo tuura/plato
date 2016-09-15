@@ -4,10 +4,11 @@ module Tuura.Concept.STG.Circuit (
     CircuitConcept,
     consistency, initialise,
     initialise0, initialise1,
-    (~>),
+    (~>), (~|~>),
     buffer, inverter, cElement, meElement,
-    me, handshake, handshake00, handshake11,
-    inputs, outputs, internals
+    andGate, orGate, me, handshake,
+    handshake00, handshake11, inputs,
+    outputs, internals
     ) where
 
 import Tuura.Concept.STG.Abstract
@@ -71,6 +72,9 @@ initialise1 as = if (as /= []) then initialise (head as) True <> initialise1 (ta
 (~>) :: Transition a -> Transition a -> CircuitConcept a
 (~>) = arcConcept
 
+(~|~>) :: [Transition a] -> Transition a -> CircuitConcept a
+(~|~>) = orCausality
+
 -- Gate-level concepts
 buffer :: a -> a -> CircuitConcept a
 buffer a b = rise a ~> rise b <> fall a ~> fall b
@@ -81,8 +85,14 @@ inverter a b = rise a ~> fall b <> fall a ~> rise b
 cElement :: a -> a -> a -> CircuitConcept a
 cElement a b c = buffer a c <> buffer b c
 
-meElement :: Eq a => a -> a -> a -> a -> CircuitConcept a
+meElement :: a -> a -> a -> a -> CircuitConcept a
 meElement r1 r2 g1 g2 = buffer r1 g1 <> buffer r2 g2 <> me g1 g2
+
+andGate :: a -> a -> a -> CircuitConcept a
+andGate a b c = rise a ~> rise c <> rise b ~> rise c <> [fall a, fall b] ~|~> fall c
+
+orGate :: a -> a -> a -> CircuitConcept a
+orGate a b c = [rise a, rise b] ~|~> rise c <> fall a ~> fall c <> fall b ~> fall c
 
 -- Protocol-level concepts
 handshake :: a -> a -> CircuitConcept a
@@ -95,7 +105,7 @@ handshake11 :: Eq a => a -> a -> CircuitConcept a
 handshake11 a b = handshake a b <> initialise a True <> initialise b True
 
 -- TODO: Restrict the initial state so that a=b=1 is not allowed.
-me :: Eq a => a -> a -> CircuitConcept a
+me :: a -> a -> CircuitConcept a
 me a b = fall a ~> rise b <> fall b ~> rise a
 
 -- Signal type declaration concepts

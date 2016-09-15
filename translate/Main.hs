@@ -99,11 +99,11 @@ doTranslate signs circuit = do
     case validate signs circuit of
         Valid -> do
             let initStrs = map (\s -> (show s, (getDefined $ initial circuit s))) signs
-            let arcStrs = map (\(from, to) -> (show from, show to)) (arcs circuit)
+            let arcStrs = handleArcs (arcs circuit)
             let inputSigns = filter ((==Input) . interface circuit) signs
             let outputSigns = filter ((==Output) . interface circuit) signs
             let internalSigns = filter ((==Internal) . interface circuit) signs
-            liftIO $ putStr $ genSTG inputSigns outputSigns internalSigns initStrs arcStrs
+            liftIO $ putStr $ genSTG inputSigns outputSigns internalSigns arcStrs initStrs
             return ()
         Invalid unused incons undef -> liftIO $ do
             putStr $ "Error. \n"
@@ -113,6 +113,32 @@ doTranslate signs circuit = do
                                     ++ unlines (map show incons) ++ "\n"
             when (undef  /= []) $ putStr $ "The following signals have undefined initial states: \n"
                                     ++ unlines (map show undef) ++ "\n"
+
+-- TODO: 1) Get rid of explicit recursion (use groupBy)? 2) Improve performance.
+handleArcs :: [([Transition DynSignal], Transition DynSignal)] -> [String]
+handleArcs arcLists
+    | arcLists == [] = []
+    | otherwise = addSymbTransition effect n ++ concatMap transition arcs ++ handleArcs remainder
+        where
+            effect = snd (head arcLists)
+            causesForEffect = filter (\o -> snd o == effect) arcLists
+            causesLists = map fst causesForEffect
+            mapped = sequence causesLists
+            n = length mapped
+            arcs = arcPairs mapped effect n
+            remainder = arcLists \\ causesForEffect
+
+addSymbTransition :: Transition DynSignal -> Int -> [String]
+addSymbTransition effect n
+        | newValue effect = map (\x -> (printf "%s0 %s/%s\n" (init (show effect)) (show effect) (show x))
+            ++ (printf "%s/%s %s1" (show effect) (show x) (init (show effect)))) [1..n - 1]
+        | otherwise = map (\x -> (printf "%s1 %s/%s\n" (init (show effect)) (show effect) (show x))
+            ++ (printf "%s/%s %s0" (show effect) (show x) (init (show effect)))) [1..n - 1]
+
+arcPairs :: [[Transition DynSignal]] -> Transition DynSignal -> Int -> [(String, String)]
+arcPairs causes effect n
+        | n == 1 = map (\c -> (show c, show effect)) (head causes)
+        | otherwise = (map (\d -> (show d, (show effect  ++ "/" ++ show (n - 1)))) (head causes)) ++ arcPairs (tail causes) effect (n - 1)
 
 output :: [(String, Bool)] -> [String]
 output = sort . nub . map fst
@@ -143,16 +169,17 @@ initVal _ _ = 0
 tmpl :: String
 tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internals %s", ".graph", "%s.marking {%s}", ".end"]
 
-genSTG :: [DynSignal] -> [DynSignal] -> [DynSignal] -> [(String, Bool)] -> [(String, String)] -> String
-genSTG inputSigns outputSigns internalSigns initStrs arcStrs =
-    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines trans) (unwords marks)
+genSTG :: [DynSignal] -> [DynSignal] -> [DynSignal] -> [String] -> [(String, Bool)] -> String
+genSTG inputSigns outputSigns internalSigns arcStrs initStrs =
+    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines arcs) (unwords marks)
     where
         allSigns = output initStrs
         outs = map show outputSigns
         ins = map show inputSigns
         ints = map show internalSigns
-        trans = concatMap symbLoop allSigns ++ concatMap transition arcStrs
+        arcs = concatMap symbLoop allSigns ++ arcStrs
         marks = initVals allSigns initStrs
+
 
 data ValidationResult a = Valid | Invalid [a] [a] [a] deriving Eq
 

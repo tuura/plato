@@ -3,7 +3,7 @@ module Tuura.Concept.STG.Abstract (
     InitialValue (..),
     Concept (..),
     initialConcept, arcConcept,
-    interfaceConcept,
+    orCausality, interfaceConcept,
     ) where
 
 import Data.Monoid
@@ -34,7 +34,7 @@ instance Monoid InitialValue where
 data Concept s e a = Concept
                    {
                        initial   :: a -> InitialValue,
-                       arcs      :: [(e, e)],
+                       arcs      :: [([e], e)],
                        interface :: a -> Interface
                    }
 
@@ -44,15 +44,18 @@ instance Monoid (Concept s e a) where
     mappend a b = Concept
                   {
                       initial   = initial a   <> initial b,
-                      arcs      = arcs a      <>  arcs b,
+                      arcs      = arcs a      <> arcs b,
                       interface = interface a <> interface b
                   }
 
 arcConcept :: e -> e -> Concept s e a
-arcConcept from to = mempty { arcs = [(from, to)] }
+arcConcept from to = mempty { arcs = [([from], to)] }
+
+orCausality :: [e] -> e -> Concept s e a
+orCausality from to = mempty { arcs = [(from, to)] }
 
 initialConcept :: (a -> InitialValue) -> Concept s e a
 initialConcept f = mempty { initial = f }
 
 interfaceConcept :: (a -> Interface) -> Concept s e a
-interfaceConcept f = mempty {interface = f}
+interfaceConcept f = mempty { interface = f }
