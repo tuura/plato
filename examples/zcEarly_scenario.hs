@@ -3,7 +3,7 @@ module BuckConverter where
 import Tuura.Concept.STG
 
 --ZC early scenario definition using concepts
-circuit uv oc zc gp_ack gn_ack gp gn =
+circuit uv oc zc gp gp_ack gn gn_ack =
     chargeFunc <> zcFunc <> zcReact <> uvFunc' <> uvReact' <> initialise zc False
   where
     interface = inputs [uv, oc, zc, gp_ack, gn_ack] <> outputs [gp, gn]
@@ -28,4 +28,4 @@ circuit uv oc zc gp_ack gn_ack gp gn =
     initialState = initialise0 [uv, oc, zc, gp, gp_ack] <> initialise1 [gn, gn_ack]
 
     chargeFunc = interface <> ocFunc <> ocReact <> environmentConstraint <>
-                 circuitConstraint <> gpHandshake <> gnHandshake <> initialState
+                 noShortcircuit <> gpHandshake <> gnHandshake <> initialState
