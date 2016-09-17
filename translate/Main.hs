@@ -29,24 +29,26 @@ main = do
 
 {- Our own Signal type. Contains the signal index, from 0 to x-1 if
  - there are x signals. -}
-data DynSignal = Signal Int deriving Eq
+data Signal = Signal Int deriving Eq
 
-instance Show DynSignal where show (Signal i) = [chr (ord 'A' + i)]
+--instance Show Signal where show (Signal i) = [chr (ord 'A' + i)]
+instance Show Signal where
+    show (Signal i)
+        | i < 26    = [chr (ord 'A' + i)]
+        | otherwise = 'S' : show i
 
-instance Ord DynSignal
+instance Ord Signal
     where
-        (<=) (Signal x) (Signal y)
-            | x <= y = True
-            | otherwise = False
+        compare (Signal x) (Signal y) = compare x y
 
 {- Temporary module to help us use any number of signals in the user's
  - circuit. Otherwise, we would be bound to a number of arguments
  - (signals) known at compile time.
- - Keep the data DynSignal line in sync with the one above! -}
+ - Keep the data Signal line in sync with the one above! -}
 signalsApply :: Int -> [String]
 signalsApply num = [
     "import Data.Char",
-    "data DynSignal = Signal Int deriving Eq",
+    "data Signal = Signal Int deriving Eq",
     "signs = [Signal i | i <- [0.." ++ show (num-1) ++ "]]",
     "apply c = c " ++ unwords ["(signs !! " ++ show i ++ ")" | i <- [0..num-1]]]
 
@@ -91,17 +93,17 @@ doWork path = do
     loadModulesTopLevel [path, tmpModuleFile]
     liftIO $ removeIfExists tmpModuleFile
     {- Fetch our signals. -}
-    signs <- GHC.interpret "signs" (GHC.as :: [DynSignal])
+    signs <- GHC.interpret "signs" (GHC.as :: [Signal])
     {- Obtain the circuit in terms of any signal (takes them as args). -}
-    let ctype = strRepeat numSigns "DynSignal ->" ++ "CircuitConcept DynSignal"
+    let ctype = strRepeat numSigns "Signal ->" ++ "CircuitConcept Signal"
     circuit <- GHC.unsafeInterpret circuitName ctype
     {- Use our generated code to apply our signals to the circuit above -}
-    apply <- GHC.unsafeInterpret "apply" $ "(" ++ ctype ++ ") -> CircuitConcept DynSignal"
+    apply <- GHC.unsafeInterpret "apply" $ "(" ++ ctype ++ ") -> CircuitConcept Signal"
     let fullCircuit = apply circuit
     (_, _) <- liftIO $ runSimulation (doTranslate signs fullCircuit) (State $ const False)
     return ()
 
-doTranslate :: MonadIO m => [DynSignal] -> Concept (State DynSignal) (Transition DynSignal) DynSignal -> StateT (State DynSignal) m ()
+doTranslate :: MonadIO m => [Signal] -> Concept (State Signal) (Transition Signal) Signal -> StateT (State Signal) m ()
 doTranslate signs circuit = do
     case validate signs circuit of
         Valid -> do
@@ -121,58 +123,51 @@ doTranslate signs circuit = do
             when (undef  /= []) $ putStr $ "The following signals have undefined initial states: \n"
                                     ++ unlines (map show undef) ++ "\n"
 
--- TODO: 1) Get rid of explicit recursion (use groupBy)? 2) Improve performance.
-handleArcs :: [([Transition DynSignal], Transition DynSignal)] -> [String]
-handleArcs arcLists = addSymbTransition effect n ++ concatMap transition arcs
+handleArcs :: [([Transition Signal], Transition Signal)] -> [String]
+handleArcs arcLists = addConsistencyTrans effect n ++ concatMap transition arcs
         where
             effect = snd (head arcLists)
-            causesLists = map fst arcLists
-            mapped = sequence causesLists
-            n = length mapped
-            arcs = arcPairs mapped effect n
+            effectCauses = map fst arcLists
+            transCauses = sequence effectCauses
+            n = length transCauses
+            arcs = concat (map (\m -> arcPairs m effect) (zip transCauses [0..(n-1)]))
 
-addSymbTransition :: Transition DynSignal -> Int -> [String]
-addSymbTransition effect n
+addConsistencyTrans :: Transition Signal -> Int -> [String]
+addConsistencyTrans effect n
         | newValue effect = map (\x -> (printf "%s0 %s/%s\n" (init (show effect)) (show effect) (show x))
             ++ (printf "%s/%s %s1" (show effect) (show x) (init (show effect)))) [1..n - 1]
         | otherwise = map (\x -> (printf "%s1 %s/%s\n" (init (show effect)) (show effect) (show x))
             ++ (printf "%s/%s %s0" (show effect) (show x) (init (show effect)))) [1..n - 1]
 
-arcPairs :: [[Transition DynSignal]] -> Transition DynSignal -> Int -> [(String, String)]
-arcPairs causes effect n
-        | n == 1 = map (\c -> (show c, show effect)) (head causes)
-        | otherwise = (map (\d -> (show d, (show effect  ++ "/" ++ show (n - 1)))) (head causes)) ++ arcPairs (tail causes) effect (n - 1)
+arcPairs :: ([Transition Signal], Int) -> Transition Signal -> [(Transition Signal, String)]
+arcPairs (causes, n) effect
+        | n == 0 = map (\c -> (c, show effect)) causes
+        | otherwise = map (\d -> (d, (show effect  ++ "/" ++ show n))) causes
 
 output :: [(String, Bool)] -> [String]
-output = sort . nub . map fst
+output = nubOrd . map fst
 
-symbLoop :: String -> [String]
-symbLoop s = map (\f -> printf f s s) ["%s0 %s+", "%s+ %s1", "%s1 %s-", "%s- %s0"]
+consistencyLoop :: String -> [String]
+consistencyLoop s = map (\f -> printf f s s) ["%s0 %s+", "%s+ %s1", "%s1 %s-", "%s- %s0"]
 
 readArc :: String -> String -> [String]
 readArc f t = [f ++ " " ++ t, t ++ " " ++ f]
 
-transition :: (String, String) -> [String]
+transition :: (Transition Signal, String) -> [String]
 transition (f, t)
-        | "+" `isSuffixOf` f = readArc (init f ++ "1") t
-        | otherwise          = readArc (init f ++ "0") t
+        | newValue f = readArc (init (show f) ++ "1") t
+        | otherwise  = readArc (init (show f) ++ "0") t
 
 initVals :: [String] -> [(String, Bool)] -> [String]
-initVals l symbInits = foldr (\s -> (++) [printf "%s%i" s $ initVal s symbInits]) [] l
-
-boolBit :: Bool -> Int
-boolBit b = if b then 1 else 0
+initVals l symbInits = concat (map (\s -> [printf "%s%i" s $ initVal s symbInits]) l)
 
 initVal :: String -> [(String, Bool)] -> Int
-initVal s ((ls,v):l)
-        | s == ls = boolBit v
-        | otherwise = initVal s l
-initVal _ _ = 0
+initVal s ls = sum (map (\x -> if (fst x == s) then fromEnum (snd x) else 0) ls)
 
 tmpl :: String
 tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internals %s", ".graph", "%s.marking {%s}", ".end"]
 
-genSTG :: [DynSignal] -> [DynSignal] -> [DynSignal] -> [String] -> [(String, Bool)] -> String
+genSTG :: [Signal] -> [Signal] -> [Signal] -> [String] -> [(String, Bool)] -> String
 genSTG inputSigns outputSigns internalSigns arcStrs initStrs =
     printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines arcs) (unwords marks)
     where
@@ -180,9 +175,8 @@ genSTG inputSigns outputSigns internalSigns arcStrs initStrs =
         outs = map show outputSigns
         ins = map show inputSigns
         ints = map show internalSigns
-        arcs = concatMap symbLoop allSigns ++ arcStrs
+        arcs = concatMap consistencyLoop allSigns ++ arcStrs
         marks = initVals allSigns initStrs
-
 
 data ValidationResult a = Valid | Invalid [a] [a] [a] deriving Eq
 
