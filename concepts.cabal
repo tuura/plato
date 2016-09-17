@@ -32,7 +32,8 @@ library
                       containers == 0.5.*,
                       mtl == 2.2.*,
                       hint >= 0.6.0,
-                      transformers >= 0.4 && < 0.6
+                      transformers >= 0.4 && < 0.6,
+                      extra >= 1.4.10
     default-language: Haskell2010
     other-extensions: TypeFamilies
     GHC-options:      -Wall -fwarn-tabs
