@@ -26,9 +26,6 @@ instance Ord Signal
     where
         compare (Signal x) (Signal y) = compare x y
 
-runTranslation :: (CircuitConcept Signal, [Signal]) -> String
-runTranslation (circuit, signs) = doTranslate signs circuit
-
     -- putStrLn "Hello"
     -- if length args /= 1
     --     then putStrLn "Exactly one path needed"
@@ -118,9 +115,9 @@ doTranslate signs circuit = do
 addErrors :: (Eq a, Show a) => [a] -> [a] -> [a] -> String
 addErrors unused incons undef = un ++ ic ++ ud
   where
-    un = if (unused /= []) then ("The following signals are not declared as input, output or internal: \n" ++ unlines (map show unused) ++ "\n") else "HELLO"
-    ic = if (unused /= []) then ("The following signals have inconsistent inital states: \n" ++ unlines (map show incons) ++ "\n") else "HELLO"
-    ud = if (undef  /= []) then ("The following signals have undefined initial states: \n" ++ unlines (map show undef) ++ "\n") else "HELLO"
+    un = if (unused /= []) then ("The following signals are not declared as input, output or internal: \n" ++ unlines (map show unused) ++ "\n") else ""
+    ic = if (unused /= []) then ("The following signals have inconsistent inital states: \n" ++ unlines (map show incons) ++ "\n") else ""
+    ud = if (undef  /= []) then ("The following signals have undefined initial states: \n" ++ unlines (map show undef) ++ "\n") else ""
 
 -- doTranslate :: MonadIO m => [Signal] -> Concept (State Signal) (Transition Signal) Signal -> StateT (State Signal) m ()
 -- doTranslate signs circuit = do
@@ -154,23 +151,23 @@ validate signs circuit
     undef        = filter ((==Undefined) . initial circuit) signs
 
 handleArcs :: [([Transition Signal], Transition Signal)] -> [String]
-handleArcs arcLists = addConsistencyTrans effect n ++ concatMap transition arcs
+handleArcs arcLists = addConsistencyTrans effect n ++ concatMap transition arcMap
         where
             effect = snd (head arcLists)
             effectCauses = map fst arcLists
             transCauses = sequence effectCauses
             n = length transCauses
-            arcs = concat (map (\m -> arcPairs m effect) (zip transCauses [0..(n-1)]))
+            arcMap = concat (map (\m -> arcPairs m effect) (zip transCauses [0..(n-1)]))
 
 genSTG :: [Signal] -> [Signal] -> [Signal] -> [String] -> [(String, Bool)] -> String
 genSTG inputSigns outputSigns internalSigns arcStrs initStrs =
-    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines arcs) (unwords marks)
+    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines allArcs) (unwords marks)
     where
         allSigns = output initStrs
         outs = map show outputSigns
         ins = map show inputSigns
         ints = map show internalSigns
-        arcs = concatMap consistencyLoop allSigns ++ arcStrs
+        allArcs = concatMap consistencyLoop allSigns ++ arcStrs
         marks = initVals allSigns initStrs
 
 addConsistencyTrans :: Transition Signal -> Int -> [String]

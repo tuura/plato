@@ -1,21 +1,19 @@
 import System.Exit (exitFailure)
 
+import Data.List
+
 import Tuura.Concept.STG
 import Tuura.Concept.STG.Translation
 
 main :: IO ()
 main = do
     testDotGOutput
-    -- testInverter
-    -- testCElementGateLevel
-    -- testCElementProtocolLevel
+    testHandshakeConcept
 
 testDotGOutput :: IO ()
 testDotGOutput = do
     putStrLn "=== testDotGOutput"
-    -- result <- runTranslation threeSignalsConcept
     assertEq threeSignalsConcept expected
-    -- putStrLn (x `shouldReturn` "Hello")
   where
     expected = ".model out\n"          ++
                ".inputs A\n"           ++
@@ -37,21 +35,14 @@ testDotGOutput = do
                ".marking {A0 B1 C0}\n" ++
                ".end\n"
 
-
--- testInverter :: IO ()
--- testInverter = do
---     putStrLn "=== testInverter"
---     void $ runSimulation inverterSimulation undefined
-
--- testCElementGateLevel :: IO ()
--- testCElementGateLevel = do
---     putStrLn "=== testCElementGateLevel"
---     void $ runSimulation cElementGateLevelSimulation undefined
-
--- testCElementProtocolLevel :: IO ()
--- testCElementProtocolLevel = do
---     putStrLn "=== testCElementProtocolLevel"
---     void $ runSimulation cElementProtocolLevelSimulation undefined
+testHandshakeConcept :: IO ()
+testHandshakeConcept = do
+    putStrLn "===testHandshakeConcept"
+    assertEq (sort handshakeConcept) (sort expected)
+    where
+      expected = [([rise a], rise b), ([rise b], fall a), ([fall a], fall b), ([fall b], rise a)]
+      a = Signal 0
+      b = Signal 1
 
 assertEq :: (Eq a, Show a) => a -> a -> IO ()
 assertEq have need
@@ -61,17 +52,8 @@ assertEq have need
         exitFailure
     | otherwise = putStrLn $ "OK " ++ show need
 
--- data Signal = A | B | C deriving (Eq, Show, Enum, Bounded)
-
--- shouldBe :: (Eq a, Show a) => a -> IO a -> IO ()
--- shouldBe x y = assertEq x y
-
--- shouldReturn :: (Eq a, Show a) => a -> a -> Bool
--- shouldReturn x y = x >>= (`shouldBe` y)
-
 threeSignalsConcept :: String
-threeSignalsConcept = do
-    doTranslate signs circuit
+threeSignalsConcept = doTranslate signs circuit
   where
     circuit = inputs [a] <> outputs [b] <> internals [c] <> initialise0 [a, c] <> initialise1 [b]
     a = Signal 0
@@ -79,58 +61,10 @@ threeSignalsConcept = do
     c = Signal 2
     signs = [a, b, c]
 
--- bufferSimulation :: Simulation Signal IO ()
--- bufferSimulation = do
---     put initialState
---     initial circuit initialState `shouldBe` True
---     enabledTransitions circuit `shouldReturn` [rise A]
---     fire $ rise A
---     enabledTransitions circuit `shouldReturn` [fall A, rise B]
---     fire $ rise B
---     enabledTransitions circuit `shouldReturn` [fall A]
---   where
---     initialState = State $ const False
---     circuit      = consistency <> buffer A B <> silent C
+handshakeConcept :: [([Transition Signal], Transition Signal)]
+handshakeConcept = arcs circuit
+  where
+    circuit = inputs[a] <> outputs [b] <> handshake00 a b
+    a = Signal 0
+    b = Signal 1
 
--- inverterSimulation :: Simulation Signal IO ()
--- inverterSimulation = do
---     put initialState
---     initial circuit initialState `shouldBe` True
---     enabledTransitions circuit `shouldReturn` [rise A]
---     fire $ rise A
---     enabledTransitions circuit `shouldReturn` [fall A, fall B]
---     fire $ fall B
---     enabledTransitions circuit `shouldReturn` [fall A]
---   where
---     initialState = State (== B)
---     circuit      = consistency <> inverter A B <> silent C
-
--- cElementGateLevelSimulation :: Simulation Signal IO ()
--- cElementGateLevelSimulation = do
---     put initialState
---     initial circuit initialState `shouldBe` True
---     enabledTransitions circuit `shouldReturn` [rise A, rise B]
---     fire $ rise A
---     enabledTransitions circuit `shouldReturn` [rise B]
---     fire $ rise B
---     enabledTransitions circuit `shouldReturn` [rise C]
---     fire $ rise C
---     enabledTransitions circuit `shouldReturn` [fall A, fall B]
---   where
---     initialState = State $ const False
---     circuit      = consistency <> cElement A B C <> inverter C A <> inverter C B
-
--- cElementProtocolLevelSimulation :: Simulation Signal IO ()
--- cElementProtocolLevelSimulation = do
---     put initialState
---     initial circuit initialState `shouldBe` True
---     enabledTransitions circuit `shouldReturn` [rise A, rise B]
---     fire $ rise A
---     enabledTransitions circuit `shouldReturn` [rise B]
---     fire $ rise B
---     enabledTransitions circuit `shouldReturn` [rise C]
---     fire $ rise C
---     enabledTransitions circuit `shouldReturn` [fall A, fall B]
---   where
---     initialState = State $ const False
---     circuit      = consistency <> handshake00 A C <> handshake00 B C
