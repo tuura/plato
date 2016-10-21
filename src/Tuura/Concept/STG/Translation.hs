@@ -8,7 +8,6 @@ import Tuura.Concept.STG
 
 data Signal = Signal Int deriving Eq
 
---instance Show Signal where show (Signal i) = [chr (ord 'A' + i)]
 instance Show Signal where
     show (Signal i)
         | i < 26    = [chr (ord 'A' + i)]

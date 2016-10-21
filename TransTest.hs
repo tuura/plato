@@ -11,6 +11,7 @@ main = do
     testHandshakeConcept
     testOrGateConcept
     testTwoAndGates
+    testTwoDifferentCElements
 
 testDotGOutput :: IO ()
 testDotGOutput = do
@@ -68,6 +69,11 @@ testTwoAndGates = do
     d   = Signal 3
     out = Signal 4
 
+testTwoDifferentCElements :: IO ()
+testTwoDifferentCElements = do
+    putStrLn "===testTwoDifferentCElements"
+    assertEq (sort (arcs cElementConcept1)) (sort (arcs cElementConcept2))
+
 assertEq :: (Eq a, Show a) => a -> a -> IO ()
 assertEq have need
     | need /= have = do
@@ -109,3 +115,17 @@ twoAndGatesConcept = arcs circuit
     c   = Signal 2
     d   = Signal 3
     out = Signal 4
+
+cElementConcept1 :: CircuitConcept Signal
+cElementConcept1 = inputs [a, b] <> outputs [c] <> initialise0 [a, b, c] <> buffer a c <> buffer b c
+  where
+    a = Signal 0
+    b = Signal 1
+    c = Signal 2
+
+cElementConcept2 :: CircuitConcept Signal
+cElementConcept2 = inputs [a, b] <> outputs [c] <> initialise0 [a, b, c] <> cElement a b c
+  where
+    a = Signal 0
+    b = Signal 1
+    c = Signal 2
