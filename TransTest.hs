@@ -10,6 +10,7 @@ main = do
     testDotGOutput
     testHandshakeConcept
     testOrGateConcept
+    testTwoAndGates
 
 testDotGOutput :: IO ()
 testDotGOutput = do
@@ -55,6 +56,17 @@ testOrGateConcept = do
     b = Signal 1
     c = Signal 2
 
+testTwoAndGates :: IO ()
+testTwoAndGates = do
+    putStrLn "===testTwoAndGates"
+    assertEq (sort twoAndGatesConcept) (sort expected)
+  where
+    expected = [([rise a], rise out), ([rise b], rise out), ([rise c], rise out), ([rise d], rise out), ([fall a, fall b], fall out), ([fall c, fall d], fall out)]
+    a   = Signal 0
+    b   = Signal 1
+    c   = Signal 2
+    d   = Signal 3
+    out = Signal 4
 
 assertEq :: (Eq a, Show a) => a -> a -> IO ()
 assertEq have need
@@ -83,8 +95,17 @@ handshakeConcept = arcs circuit
 orGateConcept :: [([Transition Signal], Transition Signal)]
 orGateConcept = arcs circuit
   where
-    circuit = inputs [a, b] <> outputs [c] <> orGate a b c
+    circuit = inputs [a, b] <> outputs [c] <> initialise0 [a, b, c] <> orGate a b c
     a = Signal 0
     b = Signal 1
     c = Signal 2
 
+twoAndGatesConcept :: [([Transition Signal], Transition Signal)]
+twoAndGatesConcept = arcs circuit
+  where
+    circuit = inputs [a, b, c, d] <> outputs [out] <> initialise0 [a, b, c, d, out] <> andGate a b out <> andGate c d out
+    a   = Signal 0
+    b   = Signal 1
+    c   = Signal 2
+    d   = Signal 3
+    out = Signal 4
