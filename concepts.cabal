@@ -21,7 +21,8 @@ library
                       Tuura.Concept.Examples.SimpleBuck,
                       Tuura.Concept.Simulation,
                       Tuura.Concept.STG,
-                      Tuura.Concept.STG.Simulation
+                      Tuura.Concept.STG.Simulation,
+                      Tuura.Concept.STG.Translation
     other-modules:    Tuura.Concept.Abstract,
                       Tuura.Concept.Circuit,
                       Tuura.Concept.STG.Abstract,
@@ -33,14 +34,24 @@ library
                       mtl == 2.2.*,
                       hint >= 0.6.0,
                       transformers >= 0.4 && < 0.6,
-                      extra >= 1.4.10
+                      extra >= 1.4.10,
+                      text >= 1.2.2,
+                      directory >= 1.2.2
     default-language: Haskell2010
     other-extensions: TypeFamilies
     GHC-options:      -Wall -fwarn-tabs
 
-test-suite concepts-test
+test-suite simulation-test
     type:             exitcode-stdio-1.0
-    main-is:          Test.hs
+    main-is:          SimTest.hs
+    build-depends:    base >= 4.8 && < 5,
+                      concepts
+    default-language: Haskell2010
+    GHC-options:      -Wall -fwarn-tabs
+
+test-suite translation-test
+    type:             exitcode-stdio-1.0
+    main-is:          TransTest.hs
     build-depends:    base >= 4.8 && < 5,
                       concepts
     default-language: Haskell2010
