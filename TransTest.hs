@@ -23,9 +23,25 @@ testDotGOutput = do
     b = Signal 1
     c = Signal 2
     signs = [a, b, c]
-    expected = unlines ([".model out", ".inputs A", ".outputs B", ".internal C", ".graph"] ++
-                        ["A0 A+", "A+ A1", "A1 A-", "A- A0", "B0 B+", "B+ B1", "B1 B-", "B- B0"] ++
-                        ["C0 C+", "C+ C1", "C1 C-", "C- C0", ".marking {A0 B1 C0}", ".end"])
+    expected = unlines [ ".model out"
+                       , ".inputs A"
+                       , ".outputs B"
+                       , ".internal C"
+                       , ".graph"
+                       , "A0 A+"
+                       , "A+ A1"
+                       , "A1 A-"
+                       , "A- A0"
+                       , "B0 B+"
+                       , "B+ B1"
+                       , "B1 B-"
+                       , "B- B0"
+                       , "C0 C+"
+                       , "C+ C1"
+                       , "C1 C-"
+                       , "C- C0"
+                       , ".marking {A0 B1 C0}"
+                       , ".end"]
 
 testHandshakeConcept :: IO ()
 testHandshakeConcept = do

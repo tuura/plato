@@ -17,11 +17,7 @@ instance Ord Signal
     where
         compare (Signal x) (Signal y) = compare x y
 
-circuitName, tmpModuleFile :: String
-circuitName   = "circuit"
-tmpModuleFile = ".Helper.hs"
-
-doTranslate :: [Signal] -> Concept (State Signal) (Transition Signal) Signal -> String
+doTranslate :: (Show a, Ord a) => [a] -> Concept (State a) (Transition a) a -> String
 doTranslate signs circuit = do
     case validate signs circuit of
         Valid -> do
@@ -51,7 +47,7 @@ validate signs circuit
     inconsistent = filter ((==Inconsistent) . initial circuit) signs
     undef        = filter ((==Undefined) . initial circuit) signs
 
-handleArcs :: [([Transition Signal], Transition Signal)] -> [String]
+handleArcs :: Show a => [([a], a)] -> [String]
 handleArcs arcLists = addConsistencyTrans effect n ++ concatMap transition arcMap
         where
             effect = snd (head arcLists)
@@ -60,7 +56,7 @@ handleArcs arcLists = addConsistencyTrans effect n ++ concatMap transition arcMa
             n = length transCauses
             arcMap = concat (map (\m -> arcPairs m effect) (zip transCauses [0..(n-1)]))
 
-genSTG :: [Signal] -> [Signal] -> [Signal] -> [String] -> [(String, Bool)] -> String
+genSTG :: Show a => [a] -> [a] -> [a] -> [String] -> [(String, Bool)] -> String
 genSTG inputSigns outputSigns internalSigns arcStrs initStrs =
     printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines allArcs) (unwords marks)
     where
@@ -71,21 +67,21 @@ genSTG inputSigns outputSigns internalSigns arcStrs initStrs =
         allArcs = concatMap consistencyLoop allSigns ++ arcStrs
         marks = initVals allSigns initStrs
 
-addConsistencyTrans :: Transition Signal -> Int -> [String]
+addConsistencyTrans :: Show a => a -> Int -> [String]
 addConsistencyTrans effect n
-        | newValue effect = map (\x -> (printf "%s0 %s/%s\n" (init (show effect)) (show effect) (show x))
+        | (tail (show effect) == "+") = map (\x -> (printf "%s0 %s/%s\n" (init (show effect)) (show effect) (show x))
             ++ (printf "%s/%s %s1" (show effect) (show x) (init (show effect)))) [1..n - 1]
         | otherwise = map (\x -> (printf "%s1 %s/%s\n" (init (show effect)) (show effect) (show x))
             ++ (printf "%s/%s %s0" (show effect) (show x) (init (show effect)))) [1..n - 1]
 
-arcPairs :: ([Transition Signal], Int) -> Transition Signal -> [(Transition Signal, String)]
+arcPairs :: Show a => ([a], Int) -> a -> [(a, String)]
 arcPairs (causes, n) effect
         | n == 0 = map (\c -> (c, show effect)) causes
         | otherwise = map (\d -> (d, (show effect  ++ "/" ++ show n))) causes
 
-transition :: (Transition Signal, String) -> [String]
+transition :: Show a => (a, String) -> [String]
 transition (f, t)
-        | newValue f = readArc (init (show f) ++ "1") t
+        | (tail (show f) == "+") = readArc (init (show f) ++ "1") t
         | otherwise  = readArc (init (show f) ++ "0") t
 
 tmpl :: String
