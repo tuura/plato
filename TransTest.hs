@@ -18,7 +18,7 @@ testDotGOutput = do
     putStrLn "=== testDotGOutput"
     assertEq threeSignalsConcept expected
   where
-    threeSignalsConcept = doTranslate signs (inputs [a] <> outputs [b] <> internals [c] <> initialise0 [a, c] <> initialise1 [b])
+    threeSignalsConcept = translate signs (inputs [a] <> outputs [b] <> internals [c] <> initialise0 [a, c] <> initialise1 [b])
     a = Signal 0
     b = Signal 1
     c = Signal 2

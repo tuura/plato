@@ -17,8 +17,8 @@ instance Ord Signal
     where
         compare (Signal x) (Signal y) = compare x y
 
-doTranslate :: (Show a, Ord a) => [a] -> Concept (State a) (Transition a) a -> String
-doTranslate signs circuit = do
+translate :: (Show a, Ord a) => [a] -> CircuitConcept a -> String
+translate signs circuit = do
     case validate signs circuit of
         Valid -> do
             let initStrs = map (\s -> (show s, (getDefined $ initial circuit s))) signs
@@ -47,7 +47,7 @@ validate signs circuit
     inconsistent = filter ((==Inconsistent) . initial circuit) signs
     undef        = filter ((==Undefined) . initial circuit) signs
 
-handleArcs :: Show a => [([a], a)] -> [String]
+handleArcs :: Show a => [([Transition a], Transition a)] -> [String]
 handleArcs arcLists = addConsistencyTrans effect n ++ concatMap transition arcMap
         where
             effect = snd (head arcLists)
@@ -67,9 +67,9 @@ genSTG inputSigns outputSigns internalSigns arcStrs initStrs =
         allArcs = concatMap consistencyLoop allSigns ++ arcStrs
         marks = initVals allSigns initStrs
 
-addConsistencyTrans :: Show a => a -> Int -> [String]
+addConsistencyTrans :: Show a => Transition a -> Int -> [String]
 addConsistencyTrans effect n
-        | (tail (show effect) == "+") = map (\x -> (printf "%s0 %s/%s\n" (init (show effect)) (show effect) (show x))
+        | newValue effect = map (\x -> (printf "%s0 %s/%s\n" (init (show effect)) (show effect) (show x))
             ++ (printf "%s/%s %s1" (show effect) (show x) (init (show effect)))) [1..n - 1]
         | otherwise = map (\x -> (printf "%s1 %s/%s\n" (init (show effect)) (show effect) (show x))
             ++ (printf "%s/%s %s0" (show effect) (show x) (init (show effect)))) [1..n - 1]
@@ -79,9 +79,9 @@ arcPairs (causes, n) effect
         | n == 0 = map (\c -> (c, show effect)) causes
         | otherwise = map (\d -> (d, (show effect  ++ "/" ++ show n))) causes
 
-transition :: Show a => (a, String) -> [String]
+transition :: Show a => (Transition a, String) -> [String]
 transition (f, t)
-        | (tail (show f) == "+") = readArc (init (show f) ++ "1") t
+        | newValue f = readArc (init (show f) ++ "1") t
         | otherwise  = readArc (init (show f) ++ "0") t
 
 tmpl :: String

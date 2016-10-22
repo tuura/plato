@@ -101,6 +101,6 @@ doWork path = do
     {- Use our generated code to apply our signals to the circuit above -}
     apply <- GHC.unsafeInterpret "apply" $ "(" ++ ctype ++ ") -> CircuitConcept Signal"
     let fullCircuit = apply circuit
-    let translation = liftIO $ putStr $ doTranslate signs fullCircuit
+    let translation = liftIO $ putStr $ translate signs fullCircuit
     (_, _) <- liftIO $ runSimulation translation (State $ const False)
     return ()
