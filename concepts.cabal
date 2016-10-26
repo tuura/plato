@@ -29,10 +29,10 @@ library
                       Tuura.Concept.STG.Circuit,
                       Tuura.PetriNet
     build-depends:    base >= 4.8 && < 5,
-                      bifunctors > 5.4,
+                      bifunctors <5.4 || >5.4,
                       containers == 0.5.*,
                       mtl == 2.2.*,
-                      hint >= 0.6.0,
+                      hint >= 0.5.2,
                       transformers >= 0.4 && < 0.6,
                       extra >= 1.4.10,
                       text >= 1.2.2,
