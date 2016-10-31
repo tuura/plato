@@ -32,7 +32,7 @@ these tools.
 The latest version of this tool, and this manual, can be found [in the
 GitHub repo](https://github.com/tuura/concepts). Any bugs or issues
 found with the tool can be reported here. This tool is also distributed
-as a back-end tool for orkcraft. This version
+as a back-end tool for Workcraft. This version
 of the concepts tool will be the latest version that works correctly
 with Workcraft. The latest
 version of Workcraft, which also
@@ -235,7 +235,7 @@ Workcraft can
 be started instead by double clicking the Workcraft icon, which is
 the app container for the necessary files.
 
-When workcraft starts, you will be greeted by blank screen, as seen here:
+When Workcraft starts, you will be greeted by blank screen, as seen here:
 
 ![Workcraft immediately after starting.](http://jrbeaumont.github.io/concepts-manual/images/blank_workcraft_screenshot.svg)
 
