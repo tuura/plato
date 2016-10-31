@@ -1,4 +1,4 @@
-﻿#Concepts Manual	
+﻿#Concepts Manual
 
 
 Introduction
@@ -24,37 +24,26 @@ upon the abstract, and a tool for translating concepts into *Signal
 Transition Graphs* (STGs). These
 are commonly used for the specification, verification and synthesis of
 asynchronous control circuits in the academic community, and they are
-supported by multiple EDA tools, such as <span><span
-style="font-variant:small-caps;">Petrify</span></span>,
-<span><span
-style="font-variant:small-caps;">Mpsat</span></span>,
-<span><span
-style="font-variant:small-caps;">Versify</span></span>,
-<span><span
-style="font-variant:small-caps;">Workcraft</span></span>,
-and others. The aim of this tool is to design and debug concepts, and
-then translate them to STGs, where they can be used with these tools.
+supported by multiple EDA tools, such as Petrify, Mpsat, Versify,
+Workcraft, and others. The aim of this tool is to design and debug
+concepts, and then translate them to STGs, where they can be used with
+these tools.
 
 The latest version of this tool, and this manual, can be found [in the
 GitHub repo](https://github.com/tuura/concepts). Any bugs or issues
 found with the tool can be reported here. This tool is also distributed
-as a back-end tool for <span><spanstyle="font-variant:small-caps;">Workcraft</span></span>. This version
+as a back-end tool for Workcraft. This version
 of the concepts tool will be the latest version that works correctly
-with <span><span
-style="font-variant:small-caps;">Workcraft</span></span>. The latest
-version of <span><span
-style="font-variant:small-caps;">Workcraft</span></span>, which also
-features tools such as <span><span
-style="font-variant:small-caps;">Petrify</span></span> and <span><span
-style="font-variant:small-caps;">Mpsat</span></span>, can be downloaded
+with Workcraft. The latest
+version of Workcraft, which also
+features tools such as Petrify and Mpsat, can be downloaded
 from <http://workcraft.org/>.
 
 Installation
 ============
 
-The concepts tool, as well as <span><span
-style="font-variant:small-caps;">Workcraft</span></span> are available
-for *Windows*, *Linux* and *Mac OS X*. The installation instructions for
+The concepts tool, as well as Workcraft are available
+for *Windows*, *Linux* and *macOS*. The installation instructions for
 all of these operating systems are the same. We will be referring to
 directories using the
 forward-slash character (’/’) as a separator, however for *Windows*,
@@ -62,10 +51,8 @@ replace this with a back-slash character (’\\’).
 
 If choosing to use the concepts tool on its own, this must be downloaded
 from the [GitHub repo](https://github.com/tuura/concepts). If you choose
-to use this tool as part of <span><span
-style="font-variant:small-caps;">Workcraft</span></span>, download this
-from the [<span><span
-style="font-variant:small-caps;">Workcraft</span></span>
+to use this tool as part of Workcraft, download this
+from the [Workcraft
 website](http://workcraft.org/). Once downloaded, extract the contents
 of the folder, and move them to a directory you wish to run them from.
 
@@ -75,20 +62,19 @@ Concepts tool requirements
 The concepts tool is written in *Haskell*, and uses *Stack* to install
 the necessary compiler and dependencies. If necessary, please download
 stack for your operating system, available from
-<https://haskell.org/downloads#stack>, and follow the instructions to
+<https://docs.haskellstack.org/en/stable/install_and_upgrade/>, and follow the instructions to
 install this.
 
 Workcraft requirements
 ----------------------
 
-<span><span style="font-variant:small-caps;">Workcraft</span></span> is
+Workcraft is
 written in Java, and the latest version of the *Java Runtime
 Environment* (JRE) needs to be installed to run. This can be downloaded
 from <http://java.com/en/download/>. If needed, download the JRE
 installer, and follow the instructions to install this.
 
-While the concepts tool is distributed with <span><span
-style="font-variant:small-caps;">Workcraft</span></span>, it still needs
+While the concepts tool is distributed with Workcraft, it still needs
 to be built by *stack* in order for it to be run. See
 above for requirements for the concepts
 tool.
@@ -96,15 +82,12 @@ tool.
 Installing the tool
 -------------------
 
-Once either the concepts tool or <span><span
-style="font-variant:small-caps;">Workcraft</span></span> has been
+Once either the concepts tool or Workcraft has been
 extracted and moved to the desired directory, using command line,
-navigate to the concepts tool directory, or if using <span><span
-style="font-variant:small-caps;">Workcraft</span></span>, navigate to
-the <span><span style="font-variant:small-caps;">Workcraft</span></span>
+navigate to the concepts tool directory, or if using Workcraft, navigate to
+the Workcraft
 directory, and then navigate to the concepts tool directory, found in
-`tools/concepts` (for *OS X*, the <span><span
-style="font-variant:small-caps;">Workcraft</span></span> directory is
+`tools/concepts` (for *OS X*, the Workcraft directory is
 located within the `Workcraft.app` contents folder. The concepts tool
 will be found at `Contents/Resources/tools/concepts`.
 
@@ -113,7 +96,7 @@ you aim to use the concepts tool. First of all, let’s setup stack. To do
 this, run:
 
 ```
-  $ stack setup
+  $ stack setup --no-system-ghc
 ```
 
 This will prepare stack to install the concepts tool. Now, to build and
@@ -131,8 +114,7 @@ Using the tool from command line
 
 With the tool installed, we can now start to use it to translate
 concepts to STGs. We will begin by discussing how it is used from
-command line. Usage as a back-end tool in <span><span
-style="font-variant:small-caps;">Workcraft</span></span> is discussed in
+command line. Usage as a back-end tool in Workcraft is discussed in
 the next section.
 
 The standard command for the tool is as follows:
@@ -218,10 +200,7 @@ When the translation is complete, the tool will output the following:
 ```
 
 This output is the STG representation in *.g* format. *.g* files are a
-standard type used as input to tools, such as <span><span
-style="font-variant:small-caps;">Petrify</span></span>, <span><span
-style="font-variant:small-caps;">Mpsat</span></span>, and <span><span
-style="font-variant:small-caps;">Workcraft</span></span>. Therefore,
+standard type used as input to tools, such as Petrify, Mpsat, and Workcraft. Therefore,
 this output can by copy-and-pasted into a file, and saved with the file
 etension *.g*, and then used as input to these tools.
 
@@ -234,13 +213,12 @@ Any errors that occur during the translation process will produce errors
 referring to the problematic lines of signals of the concepts that are
 problematic.
 
-Using the tool from <span><span style="font-variant:small-caps;">Workcraft</span></span>
+Using the tool from Workcraft
 =================================================================================================================
 
 This section will discuss how to use the concepts tool from within
-<span><span style="font-variant:small-caps;">Workcraft</span></span>.
-There are many other features of <span><span
-style="font-variant:small-caps;">Workcraft</span></span>, both as part
+Workcraft.
+There are many other features of Workcraft, both as part
 of the STG plug in, some of which I will discuss in the context of
 concepts here, and as part of other modelling formalisms. More
 information on these can be found at <http://workcraft.org/>.
@@ -248,18 +226,16 @@ information on these can be found at <http://workcraft.org/>.
 Translating and authoring concepts
 ----------------------------------
 
-First of all, <span><span
-style="font-variant:small-caps;">Workcraft</span></span> must be
+First of all, Workcraft must be
 started. This can be done by running the start up script, located in the
-<span><span style="font-variant:small-caps;">Workcraft</span></span>
+Workcraft
 directory in *Windows* and *Linux*. In *Windows*, this script is named
 “`workcraft.bat`“. In *Linux*, it is simply ”`workcraft`". In *OS X*,
-<span><span style="font-variant:small-caps;">Workcraft</span></span> can
-be started instead by double clicking the <span><span
-style="font-variant:small-caps;">Workcraft</span></span> icon, which is
+Workcraft can
+be started instead by double clicking the Workcraft icon, which is
 the app container for the necessary files.
 
-When workcraft starts, you will be greeted by blank screen, as seen here:
+When Workcraft starts, you will be greeted by blank screen, as seen here:
 
 ![Workcraft immediately after starting.](http://jrbeaumont.github.io/concepts-manual/images/blank_workcraft_screenshot.svg)
 
@@ -311,7 +287,7 @@ these operations can be made to this STG or to the concepts file.
 Importing concepts directly
 ---------------------------
 
-In <span><span style="font-variant:small-caps;">Workcraft</span></span>
+In Workcraft
 it is also possible to import concepts directly from a file, without
 having to view the concepts first. This can be done from the “*File*”
 menu, by selecting the “*Import...*” option.
@@ -325,11 +301,10 @@ Errors
 ------
 
 If any errors are encountered during the translation process,
-<span><span style="font-variant:small-caps;">Workcraft</span></span>
+Workcraft
 will produce a helpful error message. This usually can tell you with
 more detail what the issue that is causing the error is, but will ask
-you to refer to <span><span
-style="font-variant:small-caps;">Workcraft</span></span>’s console
+you to refer to Workcraft’s console
 window for specific line numbers or signals which need to be corrected.
 These errors will include whether a signal has not been declared as an
 input or output, a signal has not had it’s initial state given, or even
@@ -484,18 +459,18 @@ simply states that the cause will happen before the effect. It does
 not suggest timing. One effect signal transition having multiple
 cause signal transitions creates *AND-causality*. This means that
 for the effect to occur, both causes must occur. For example:
-`rise a ~> rise c <> rise b ~> rise c` 
+`rise a ~> rise c <> rise b ~> rise c`
 will form a concept where both `rise a` and `rise b` must occur
 before `rise c` can occur.
 
 `~|~>`
 
-This is used to show \emph{OR causality}. Similar to `~>`, however the 
-transitions on left side of this arrow can be a list of causes, 
+This is used to show \emph{OR causality}. Similar to `~>`, however the
+transitions on left side of this arrow can be a list of causes,
 e.g `[rise a, rise b]`. The effect transition (on the right of the arrow)
 must be a single signal transition. This will imply that only one of the
-signal transitions in the cause list must occur in order for the effect 
-to occur. With the previous example, the `rise a` transition alone can cause the effect. 
+signal transitions in the cause list must occur in order for the effect
+to occur. With the previous example, the `rise a` transition alone can cause the effect.
 
 `<>`
 
@@ -606,20 +581,20 @@ but never at the same time.
 
 `andGate a b c`
 
-This is a gate-level concept, using OR-causality to implement a 
-standard AND gate. Signals `a` and `b`are inputs to the gate, 
+This is a gate-level concept, using OR-causality to implement a
+standard AND gate. Signals `a` and `b`are inputs to the gate,
 and `c` is the output. Both `rise a` and `rise b` must occur for
-`rise c` to occur. Following this, either `fall a` or `fall b` must 
+`rise c` to occur. Following this, either `fall a` or `fall b` must
 occur for `fall c` to occur.
-  
+
 `orGate a b c`
 
-This is a gate-level concept, using OR-causality to implement a 
-standard OR gate. Signals `a` and `b` are inputs to the gate, and 
-`c` is the output. Either `rise a` or `rise b` must occur for 
-`rise c` to occur. Following this, both `fall a`and `fall b` must 
-occur for `fall c` to occur. 
-  
+This is a gate-level concept, using OR-causality to implement a
+standard OR gate. Signals `a` and `b` are inputs to the gate, and
+`c` is the output. Either `rise a` or `rise b` must occur for
+`rise c` to occur. Following this, both `fall a`and `fall b` must
+occur for `fall c` to occur.
+
 
 There are many operators and concepts. With these built-in concepts, we
 beleive that it is possible to generate STGs of various sizes and
@@ -665,8 +640,7 @@ affect their type, or the specification in any-way.
 A work-around for this when used in command line is unfortunatley
 complicated. The *.g* file output by the tool can be edited, replacing,
 for example, all ’`A`’ signals with the desired signal name. If using
-the tool with <span><span
-style="font-variant:small-caps;">Workcraft</span></span>, this becomes
+the tool with Workcraft, this becomes
 somewhat easier. The STG when imported can be manipulated much more
 easily. The signals can have their names changed by selecting them and
 changing the property. Signals with the same name can be selected
