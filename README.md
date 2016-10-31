@@ -5,9 +5,14 @@
 
 A DSL for asynchronous circuits specification.
 
+### Requirements
+
+To build and run the translation tool, Stack is needed, and can be downloaded for all operating systems from
+<https://docs.haskellstack.org/en/stable/install_and_upgrade/>
+
 ### Build
 
-	stack setup
+	stack setup --no-system-ghc
 	stack build
 
 ### Test
