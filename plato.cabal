@@ -1,4 +1,4 @@
-name:          concepts
+name:          plato
 version:       0.0.1
 synopsis:      Hardware concepts
 license:       BSD3
@@ -6,14 +6,14 @@ license-file:  LICENSE
 author:        Tuura authors (see AUTHORS file)
 maintainer:    Andrey Mokhov <andrey.mokhov@gmail.com>, github: @snowleopard
 copyright:     Tuura authors (see AUTHORS file), 2015
-homepage:      https://github.com/tuura/concepts
+homepage:      https://github.com/tuura/plato
 category:      Hardware
 build-type:    Simple
 cabal-version: >=1.10
 
 source-repository head
     type:     git
-    location: https://github.com/tuura/concepts.git
+    location: https://github.com/tuura/plato.git
 
 library
     hs-source-dirs:   src
@@ -45,7 +45,7 @@ test-suite simulation-test
     type:             exitcode-stdio-1.0
     main-is:          SimTest.hs
     build-depends:    base >= 4.8 && < 5,
-                      concepts
+                      plato
     default-language: Haskell2010
     GHC-options:      -Wall -fwarn-tabs
 
@@ -53,6 +53,6 @@ test-suite translation-test
     type:             exitcode-stdio-1.0
     main-is:          TransTest.hs
     build-depends:    base >= 4.8 && < 5,
-                      concepts
+                      plato
     default-language: Haskell2010
     GHC-options:      -Wall -fwarn-tabs

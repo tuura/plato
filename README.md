@@ -1,7 +1,7 @@
 # Concepts
 
-[![Build Status](https://travis-ci.org/tuura/concepts.svg?branch=master)](https://travis-ci.org/tuura/concepts)
-[![Build status](https://ci.appveyor.com/api/projects/status/dn6igqdxf3cq2t8w/branch/master?svg=true)](https://ci.appveyor.com/project/snowleopard/concepts/branch/master)
+[![Build Status](https://travis-ci.org/tuura/plato.svg?branch=master)](https://travis-ci.org/tuura/plato)
+[![Build status](https://ci.appveyor.com/api/projects/status/eyfuyi0v9v1ulcgn?svg=true)](https://ci.appveyor.com/project/jrbeaumont/plato-9uatd)
 
 A DSL for asynchronous circuits specification.
 
@@ -24,7 +24,7 @@ To build and run the translation tool, Stack is needed, and can be downloaded fo
 Invoke the translate executable with a concept circuit file:
 
 	stack runghc translate/Main.hs examples/celement_with_env_1.hs
-	
+
 ### Manual
 
 The manual can be found at [doc/manual.md](https://github.com/tuura/concepts/blob/master/doc/manual.md)
