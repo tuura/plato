@@ -1,9 +1,9 @@
-# Concepts
+# Plato
 
 [![Build Status](https://travis-ci.org/tuura/plato.svg?branch=master)](https://travis-ci.org/tuura/plato)
 [![Build status](https://ci.appveyor.com/api/projects/status/eyfuyi0v9v1ulcgn?svg=true)](https://ci.appveyor.com/project/jrbeaumont/plato-9uatd)
 
-A DSL for asynchronous circuits specification.
+A DSL for asynchronous behavioural concept circuits specification, including a tool to translate concepts to Signal Transition Graphs
 
 ### Requirements
 
@@ -27,4 +27,4 @@ Invoke the translate executable with a concept circuit file:
 
 ### Manual
 
-The manual can be found at [doc/manual.md](https://github.com/tuura/concepts/blob/master/doc/manual.md)
+The manual can be found at [doc/manual.md](https://github.com/tuura/plato/blob/master/doc/manual.md)
