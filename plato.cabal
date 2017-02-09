@@ -22,7 +22,8 @@ library
                       Tuura.Concept.Simulation,
                       Tuura.Concept.STG,
                       Tuura.Concept.STG.Simulation,
-                      Tuura.Concept.STG.Translation
+                      Tuura.Concept.STG.Translation,
+                      Tuura.Plato.Options
     other-modules:    Tuura.Concept.Abstract,
                       Tuura.Concept.Circuit,
                       Tuura.Concept.STG.Abstract,
