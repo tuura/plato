@@ -14,19 +14,18 @@ import Tuura.Concept.STG
 import Tuura.Concept.STG.Simulation
 import Tuura.Concept.STG.Translation hiding (Signal)
 
+import Tuura.Plato.Options
+
 import qualified Language.Haskell.Interpreter as GHC
 import qualified Language.Haskell.Interpreter.Unsafe as GHC
 
 main :: IO ()
 main = do
-    args <- getArgs
-    if length args /= 1
-        then putStrLn "Exactly one path needed"
-        else do
-            r <- GHC.runInterpreter $ doWork (head args)
-            case r of
-               Left err -> putStrLn $ displayException err
-               Right () -> return ()
+    options <- getOptions
+    let input = optInput options
+    let paths = [input] ++ optInclude options
+    r <- GHC.runInterpreter $ doWork paths
+    either (putStrLn . displayException) return r
 
 {- Our own Signal type. Contains the signal index, from 0 to x-1 if
  - there are x signals. -}
@@ -82,16 +81,16 @@ loadModulesTopLevel paths = do
     mods <- GHC.getLoadedModules
     GHC.setTopLevelModules mods
 
-doWork :: String -> GHC.Interpreter () {- TODO: much of this is duplicated -}
-doWork path = do
+doWork :: [String] -> GHC.Interpreter () {- TODO: much of this is duplicated -}
+doWork paths = do
     {- Load user's module to gather info. -}
-    loadModulesTopLevel [path]
+    loadModulesTopLevel paths
     {- Use the circuit's type to gather how many signals it takes. -}
     t <- GHC.typeOf circuitName
     let numSigns = count "->" t
     {- Load the generated module too. -}
     liftIO $ writeTmpFile $ signalsApply numSigns
-    loadModulesTopLevel [path, tmpModuleFile]
+    loadModulesTopLevel (paths ++ [tmpModuleFile])
     liftIO $ removeIfExists tmpModuleFile
     {- Fetch our signals. -}
     signs <- GHC.interpret "signs" (GHC.as :: [Signal])
