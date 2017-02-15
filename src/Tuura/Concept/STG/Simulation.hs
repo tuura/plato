@@ -1,6 +1,6 @@
 module Tuura.Concept.STG.Simulation (
     module Control.Monad.State,
-    Simulation, PureSimulation, runSimulation, runPureSimulation
+    Simulation, PureSimulation, runSimulationSTG, runPureSimulationSTG
     ) where
 
 import Tuura.Concept.STG.Circuit
@@ -11,8 +11,8 @@ type Simulation a m = StateT (State a) m
 
 type PureSimulation a = Simulation a Identity
 
-runSimulation :: Simulation a m r -> State a -> m (r, State a)
-runSimulation = runStateT
+runSimulationSTG :: Simulation a m r -> State a -> m (r, State a)
+runSimulationSTG = runStateT
 
-runPureSimulation :: PureSimulation a r -> State a -> (r, State a)
-runPureSimulation = runState
+runPureSimulationSTG :: PureSimulation a r -> State a -> (r, State a)
+runPureSimulationSTG = runState

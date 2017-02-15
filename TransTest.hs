@@ -5,6 +5,8 @@ import Data.List
 import Tuura.Concept.STG
 import Tuura.Concept.STG.Translation
 
+import Tuura.Plato.Translation
+
 main :: IO ()
 main = do
     testDotGOutput
@@ -18,7 +20,7 @@ testDotGOutput = do
     putStrLn "=== testDotGOutput"
     assertEq threeSignalsConcept expected
   where
-    threeSignalsConcept = translate signs (inputs [a] <> outputs [b] <> internals [c] <> initialise0 [a, c] <> initialise1 [b])
+    threeSignalsConcept = translate (inputs [a] <> outputs [b] <> internals [c] <> initialise0 [a, c] <> initialise1 [b]) signs
     a = Signal 0
     b = Signal 1
     c = Signal 2

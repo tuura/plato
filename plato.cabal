@@ -23,11 +23,17 @@ library
                       Tuura.Concept.STG,
                       Tuura.Concept.STG.Simulation,
                       Tuura.Concept.STG.Translation,
-                      Tuura.Plato.Options
+                      Tuura.Concept.FSM,
+                      Tuura.Concept.FSM.Simulation,
+                      Tuura.Concept.FSM.Translation,
+                      Tuura.Plato.Options,
+                      Tuura.Plato.Translation
     other-modules:    Tuura.Concept.Abstract,
                       Tuura.Concept.Circuit,
                       Tuura.Concept.STG.Abstract,
                       Tuura.Concept.STG.Circuit,
+                      Tuura.Concept.FSM.Abstract,
+                      Tuura.Concept.FSM.Circuit,
                       Tuura.PetriNet
     build-depends:    base >= 4.8 && < 5,
                       bifunctors <5.4 || >5.4,

@@ -9,12 +9,14 @@ import System.Exit
 data Options = Options
     { optInput   :: String
     , optInclude :: [String]
+    , optFSM     :: Bool
     , optHelp    :: Bool }
 
 defaultOptions :: Options
 defaultOptions   = Options
     { optInput   = ""
     , optInclude = []
+    , optFSM     = False
     , optHelp    = False }
 
 options :: [OptDescr (Options -> Options)]
@@ -22,6 +24,9 @@ options =
  [ Option ['i'] ["include"]
      (ReqArg (\ d opts -> opts { optInclude = optInclude opts ++ [d] }) "FILEPATH")
      "Concept file to be included"
+ , Option ['f'] ["fsm"]
+     (NoArg (\ opts -> opts { optFSM = True }))
+     "Translate concept specification to an FSM"
  , Option ['h'] ["help"]
      (NoArg (\ opts -> opts { optHelp = True }))
      "Show this help message"
