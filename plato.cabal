@@ -28,7 +28,6 @@ library
                       Tuura.Concept.FSM.Translation,
                       Tuura.Plato.Options,
                       Tuura.Plato.Translation
-                      Tuura.Plato.Options
     other-modules:    Tuura.Concept.Abstract,
                       Tuura.Concept.Circuit,
                       Tuura.Concept.STG.Abstract,
