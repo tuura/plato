@@ -33,7 +33,6 @@ main = do
     let input = optInput options
     let paths = [input] ++ optInclude options
     r <- GHC.runInterpreter $ doWork (optFSM options) paths
-    r <- GHC.runInterpreter $ doWork paths
     either (putStrLn . displayException) return r
 
 {- Our own Signal type. Contains the signal index, from 0 to x-1 if
@@ -89,10 +88,9 @@ loadModulesTopLevel paths = do
     GHC.loadModules paths
     mods <- GHC.getLoadedModules
     GHC.setTopLevelModules mods
+
 doWork :: Bool -> [String] -> GHC.Interpreter () {- TODO: much of this is duplicated -}
 doWork transFSM paths = do
-doWork :: [String] -> GHC.Interpreter () {- TODO: much of this is duplicated -}
-doWork paths = do
     {- Load user's module to gather info. -}
     loadModulesTopLevel paths
     {- Use the circuit's type to gather how many signals it takes. -}
@@ -102,9 +100,6 @@ doWork paths = do
     GHC.liftIO $ writeTmpFile $ signalsApply numSigns
     loadModulesTopLevel (paths ++ [tmpModuleFile])
     GHC.liftIO $ removeIfExists tmpModuleFile
-    liftIO $ writeTmpFile $ signalsApply numSigns
-    loadModulesTopLevel (paths ++ [tmpModuleFile])
-    liftIO $ removeIfExists tmpModuleFile
     {- Fetch our signals. -}
     signs <- GHC.interpret "signs" (GHC.as :: [Signal])
     {- Obtain the circuit in terms of any signal (takes them as args). -}
