@@ -3,7 +3,7 @@ module Tuura.Concept.FSM.Simulation (
     Simulation, PureSimulation, runSimulationFSM, runPureSimulationFSM
     ) where
 
-import Tuura.Concept.FSM.Circuit
+import Tuura.Concept.Circuit.Circuit
 import Control.Monad.State hiding (State)
 import Data.Functor.Identity
 
