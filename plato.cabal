@@ -30,8 +30,8 @@ library
                       Tuura.Plato.Translation
     other-modules:    Tuura.Concept.Abstract,
                       Tuura.Concept.Circuit,
-                      Tuura.Concept.Circuit.Circuit,
-                      Tuura.Concept.Circuit.Abstract,
+                      Tuura.Concept.Circuit.Basic,
+                      Tuura.Concept.Circuit.Derived,
                       Tuura.PetriNet
     build-depends:    base >= 4.8 && < 5,
                       bifunctors <5.4 || >5.4,

@@ -1,4 +1,4 @@
-module Tuura.Concept.Circuit.Abstract (
+module Tuura.Concept.Circuit.Basic (
     Interface (..),
     InitialValue (..),
     Concept (..),
