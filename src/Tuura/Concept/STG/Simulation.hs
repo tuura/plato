@@ -3,7 +3,7 @@ module Tuura.Concept.STG.Simulation (
     Simulation, PureSimulation, runSimulationSTG, runPureSimulationSTG
     ) where
 
-import Tuura.Concept.Circuit.Circuit
+import Tuura.Concept.Circuit.Derived
 import Control.Monad.State hiding (State)
 import Data.Functor.Identity
 

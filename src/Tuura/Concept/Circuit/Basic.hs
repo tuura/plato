@@ -1,9 +1,10 @@
-module Tuura.Concept.Circuit.Abstract (
+module Tuura.Concept.Circuit.Basic (
     Interface (..),
     InitialValue (..),
     Concept (..),
     initialConcept, arcConcept,
     orCausality, interfaceConcept,
+    invariantConcept
     ) where
 
 import Data.Monoid
@@ -35,17 +36,19 @@ data Concept s e a = Concept
                    {
                        initial   :: a -> InitialValue,
                        arcs      :: [([e], e)],
-                       interface :: a -> Interface
+                       interface :: a -> Interface,
+                       invariant :: [[e]]
                    }
 
 instance Monoid (Concept s e a) where
-    mempty = Concept mempty mempty mempty
+    mempty = Concept mempty mempty mempty mempty
 
     mappend a b = Concept
                   {
                       initial   = initial a   <> initial b,
                       arcs      = arcs a      <> arcs b,
-                      interface = interface a <> interface b
+                      interface = interface a <> interface b,
+                      invariant = invariant a <> invariant b
                   }
 
 arcConcept :: e -> e -> Concept s e a
@@ -59,3 +62,6 @@ initialConcept f = mempty { initial = f }
 
 interfaceConcept :: (a -> Interface) -> Concept s e a
 interfaceConcept f = mempty { interface = f }
+
+invariantConcept :: [e] -> Concept s e a
+invariantConcept i = mempty { invariant = [i] }

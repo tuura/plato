@@ -1,4 +1,4 @@
-module Tuura.Concept.Circuit.Circuit (
+module Tuura.Concept.Circuit.Derived (
     State (..), Transition (..),
     rise, fall, toggle, oldValue, before, after,
     CircuitConcept,
@@ -11,7 +11,7 @@ module Tuura.Concept.Circuit.Circuit (
     outputs, internals
     ) where
 
-import Tuura.Concept.Circuit.Abstract
+import Tuura.Concept.Circuit.Basic
 import Data.Monoid
 
 -- Circuit primitives
@@ -106,7 +106,10 @@ handshake11 a b = handshake a b <> initialise a True <> initialise b True
 
 -- TODO: Restrict the initial state so that a=b=1 is not allowed.
 me :: a -> a -> CircuitConcept a
-me a b = fall a ~> rise b <> fall b ~> rise a
+me a b = fall a ~> rise b <> fall b ~> rise a <> invariantConcept [rise a, rise b]
+
+invariant :: [Transition a] -> CircuitConcept a
+invariant i = invariantConcept i
 
 -- Signal type declaration concepts
 inputs :: Eq a => [a] -> CircuitConcept a

@@ -84,7 +84,8 @@ translate circuit signs =
       Valid -> do
           let allArcs = addConsistency (arcs circuit) signs
           let sortedArcs = concatMap handleArcs (groupSortOn snd allArcs)
-          let arcStrs = map show (createAllArcs sortedArcs)
+          let invariants = createInvariants (invariant circuit) signs
+          let arcStrs = map show (createAllArcs sortedArcs invariants)
           let inputSigns = filter ((==Input) . interface circuit) signs
           let outputSigns = filter ((==Output) . interface circuit) signs
           let internalSigns = filter ((==Internal) . interface circuit) signs
@@ -173,6 +174,19 @@ createArcs xs = zipWith3 createArc makeSrcEncs makeDestEncs activeTransitions
           invert = liftM2 Transition signal (not . newValue)
           activeTransitions = (map snd .  addMissingSignals) xs
 
+createInvariants :: Ord a => [[Transition a]] -> [a] -> [[Tristate]]
+createInvariants xs allSigns = concatMap expand (map encode newTransitions)
+    where newTransitions = map (\(m,t) -> (map (\s -> TransitionX { msignal = s, mnewValue = triX }) m) ++ t)
+                           (zip missingSignals transX)
+          transX = map (map toTransitionX) xs
+          missingSignals = map (allSigns \\) (onlySignals xs)
+          expand t = case elemIndex triX t of
+               Nothing -> [t]
+               Just n  -> do
+                let newTrue = replaceAtIndex triTrue t n
+                let newFalse = replaceAtIndex triFalse t n
+                expand newTrue ++ expand newFalse
+
 replaceAtIndex :: a -> [a] -> Int -> [a]
 replaceAtIndex item ls n = a ++ (item:b)
     where (a, (_:b)) = splitAt n ls
@@ -205,6 +219,11 @@ fsmarcxToFsmarc arc = FsmArc newSourceEnc (transx arc) newDestEnc
     where newSourceEnc = (encToInt . srcEncx) arc
           newDestEnc = (encToInt . destEncx) arc
 
+removeInvariants :: [FsmArcX a] -> [[Tristate]] -> [FsmArcX a]
+removeInvariants xs inv = concatMap (\x -> if (destEncx x `elem` inv || srcEncx x `elem` inv)
+                          then []
+                          else [x]) xs
+
 -- Produce all arcs with all X's resolved
-createAllArcs :: Ord a => [([Transition a], Transition a)] -> [FsmArc a]
-createAllArcs = map fsmarcxToFsmarc . expandAllXs . createArcs
+createAllArcs :: Ord a => [([Transition a], Transition a)] -> [[Tristate]] -> [FsmArc a]
+createAllArcs xs inv = map (fsmarcxToFsmarc) (removeInvariants (expandAllXs (createArcs xs)) inv)
