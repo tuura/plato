@@ -3,5 +3,6 @@
 *.o
 dist/
 .stack-work/
+<<<<<<< HEAD
 *.DS_Store
 
