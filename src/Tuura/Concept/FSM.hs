@@ -1,9 +1,9 @@
 module Tuura.Concept.FSM (
     module Data.Monoid,
-    module Tuura.Concept.FSM.Abstract,
-    module Tuura.Concept.FSM.Circuit,
+    module Tuura.Concept.Circuit.Basic,
+    module Tuura.Concept.Circuit.Derived,
     ) where
 
 import Data.Monoid
-import Tuura.Concept.FSM.Abstract
-import Tuura.Concept.FSM.Circuit
+import Tuura.Concept.Circuit.Basic
+import Tuura.Concept.Circuit.Derived

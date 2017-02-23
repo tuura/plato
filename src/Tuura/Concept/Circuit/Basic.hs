@@ -1,4 +1,4 @@
-module Tuura.Concept.FSM.Abstract (
+module Tuura.Concept.Circuit.Basic (
     Interface (..),
     InitialValue (..),
     Concept (..),
