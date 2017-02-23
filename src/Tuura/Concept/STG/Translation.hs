@@ -23,13 +23,13 @@ translate circuit signs =
         Valid -> do
             let initStrs = map (\s -> (show s, (getDefined $ initial circuit s))) signs
             let arcStrs = nubOrd (concatMap handleArcs (groupSortOn snd (arcs circuit)))
+            let invStrs = genInvStrs (invariant circuit)
             let inputSigns = filter ((==Input) . interface circuit) signs
             let outputSigns = filter ((==Output) . interface circuit) signs
             let internalSigns = filter ((==Internal) . interface circuit) signs
-            genSTG inputSigns outputSigns internalSigns arcStrs initStrs
+            genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStrs
         Invalid unused incons undef invInit -> do
             "Error. \n" ++ addErrors unused incons undef invInit
-
 
 handleArcs :: Show a => [([Transition a], Transition a)] -> [String]
 handleArcs arcLists = addConsistencyTrans effect n ++ concatMap transition arcMap
@@ -40,9 +40,9 @@ handleArcs arcLists = addConsistencyTrans effect n ++ concatMap transition arcMa
             n = length transCauses
             arcMap = concat (map (\m -> arcPairs m effect) (zip transCauses [0..(n-1)]))
 
-genSTG :: Show a => [a] -> [a] -> [a] -> [String] -> [(String, Bool)] -> String
-genSTG inputSigns outputSigns internalSigns arcStrs initStrs =
-    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines allArcs) (unwords marks)
+genSTG :: Show a => [a] -> [a] -> [a] -> [String] -> [(String, Bool)] -> [String] -> String
+genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStrs =
+    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines allArcs) (unwords marks) (unlines invStrs)
     where
         allSigns = output initStrs
         outs = map show outputSigns
@@ -69,7 +69,7 @@ transition (f, t)
         | otherwise  = readArc (init (show f) ++ "0") t
 
 tmpl :: String
-tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internal %s", ".graph", "%s.marking {%s}", ".end"]
+tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internal %s", ".graph", "%s.marking {%s}", ".end", "\n%s"]
 
 output :: [(String, Bool)] -> [String]
 output = nubOrd . map fst
@@ -85,3 +85,10 @@ initVal s ls = sum (map (\x -> if (fst x == s) then fromEnum (snd x) else 0) ls)
 
 readArc :: String -> String -> [String]
 readArc f t = [f ++ " " ++ t, t ++ " " ++ f]
+
+genInvStrs :: (Eq a, Show a) => [[Transition a]] -> [String]
+genInvStrs invs
+        | invs      == [] = []
+        | otherwise = info ++ map (\i -> unwords (map show i)) invs
+    where
+        info = ["Signal transition sets which are invariant:"]
