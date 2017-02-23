@@ -27,8 +27,8 @@ translate circuit signs =
             let outputSigns = filter ((==Output) . interface circuit) signs
             let internalSigns = filter ((==Internal) . interface circuit) signs
             genSTG inputSigns outputSigns internalSigns arcStrs initStrs
-        Invalid unused incons undef -> do
-            "Error. \n" ++ addErrors unused incons undef
+        Invalid unused incons undef invInit -> do
+            "Error. \n" ++ addErrors unused incons undef invInit
 
 
 handleArcs :: Show a => [([Transition a], Transition a)] -> [String]
@@ -39,15 +39,6 @@ handleArcs arcLists = addConsistencyTrans effect n ++ concatMap transition arcMa
             transCauses = cartesianProduct effectCauses
             n = length transCauses
             arcMap = concat (map (\m -> arcPairs m effect) (zip transCauses [0..(n-1)]))
-
-validate :: Eq a => [a] -> CircuitConcept a -> ValidationResult a
-validate signs circuit
-    | unused ++ inconsistent ++ undef == [] = Valid
-    | otherwise                             = Invalid unused inconsistent undef
-  where
-    unused       = filter ((==Unused) . interface circuit) signs
-    inconsistent = filter ((==Inconsistent) . initial circuit) signs
-    undef        = filter ((==Undefined) . initial circuit) signs
 
 genSTG :: Show a => [a] -> [a] -> [a] -> [String] -> [(String, Bool)] -> String
 genSTG inputSigns outputSigns internalSigns arcStrs initStrs =

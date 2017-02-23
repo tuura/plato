@@ -91,8 +91,8 @@ translate circuit signs =
           let internalSigns = filter ((==Internal) . interface circuit) signs
           let initialState = getInitialState circuit signs
           genFSM inputSigns outputSigns internalSigns arcStrs initialState
-      Invalid unused incons undef ->
-          "Error. \n" ++ addErrors unused incons undef
+      Invalid unused incons undef invInit ->
+          "Error. \n" ++ addErrors unused incons undef invInit
 
 getInitialState :: CircuitConcept a -> [a] -> String
 getInitialState circuit signs = show (encToInt state)
@@ -101,15 +101,6 @@ getInitialState circuit signs = show (encToInt state)
 
 addConsistency :: Ord a => [([Transition a], Transition a)] -> [a] -> [([Transition a], Transition a)]
 addConsistency allArcs signs = nubOrd (allArcs ++ concatMap (\s -> [([rise s], fall s), ([fall s], rise s)]) signs)
-
-validate :: Eq a => [a] -> CircuitConcept a -> ValidationResult a
-validate signs circuit
-    | unused ++ inconsistent ++ undef == [] = Valid
-    | otherwise                             = Invalid unused inconsistent undef
-  where
-    unused       = filter ((==Unused) . interface circuit) signs
-    inconsistent = filter ((==Inconsistent) . initial circuit) signs
-    undef        = filter ((==Undefined) . initial circuit) signs
 
 handleArcs :: [([Transition a], Transition a)] -> [([Transition a], Transition a)]
 handleArcs arcLists = result
