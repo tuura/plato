@@ -43,8 +43,7 @@ testDotGOutput = do
                        , "C1 C-"
                        , "C- C0"
                        , ".marking {A0 B1 C0}"
-                       , ".end"
-                       , ""]
+                       , ".end"]
 
 testHandshakeConcept :: IO ()
 testHandshakeConcept = do

@@ -91,8 +91,8 @@ translate circuit signs =
           let internalSigns = filter ((==Internal) . interface circuit) signs
           let initialState = getInitialState circuit signs
           genFSM inputSigns outputSigns internalSigns arcStrs initialState
-      Invalid unused incons undef invInit ->
-          "Error. \n" ++ addErrors unused incons undef invInit
+      Invalid errs ->
+          "Error. \n" ++ concatMap addErrors errs
 
 getInitialState :: CircuitConcept a -> [a] -> String
 getInitialState circuit signs = show (encToInt state)
