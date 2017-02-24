@@ -6,7 +6,7 @@ module Tuura.Concept.Circuit.Derived (
     initialise0, initialise1,
     (~>), (~|~>),
     buffer, inverter, cElement, meElement,
-    andGate, orGate, me, handshake,
+    andGate, orGate, me, never, handshake,
     handshake00, handshake11, inputs,
     outputs, internals
     ) where
@@ -106,10 +106,10 @@ handshake11 a b = handshake a b <> initialise a True <> initialise b True
 
 -- TODO: Restrict the initial state so that a=b=1 is not allowed.
 me :: a -> a -> CircuitConcept a
-me a b = fall a ~> rise b <> fall b ~> rise a <> invariantConcept [rise a, rise b]
+me a b = fall a ~> rise b <> fall b ~> rise a <> never [rise a, rise b]
 
-invariant :: [Transition a] -> CircuitConcept a
-invariant i = invariantConcept i
+never :: [Transition a] -> CircuitConcept a
+never es = invariantConcept (NeverAll es)
 
 -- Signal type declaration concepts
 inputs :: Eq a => [a] -> CircuitConcept a

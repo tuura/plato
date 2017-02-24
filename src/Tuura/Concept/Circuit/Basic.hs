@@ -1,6 +1,7 @@
 module Tuura.Concept.Circuit.Basic (
     Interface (..),
     InitialValue (..),
+    Invariant (..),
     Concept (..),
     initialConcept, arcConcept,
     orCausality, interfaceConcept,
@@ -31,13 +32,15 @@ instance Monoid InitialValue where
     mappend x Undefined = x
     mappend (Defined x) (Defined y) = if x == y then Defined x else Inconsistent
 
+data Invariant e = NeverAll [e] deriving (Eq, Show)
+
 -- Note, type parameter s is unused in this implementation and may be removed later.
 data Concept s e a = Concept
                    {
                        initial   :: a -> InitialValue,
                        arcs      :: [([e], e)],
                        interface :: a -> Interface,
-                       invariant :: [[e]]
+                       invariant :: [Invariant e]
                    }
 
 instance Monoid (Concept s e a) where
@@ -63,5 +66,5 @@ initialConcept f = mempty { initial = f }
 interfaceConcept :: (a -> Interface) -> Concept s e a
 interfaceConcept f = mempty { interface = f }
 
-invariantConcept :: [e] -> Concept s e a
+invariantConcept :: Invariant e -> Concept s e a
 invariantConcept i = mempty { invariant = [i] }

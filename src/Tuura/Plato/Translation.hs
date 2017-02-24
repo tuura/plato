@@ -30,17 +30,17 @@ addErrors unused incons undef invInit = un ++ ic ++ ud ++ iv
 validate :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
 validate signs circuit
     | unused ++ inconsistent ++ undef ++ invInit == [] = Valid
-    | otherwise                             = Invalid unused inconsistent undef invInit
+    | otherwise = Invalid unused inconsistent undef invInit
   where
     unused       = filter ((==Unused) . interface circuit) signs
     inconsistent = filter ((==Inconsistent) . initial circuit) signs
     undef        = filter ((==Undefined) . initial circuit) signs
-    invInit      = checkInitialStates signs circuit
+    invInit      = concatMap (\i -> checkInitialStates signs i (initial circuit)) (invariant circuit)
 
-checkInitialStates :: Ord a => [a] -> CircuitConcept a -> [a]
-checkInitialStates signs circuit = nubOrd (concatMap (\inv -> if (checkForInvariant inv initialStates) then (invariantError inv) else []) (invariant circuit))
+checkInitialStates :: Ord a => [a] -> Invariant (Transition a) -> (a -> InitialValue) -> [a]
+checkInitialStates signs (NeverAll es) initials = nubOrd (if (checkForInvariant es initialStates) then (invariantError es) else [])
   where
-    initialStates = map (\s -> Transition { signal = s , newValue = getDefined $ initial circuit s }) signs
+    initialStates = map (\s -> Transition { signal = s , newValue = getDefined $ initials s }) signs
 
 invariantError :: [Transition a] -> [a]
 invariantError = map (signal)

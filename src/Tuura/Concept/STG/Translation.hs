@@ -23,7 +23,7 @@ translate circuit signs =
         Valid -> do
             let initStrs = map (\s -> (show s, (getDefined $ initial circuit s))) signs
             let arcStrs = nubOrd (concatMap handleArcs (groupSortOn snd (arcs circuit)))
-            let invStrs = genInvStrs (invariant circuit)
+            let invStrs = map genInvStrs (invariant circuit)
             let inputSigns = filter ((==Input) . interface circuit) signs
             let outputSigns = filter ((==Output) . interface circuit) signs
             let internalSigns = filter ((==Internal) . interface circuit) signs
@@ -69,7 +69,7 @@ transition (f, t)
         | otherwise  = readArc (init (show f) ++ "0") t
 
 tmpl :: String
-tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internal %s", ".graph", "%s.marking {%s}", ".end", "%s"]
+tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internal %s", ".graph", "%s.marking {%s}", "%s.end"]
 
 output :: [(String, Bool)] -> [String]
 output = nubOrd . map fst
@@ -86,9 +86,10 @@ initVal s ls = sum (map (\x -> if (fst x == s) then fromEnum (snd x) else 0) ls)
 readArc :: String -> String -> [String]
 readArc f t = [f ++ " " ++ t, t ++ " " ++ f]
 
-genInvStrs :: (Eq a, Show a) => [[Transition a]] -> [String]
-genInvStrs invs
-        | invs      == [] = []
-        | otherwise = info ++ map (\i -> unwords (map show i)) invs
+genInvStrs :: (Ord a, Show a) => Invariant (Transition a) -> String
+genInvStrs (NeverAll es)
+        | es      == [] = []
+        | otherwise = "# invariant = not (" ++ (format (head sorted)) ++ (concatMap (\e -> " && " ++ format e) (tail sorted)) ++ ")"
     where
-        info = ["Signal transition sets which are invariant:"]
+        format e = if (newValue e) then show (signal e) else "not " ++ show (signal e)
+        sorted = nubOrd es
