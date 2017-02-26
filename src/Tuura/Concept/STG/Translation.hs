@@ -29,7 +29,7 @@ translate circuit signs =
             let internalSigns = filter ((==Internal) . interface circuit) signs
             genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStrs
         Invalid errs ->
-          "Error. \n" ++ concatMap addErrors errs
+            "Error. \n" ++ addErrors errs
 
 handleArcs :: Show a => [([Transition a], Transition a)] -> [String]
 handleArcs arcLists = addConsistencyTrans effect n ++ concatMap transition arcMap
@@ -89,7 +89,6 @@ readArc f t = [f ++ " " ++ t, t ++ " " ++ f]
 genInvStrs :: (Ord a, Show a) => Invariant (Transition a) -> String
 genInvStrs (NeverAll es)
         | es        == [] = []
-        | otherwise = "# invariant = not (" ++ (format (head sorted)) ++ (concatMap (\e -> " && " ++ format e) (tail sorted)) ++ ")"
+        | otherwise = "# invariant = not (" ++  (intercalate " && " (map format es)) ++ ")"
     where
         format e = if (newValue e) then show (signal e) else "not " ++ show (signal e)
-        sorted = nubOrd es

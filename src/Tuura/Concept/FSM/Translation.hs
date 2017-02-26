@@ -92,7 +92,7 @@ translate circuit signs =
           let initialState = getInitialState circuit signs
           genFSM inputSigns outputSigns internalSigns arcStrs initialState
       Invalid errs ->
-          "Error. \n" ++ concatMap addErrors errs
+          "Error. \n" ++ addErrors errs
 
 getInitialState :: CircuitConcept a -> [a] -> String
 getInitialState circuit signs = show (encToInt state)
