@@ -40,7 +40,7 @@ addErrors errs =
              ++ unlines (map show (undefd errs)) ++ "\n"
         else "") ++
         (if (invart errs) /= []
-        then "The initial state is an invariant state.\nSignals with erroneous initial states: \n"
+        then "The invariant does not hold for the initial state.\nSignals with erroneous initial states: \n"
              ++ unlines (map show (invart errs)) ++ "\n"
         else "")
     where

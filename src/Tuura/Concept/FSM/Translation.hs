@@ -82,20 +82,22 @@ translate :: (Show a, Ord a) => CircuitConcept a -> [a] -> String
 translate circuit signs =
     case validate signs circuit of
       Valid -> do
-          let allArcs = addConsistency (arcs circuit) signs
-          let sortedArcs = concatMap handleArcs (groupSortOn snd allArcs)
+          let allCause = addConsistency (arcs circuit) signs
+          let sortedCause = concatMap handleArcs (groupSortOn snd allCause)
+          let initialState = getInitialState circuit signs
           let invariants = concatMap (\i -> createInvariants i signs) (invariant circuit)
-          let arcStrs = map show (createAllArcs sortedArcs invariants)
+          let allArcs = createAllArcs sortedCause
+          let reachables = findReachables allArcs initialState
+          let reachableArcs = removeUnreachables allArcs reachables
           let inputSigns = filter ((==Input) . interface circuit) signs
           let outputSigns = filter ((==Output) . interface circuit) signs
           let internalSigns = filter ((==Internal) . interface circuit) signs
-          let initialState = getInitialState circuit signs
-          genFSM inputSigns outputSigns internalSigns arcStrs initialState
+          genFSM inputSigns outputSigns internalSigns (map show reachableArcs) (show initialState)
       Invalid errs ->
           "Error. \n" ++ addErrors errs
 
-getInitialState :: CircuitConcept a -> [a] -> String
-getInitialState circuit signs = show (encToInt state)
+getInitialState :: CircuitConcept a -> [a] -> Int
+getInitialState circuit signs = encToInt state
   where
     state = map (\s -> if (getDefined $ initial circuit s) then triTrue else triFalse) signs
 
@@ -209,9 +211,22 @@ fsmarcxToFsmarc arc = FsmArc newSourceEnc (transx arc) newDestEnc
     where newSourceEnc = (encToInt . srcEncx) arc
           newDestEnc = (encToInt . destEncx) arc
 
-removeInvariants :: [FsmArcX a] -> [[Tristate]] -> [FsmArcX a]
-removeInvariants xs inv = filter (\x -> not (destEncx x `elem` inv || srcEncx x `elem` inv)) xs
+removeUnreachables :: [FsmArc a] -> [Int] -> [FsmArc a]
+removeUnreachables xs reachables = filter (\s -> (destEnc s `elem` reachables && srcEnc s `elem` reachables)) xs
 
 -- Produce all arcs with all X's resolved
-createAllArcs :: Ord a => [([Transition a], Transition a)] -> [[Tristate]] -> [FsmArc a]
-createAllArcs xs = map fsmarcxToFsmarc . removeInvariants (expandAllXs (createArcs xs))
+createAllArcs :: Ord a => [([Transition a], Transition a)] -> [FsmArc a]
+createAllArcs = map fsmarcxToFsmarc . expandAllXs . createArcs
+
+findReachables :: [FsmArc a] -> Int -> [Int]
+findReachables allArcs initialState = nubOrd (visit initialState allArcs [])
+
+visit :: Int -> [FsmArc a] -> [Int] -> [Int]
+visit state allArcs visited = [state] ++
+        if (nonVisited /= [])
+        then concatMap (\s -> visit s allArcs (visited ++ [state] ++ nonVisited)) nonVisited
+        else []
+    where
+      indices = elemIndices state (map srcEnc allArcs)
+      destArcs = map ((map destEnc allArcs) !!) indices
+      nonVisited = filter (\x -> (x `notElem` visited)) destArcs
