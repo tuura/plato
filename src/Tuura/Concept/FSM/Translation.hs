@@ -85,14 +85,20 @@ translate circuit signs =
           let allCause = addConsistency (arcs circuit) signs
           let sortedCause = concatMap handleArcs (groupSortOn snd allCause)
           let initialState = getInitialState circuit signs
-          let invariants = concatMap (\i -> createInvariants i signs) (invariant circuit)
           let allArcs = createAllArcs sortedCause
           let reachables = findReachables allArcs initialState
+          let invariants = map encToInt (concatMap (\i -> getInvariantStates i signs) (invariant circuit))
           let reachableArcs = removeUnreachables allArcs reachables
           let inputSigns = filter ((==Input) . interface circuit) signs
           let outputSigns = filter ((==Output) . interface circuit) signs
           let internalSigns = filter ((==Internal) . interface circuit) signs
-          genFSM inputSigns outputSigns internalSigns (map show reachableArcs) (show initialState)
+          let reachableInvariants = filter (`elem` reachables) invariants
+          let unreachables = ([0..(length signs)] \\ invariants) \\ reachables
+          if (reachableInvariants /= [])
+              then reachableInvariantStateError reachableInvariants
+            else do
+              let reachReport = genReachReport unreachables
+              genFSM inputSigns outputSigns internalSigns (map show reachableArcs) (show initialState) reachReport
       Invalid errs ->
           "Error. \n" ++ addErrors errs
 
@@ -112,16 +118,31 @@ handleArcs arcLists = result
             transCauses = cartesianProduct effectCauses
             result = map (\m -> (m, effect)) transCauses
 
-genFSM :: Show a => [a] -> [a] -> [a] -> [String] -> String -> String
-genFSM inputSigns outputSigns internalSigns arcStrs initialState =
-     printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines arcStrs) initialState
+genFSM :: Show a => [a] -> [a] -> [a] -> [String] -> String -> String -> String
+genFSM inputSigns outputSigns internalSigns arcStrs initialState reachReport =
+     printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines arcStrs) initialState reachReport
     where
-        outs = map show outputSigns
-        ins = map show inputSigns
-        ints = map show internalSigns
+      outs = map show outputSigns
+      ins = map show inputSigns
+      ints = map show internalSigns
+
+reachableInvariantStateError :: Show a => [a] -> String
+reachableInvariantStateError es = "Error:\n" ++
+                                  "The following state(s) are reachable but the invariant does not hold for them:\n" ++
+                                  unlines (errStates)
+    where
+      errStates = map (\e -> "s" ++ (show e)) es
+
+genReachReport :: (Eq a, Show a) => [a] -> String
+genReachReport us
+        | us == []  = "# invariant = reachability"
+        | otherwise = "# Warning:\n# The following state(s) are invariant but are not reachable:\n" ++
+                      unlines (unreachStates)
+    where
+      unreachStates = map (\u -> "# s" ++ (show u)) us
 
 tmpl :: String
-tmpl = unlines [".inputs %s", ".outputs %s", ".internals %s", ".state graph", "%s.marking {s%s}", ".end"]
+tmpl = unlines [".inputs %s", ".outputs %s", ".internals %s", ".state graph", "%s.marking {s%s}", "%s.end"]
 
 fullList :: ([a], a) -> [a]
 fullList (l,t) = t:l
@@ -167,8 +188,8 @@ createArcs xs = zipWith3 createArc makeSrcEncs makeDestEncs activeTransitions
           invert = liftM2 Transition signal (not . newValue)
           activeTransitions = (map snd .  addMissingSignals) xs
 
-createInvariants :: Ord a => Invariant (Transition a) -> [a] -> [[Tristate]]
-createInvariants (NeverAll es) allSigns = expand (encode newTransitions)
+getInvariantStates :: Ord a => Invariant (Transition a) -> [a] -> [[Tristate]]
+getInvariantStates (NeverAll es) allSigns = expand (encode newTransitions)
     where newTransitions = transX ++ (concatMap (map (\s -> TransitionX { msignal = s, mnewValue = triX })) missingSignals)
           transX = map toTransitionX es
           missingSignals = map (allSigns \\) (onlySignals [es])
