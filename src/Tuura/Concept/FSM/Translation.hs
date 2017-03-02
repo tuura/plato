@@ -94,7 +94,7 @@ translate circuit signs =
               outputSigns = filter ((==Output) . interface circuit) signs
               internalSigns = filter ((==Internal) . interface circuit) signs
               reachableInvariants = filter (`elem` reachables) invariants
-              unreachables = ([0..(length signs)] \\ invariants) \\ reachables
+              unreachables = ([0..2^(length signs) - 1] \\ invariants) \\ reachables
           if (reachableInvariants /= [])
               then reachableInvariantStateError reachableInvariants
             else do
@@ -247,10 +247,9 @@ findReachables :: Ord a => [FsmArc a] -> Int -> [Int]
 findReachables allArcs initialState = nubOrd (visit initialState allArcs Set.empty)
 
 visit :: Ord a => Int -> [FsmArc a] -> Set.Set Int -> [Int]
-visit state allArcs visited = [state] ++ concatMap (\s -> visit s allArcs newVisited) nonVisited
+visit state allArcs visited = [state] ++ concatMap (\s -> visit s allArcs newVisited) (Set.difference destStates visited)
     where
       arcSet = Set.fromList allArcs
       srcStates = Set.filter (\s -> (srcEnc s) == state) arcSet
       destStates = Set.map destEnc srcStates
-      nonVisited = Set.filter (`Set.notMember` visited) destStates
-      newVisited = Set.unions [(Set.singleton state), visited, nonVisited]
+      newVisited = Set.unions [Set.singleton state, visited, destStates]
