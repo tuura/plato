@@ -3,6 +3,7 @@ module Tuura.Concept.FSM.Translation where
 import Data.List
 import Data.List.Extra
 import Data.Ord (comparing)
+import qualified Data.Set as Set
 import Control.Monad
 import Data.Char  (digitToInt)
 import Data.Maybe (fromMaybe, listToMaybe)
@@ -66,7 +67,7 @@ data FsmArc a = FsmArc
         srcEnc :: Int,
         trans :: Transition a,
         destEnc :: Int
-    }
+    } deriving (Eq, Ord)
 
 instance Show a => Show (FsmArc a) where
     show (FsmArc senc tran tenc) = "s" ++ show senc ++ " " ++ show tran ++ " s" ++ show tenc
@@ -82,33 +83,36 @@ translate :: (Show a, Ord a) => CircuitConcept a -> [a] -> String
 translate circuit signs =
     case validate signs circuit of
       Valid -> do
-          let allArcs = addConsistency (arcs circuit) signs
-          let sortedArcs = concatMap handleArcs (groupSortOn snd allArcs)
-          let arcStrs = map show (createAllArcs sortedArcs)
-          let inputSigns = filter ((==Input) . interface circuit) signs
-          let outputSigns = filter ((==Output) . interface circuit) signs
-          let internalSigns = filter ((==Internal) . interface circuit) signs
-          let initialState = getInitialState circuit signs
-          genFSM inputSigns outputSigns internalSigns arcStrs initialState
-      Invalid unused incons undef ->
-          "Error. \n" ++ addErrors unused incons undef
+          let allCause = addConsistency (arcs circuit) signs
+              sortedCause = concatMap handleArcs (groupSortOn snd allCause)
+              initialState = getInitialState circuit signs
+              allArcs = createAllArcs sortedCause
+              reachables = findReachables allArcs initialState
+              invariants = map encToInt (concatMap (\i -> getInvariantStates i signs) (invariant circuit))
+              reachableArcs = removeUnreachables allArcs reachables
+              inputSigns = filter ((==Input) . interface circuit) signs
+              outputSigns = filter ((==Output) . interface circuit) signs
+              internalSigns = filter ((==Internal) . interface circuit) signs
+              reachableInvariants = filter (`elem` reachables) invariants
+              unreachables = ([0..2^(length signs) - 1] \\ invariants) \\ reachables
+          if (reachableInvariants /= [])
+              then reachableInvariantStateError reachableInvariants
+            else do
+              let reachReport = genReachReport unreachables
+              genFSM inputSigns outputSigns internalSigns (map show reachableArcs) (show initialState) reachReport
+      Invalid errs ->
+          "Error. \n" ++ addErrors errs
 
-getInitialState :: CircuitConcept a -> [a] -> String
-getInitialState circuit signs = show (encToInt state)
+getInitialState :: CircuitConcept a -> [a] -> Int
+getInitialState circuit signs = encToInt state
   where
-    state = map (\s -> if (getDefined $ initial circuit s) then triTrue else triFalse) signs
+    state = map (fromBool  . getDefined . initial circuit ) signs
+
+fromBool :: Bool -> Tristate
+fromBool x = if x then triTrue else triFalse
 
 addConsistency :: Ord a => [([Transition a], Transition a)] -> [a] -> [([Transition a], Transition a)]
 addConsistency allArcs signs = nubOrd (allArcs ++ concatMap (\s -> [([rise s], fall s), ([fall s], rise s)]) signs)
-
-validate :: Eq a => [a] -> CircuitConcept a -> ValidationResult a
-validate signs circuit
-    | unused ++ inconsistent ++ undef == [] = Valid
-    | otherwise                             = Invalid unused inconsistent undef
-  where
-    unused       = filter ((==Unused) . interface circuit) signs
-    inconsistent = filter ((==Inconsistent) . initial circuit) signs
-    undef        = filter ((==Undefined) . initial circuit) signs
 
 handleArcs :: [([Transition a], Transition a)] -> [([Transition a], Transition a)]
 handleArcs arcLists = result
@@ -118,16 +122,31 @@ handleArcs arcLists = result
             transCauses = cartesianProduct effectCauses
             result = map (\m -> (m, effect)) transCauses
 
-genFSM :: Show a => [a] -> [a] -> [a] -> [String] -> String -> String
-genFSM inputSigns outputSigns internalSigns arcStrs initialState =
-     printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines arcStrs) initialState
+genFSM :: Show a => [a] -> [a] -> [a] -> [String] -> String -> String -> String
+genFSM inputSigns outputSigns internalSigns arcStrs initialState reachReport =
+     printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines arcStrs) initialState reachReport
     where
-        outs = map show outputSigns
-        ins = map show inputSigns
-        ints = map show internalSigns
+      outs = map show outputSigns
+      ins = map show inputSigns
+      ints = map show internalSigns
+
+reachableInvariantStateError :: Show a => [a] -> String
+reachableInvariantStateError es = "Error:\n" ++
+                                  "The following state(s) are reachable but the invariant does not hold for them:\n" ++
+                                  unlines (errStates)
+    where
+      errStates = [ "s" ++ show e | e <- es ]
+
+genReachReport :: (Eq a, Show a) => [a] -> String
+genReachReport es
+        | es == []  = "# invariant = reachability\n"
+        | otherwise = "# Warning:\n# The following state(s) hold for the invariant but are not reachable:\n" ++
+                      unlines (unreachStates)
+    where
+      unreachStates = [ "# s" ++ show e | e <- es ]
 
 tmpl :: String
-tmpl = unlines [".inputs %s", ".outputs %s", ".internals %s", ".state graph", "%s.marking {s%s}", ".end"]
+tmpl = unlines [".inputs %s", ".outputs %s", ".internals %s", ".state graph", "%s.marking {s%s}", "%s.end"]
 
 fullList :: ([a], a) -> [a]
 fullList (l,t) = t:l
@@ -173,6 +192,18 @@ createArcs xs = zipWith3 createArc makeSrcEncs makeDestEncs activeTransitions
           invert = liftM2 Transition signal (not . newValue)
           activeTransitions = (map snd .  addMissingSignals) xs
 
+getInvariantStates :: Ord a => Invariant (Transition a) -> [a] -> [[Tristate]]
+getInvariantStates (NeverAll es) allSigns = expand (encode newTransitions)
+    where newTransitions = transX ++ (concatMap (map (\s -> TransitionX { msignal = s, mnewValue = triX })) missingSignals)
+          transX = map toTransitionX es
+          missingSignals = map (allSigns \\) (onlySignals [es]) -- TODO: Optimise
+          expand t = case elemIndex triX t of
+               Nothing -> [t]
+               Just n  -> do
+                let newTrue = replaceAtIndex triTrue t n
+                let newFalse = replaceAtIndex triFalse t n
+                expand newTrue ++ expand newFalse
+
 replaceAtIndex :: a -> [a] -> Int -> [a]
 replaceAtIndex item ls n = a ++ (item:b)
     where (a, (_:b)) = splitAt n ls
@@ -205,6 +236,20 @@ fsmarcxToFsmarc arc = FsmArc newSourceEnc (transx arc) newDestEnc
     where newSourceEnc = (encToInt . srcEncx) arc
           newDestEnc = (encToInt . destEncx) arc
 
+removeUnreachables :: [FsmArc a] -> [Int] -> [FsmArc a]
+removeUnreachables xs reachables = filter (\s -> (destEnc s `elem` reachables && srcEnc s `elem` reachables)) xs
+
 -- Produce all arcs with all X's resolved
 createAllArcs :: Ord a => [([Transition a], Transition a)] -> [FsmArc a]
 createAllArcs = map fsmarcxToFsmarc . expandAllXs . createArcs
+
+findReachables :: Ord a => [FsmArc a] -> Int -> [Int]
+findReachables allArcs initialState = nubOrd (visit initialState allArcs Set.empty)
+
+visit :: Ord a => Int -> [FsmArc a] -> Set.Set Int -> [Int]
+visit state allArcs visited = [state] ++ concatMap (\s -> visit s allArcs newVisited) (Set.difference destStates visited)
+    where
+      arcSet = Set.fromList allArcs
+      srcStates = Set.filter (\s -> (srcEnc s) == state) arcSet
+      destStates = Set.map destEnc srcStates
+      newVisited = Set.unions [Set.singleton state, visited, destStates]

@@ -22,14 +22,14 @@ translate circuit signs =
     case validate signs circuit of
         Valid -> do
             let initStrs = map (\s -> (show s, (getDefined $ initial circuit s))) signs
-            let arcStrs = nubOrd (concatMap handleArcs (groupSortOn snd (arcs circuit)))
-            let inputSigns = filter ((==Input) . interface circuit) signs
-            let outputSigns = filter ((==Output) . interface circuit) signs
-            let internalSigns = filter ((==Internal) . interface circuit) signs
-            genSTG inputSigns outputSigns internalSigns arcStrs initStrs
-        Invalid unused incons undef -> do
-            "Error. \n" ++ addErrors unused incons undef
-
+                arcStrs = nubOrd (concatMap handleArcs (groupSortOn snd (arcs circuit)))
+                invStrs = map genInvStrs (invariant circuit)
+                inputSigns = filter ((==Input) . interface circuit) signs
+                outputSigns = filter ((==Output) . interface circuit) signs
+                internalSigns = filter ((==Internal) . interface circuit) signs
+            genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStrs
+        Invalid errs ->
+            "Error. \n" ++ addErrors errs
 
 handleArcs :: Show a => [([Transition a], Transition a)] -> [String]
 handleArcs arcLists = addConsistencyTrans effect n ++ concatMap transition arcMap
@@ -40,18 +40,9 @@ handleArcs arcLists = addConsistencyTrans effect n ++ concatMap transition arcMa
             n = length transCauses
             arcMap = concat (map (\m -> arcPairs m effect) (zip transCauses [0..(n-1)]))
 
-validate :: Eq a => [a] -> CircuitConcept a -> ValidationResult a
-validate signs circuit
-    | unused ++ inconsistent ++ undef == [] = Valid
-    | otherwise                             = Invalid unused inconsistent undef
-  where
-    unused       = filter ((==Unused) . interface circuit) signs
-    inconsistent = filter ((==Inconsistent) . initial circuit) signs
-    undef        = filter ((==Undefined) . initial circuit) signs
-
-genSTG :: Show a => [a] -> [a] -> [a] -> [String] -> [(String, Bool)] -> String
-genSTG inputSigns outputSigns internalSigns arcStrs initStrs =
-    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines allArcs) (unwords marks)
+genSTG :: Show a => [a] -> [a] -> [a] -> [String] -> [(String, Bool)] -> [String] -> String
+genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStrs =
+    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines allArcs) (unwords marks) (unlines invStrs)
     where
         allSigns = output initStrs
         outs = map show outputSigns
@@ -78,7 +69,7 @@ transition (f, t)
         | otherwise  = readArc (init (show f) ++ "0") t
 
 tmpl :: String
-tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internal %s", ".graph", "%s.marking {%s}", ".end"]
+tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internal %s", ".graph", "%s.marking {%s}", "%s.end"]
 
 output :: [(String, Bool)] -> [String]
 output = nubOrd . map fst
@@ -94,3 +85,10 @@ initVal s ls = sum (map (\x -> if (fst x == s) then fromEnum (snd x) else 0) ls)
 
 readArc :: String -> String -> [String]
 readArc f t = [f ++ " " ++ t, t ++ " " ++ f]
+
+genInvStrs :: (Ord a, Show a) => Invariant (Transition a) -> String
+genInvStrs (NeverAll es)
+        | es        == [] = []
+        | otherwise = "# invariant = not (" ++  (intercalate " && " (map format es)) ++ ")"
+    where
+        format e = if (newValue e) then show (signal e) else "not " ++ show (signal e)

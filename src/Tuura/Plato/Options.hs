@@ -1,10 +1,7 @@
 module Tuura.Plato.Options (Options(..), getOptions) where
 
-import Data.Foldable (foldlM)
-import Control.Monad
 import System.Console.GetOpt
 import System.Environment
-import System.Exit
 
 data Options = Options
     { optInput   :: String
