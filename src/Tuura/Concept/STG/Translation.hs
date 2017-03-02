@@ -22,11 +22,11 @@ translate circuit signs =
     case validate signs circuit of
         Valid -> do
             let initStrs = map (\s -> (show s, (getDefined $ initial circuit s))) signs
-            let arcStrs = nubOrd (concatMap handleArcs (groupSortOn snd (arcs circuit)))
-            let invStrs = map genInvStrs (invariant circuit)
-            let inputSigns = filter ((==Input) . interface circuit) signs
-            let outputSigns = filter ((==Output) . interface circuit) signs
-            let internalSigns = filter ((==Internal) . interface circuit) signs
+                arcStrs = nubOrd (concatMap handleArcs (groupSortOn snd (arcs circuit)))
+                invStrs = map genInvStrs (invariant circuit)
+                inputSigns = filter ((==Input) . interface circuit) signs
+                outputSigns = filter ((==Output) . interface circuit) signs
+                internalSigns = filter ((==Internal) . interface circuit) signs
             genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStrs
         Invalid errs ->
             "Error. \n" ++ addErrors errs
