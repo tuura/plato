@@ -106,12 +106,10 @@ translate circuit signs =
 getInitialState :: CircuitConcept a -> [a] -> Int
 getInitialState circuit signs = encToInt state
   where
-    state = map (\s -> fromBool (getDefined $ initial circuit s)) signs
+    state = map (fromBool  . getDefined . initial circuit ) signs
 
 fromBool :: Bool -> Tristate
-fromBool x
-         | x         = triTrue
-         | otherwise = triFalse
+fromBool x = if x then triTrue else triFalse
 
 addConsistency :: Ord a => [([Transition a], Transition a)] -> [a] -> [([Transition a], Transition a)]
 addConsistency allArcs signs = nubOrd (allArcs ++ concatMap (\s -> [([rise s], fall s), ([fall s], rise s)]) signs)
@@ -198,7 +196,7 @@ getInvariantStates :: Ord a => Invariant (Transition a) -> [a] -> [[Tristate]]
 getInvariantStates (NeverAll es) allSigns = expand (encode newTransitions)
     where newTransitions = transX ++ (concatMap (map (\s -> TransitionX { msignal = s, mnewValue = triX })) missingSignals)
           transX = map toTransitionX es
-          missingSignals = map (allSigns \\) (onlySignals [es])
+          missingSignals = map (allSigns \\) (onlySignals [es]) -- TODO: Optimise
           expand t = case elemIndex triX t of
                Nothing -> [t]
                Just n  -> do
@@ -246,12 +244,13 @@ createAllArcs :: Ord a => [([Transition a], Transition a)] -> [FsmArc a]
 createAllArcs = map fsmarcxToFsmarc . expandAllXs . createArcs
 
 findReachables :: Ord a => [FsmArc a] -> Int -> [Int]
-findReachables allArcs initialState = nubOrd (visit initialState allArcs [])
+findReachables allArcs initialState = nubOrd (visit initialState allArcs Set.empty)
 
-visit :: Ord a => Int -> [FsmArc a] -> [Int] -> [Int]
-visit state allArcs visited = [state] ++ concatMap (\s -> visit s allArcs (visited ++ [state] ++ nonVisited)) nonVisited
+visit :: Ord a => Int -> [FsmArc a] -> Set.Set Int -> [Int]
+visit state allArcs visited = [state] ++ concatMap (\s -> visit s allArcs newVisited) nonVisited
     where
       arcSet = Set.fromList allArcs
       srcStates = Set.filter (\s -> (srcEnc s) == state) arcSet
-      destStates = map destEnc (Set.toList srcStates)
-      nonVisited = filter (`notElem` visited) destStates
+      destStates = Set.map destEnc srcStates
+      nonVisited = Set.filter (`Set.notMember` visited) destStates
+      newVisited = Set.unions [(Set.singleton state), visited, nonVisited]

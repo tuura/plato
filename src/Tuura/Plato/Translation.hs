@@ -25,6 +25,7 @@ instance Ord Signal
     where
         compare (Signal x) (Signal y) = compare x y
 
+-- TODO: Tidy up function, it looks ugly.
 addErrors :: (Eq a, Show a) => [ValidationError a] -> String
 addErrors errs =
         if (unused errs) /= []
