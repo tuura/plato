@@ -4,6 +4,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/eyfuyi0v9v1ulcgn?svg=true)](https://ci.appveyor.com/project/jrbeaumont/plato-9uatd)
 
 A DSL for asynchronous behavioural concept circuits specification, including a tool to translate concepts to Signal Transition Graphs
+and Finite State Machines
 
 ### Requirements
 
@@ -23,7 +24,13 @@ To build and run the translation tool, Stack is needed, and can be downloaded fo
 
 Invoke the translate executable with a concept circuit file:
 
-	stack runghc translate/Main.hs examples/celement_with_env_1.hs
+	stack runghc translate/Main.hs -- examples/Celement_with_env_1.hs
+
+### Translate to FSM
+
+Invoke the translate executable with a concept circuit file, including the "-f" flag:
+
+	stack runghc translate/Main.hs -- examples/Celement_with_env_1.hs -f
 
 ### Manual
 
