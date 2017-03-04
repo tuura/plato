@@ -1,4 +1,4 @@
-﻿#Concepts Manual
+﻿#Plato manual
 
 
 Introduction
@@ -17,49 +17,49 @@ information on the theory of concepts can be found
 in, the latest version of which can be found
 [here](https://github.com/tuura/concepts-article/releases).
 
-In this document, we will discuss the associated tool for concepts. This
-open source tool is written in *Haskell*, and contains both the library
+In this document, we will discuss the associated tool for concepts, *Plato*.
+This open source tool is written in *Haskell*, and contains both the library
 for concepts, including abstract concepts and circuit concepts built
 upon the abstract, and a tool for translating concepts into *Signal
-Transition Graphs* (STGs). These
+Transition Graphs* (STGs) and *Finite State Machines* (FSMs). These
 are commonly used for the specification, verification and synthesis of
 asynchronous control circuits in the academic community, and they are
 supported by multiple EDA tools, such as Petrify, Mpsat, Versify,
 Workcraft, and others. The aim of this tool is to design and debug
-concepts, and then translate them to STGs, where they can be used with
-these tools.
+concepts, and then translate them to STGs or FSMs based on the users 
+preferences, where they can be used with these tools.
 
 The latest version of this tool, and this manual, can be found [in the
-GitHub repo](https://github.com/tuura/concepts). Any bugs or issues
+GitHub repo](https://github.com/tuura/plato). Any bugs or issues
 found with the tool can be reported here. This tool is also distributed
-as a back-end tool for Workcraft. This version
-of the concepts tool will be the latest version that works correctly
+as a back-end tool for *Workcraft*. This version
+of plato will be the latest version that works correctly
 with Workcraft. The latest
 version of Workcraft, which also
-features tools such as Petrify and Mpsat, can be downloaded
+features tools such as *Petrify* and *Mpsat*, can be downloaded
 from <http://workcraft.org/>.
 
 Installation
 ============
 
-The concepts tool, as well as Workcraft are available
+Plato, as well as Workcraft are available
 for *Windows*, *Linux* and *macOS*. The installation instructions for
 all of these operating systems are the same. We will be referring to
 directories using the
 forward-slash character (’/’) as a separator, however for *Windows*,
 replace this with a back-slash character (’\\’).
 
-If choosing to use the concepts tool on its own, this must be downloaded
-from the [GitHub repo](https://github.com/tuura/concepts). If you choose
+If choosing to use plato on its own, this must be downloaded
+from the [GitHub repo](https://github.com/tuura/plato). If you choose
 to use this tool as part of Workcraft, download this
-from the [Workcraft
-website](http://workcraft.org/). Once downloaded, extract the contents
-of the folder, and move them to a directory you wish to run them from.
+from the [Workcraft website](http://workcraft.org/). Once downloaded, 
+extract the contents of the folder, and move them to a directory you wish to
+run them from.
 
-Concepts tool requirements
---------------------------
+Plato requirements
+--------------------
 
-The concepts tool is written in *Haskell*, and uses *Stack* to install
+Plato is written in *Haskell*, and uses *Stack* to install
 the necessary compiler and dependencies. If necessary, please download
 stack for your operating system, available from
 <https://docs.haskellstack.org/en/stable/install_and_upgrade/>, and follow the instructions to
@@ -74,33 +74,32 @@ Environment* (JRE) needs to be installed to run. This can be downloaded
 from <http://java.com/en/download/>. If needed, download the JRE
 installer, and follow the instructions to install this.
 
-While the concepts tool is distributed with Workcraft, it still needs
+While *Plato* is distributed with Workcraft, it still needs
 to be built by *stack* in order for it to be run. See
-above for requirements for the concepts
-tool.
+above for requirements for the plato.
 
 Installing the tool
 -------------------
 
-Once either the concepts tool or Workcraft has been
+Once either plato or Workcraft has been
 extracted and moved to the desired directory, using command line,
-navigate to the concepts tool directory, or if using Workcraft, navigate to
+navigate to the plato directory, or if using Workcraft, navigate to
 the Workcraft
-directory, and then navigate to the concepts tool directory, found in
-`tools/concepts` (for *OS X*, the Workcraft directory is
-located within the `Workcraft.app` contents folder. The concepts tool
-will be found at `Contents/Resources/tools/concepts`.
+directory, and then navigate to the plato directory, found in
+`tools/plato` (for *OS X*, the Workcraft directory is
+located within the `Workcraft.app` contents folder. Plato
+will be found at `Contents/Resources/tools/plato`).
 
 Now, the process of installing the tool is the same, regardless of how
-you aim to use the concepts tool. First of all, let’s setup stack. To do
+you aim to use the plato. First of all, let’s setup stack. To do
 this, run:
 
 ```
   $ stack setup --no-system-ghc
 ```
 
-This will prepare stack to install the concepts tool. Now, to build and
-install the concepts tool, simply run:
+This will prepare stack to install plato. Now, to build and
+install plato, simply run:
 
 ```
   $ stack build
@@ -108,207 +107,6 @@ install the concepts tool, simply run:
 
 If this process completes successfully, the tool will now be installed
 and ready to be used.
-
-Using the tool from command line
-================================
-
-With the tool installed, we can now start to use it to translate
-concepts to STGs. We will begin by discussing how it is used from
-command line. Usage as a back-end tool in Workcraft is discussed in
-the next section.
-
-The standard command for the tool is as follows:
-
-```
-  $ stack runghc <path-to-translate> <path-to-concepts-file> [--stack-yaml <path-to-stack-file>]
-```
-
-The three parts of this are as follows:
-
--   `stack` - This will ensure that the dependencies and compiler are
-    installed when running.
-
--   `runghc` - This runs the translation function.
-
--   `<path-to-translate>` - This is file path pointing to the translate
-    code file, which performs the necessary operations to translate
-    concepts to STGs.
-
--   `<path-to-concepts-file>` - This is the path pointing to the file
-    containing the concepts to be translated.
-
--   `[–stack-yaml <path-to-stack-file>]` - This is optional. If running
-    the tool from outside of the directory, the path to the stack file
-    needs to be given.
-
-When running the concepts tool from command line, as long as the paths
-to the translate code, the concepts file and the `stack.yaml` file are
-correct, it doesn’t matter which directory the tool is run from. The
-`stack.yaml` file is located in the base of the concepts directory.
-
-Now, let’s use one of the examples included with the concepts tool to
-show the usage. These can be found in the `examples` directory of the
-concepts tool. For this section, we will assume that we are currently in
-the concepts tool directory. The example we will use is the file titled
-“`Celement_with_env_1.hs`”. This has the “.hs” file extension, as it is
-in fact a file using Haskell code, and all files containing concepts
-should feature this file extension. To translate this concepts file to
-an STG, the following command must be run:
-
-```
-  $ stack runghc translate/Main.hs examples/Celement_with_env_1.hs
-```
-
-When the translation is complete, the tool will output the following:
-
-```
-  .model out
-  .inputs A B
-  .outputs C
-  .internals
-  .graph
-  A0 A+
-  A+ A1
-  A1 A-
-  A- A0
-  B0 B+
-  B+ B1
-  B1 B-
-  B- B0
-  C0 C+
-  C+ C1
-  C1 C-
-  C- C0
-  A1 C+
-  C+ A1
-  B1 C+
-  C+ B1
-  C1 A-
-  A- C1
-  C1 B-
-  B- C1
-  A0 C-
-  C- A0
-  B0 C-
-  C- B0
-  C0 A+
-  A+ C0
-  C0 B+
-  B+ C0
-  .marking {A0 B0 C0}
-  .end
-```
-
-This output is the STG representation in *.g* format. *.g* files are a
-standard type used as input to tools, such as Petrify, Mpsat, and Workcraft. Therefore,
-this output can by copy-and-pasted into a file, and saved with the file
-etension *.g*, and then used as input to these tools.
-
-The concepts tool can be used in a similar way, ensuring that the file
-paths to the translate code file, and the concepts input file, are
-correct. A section below contains information on how to
-layout a concepts file, to avoid as many errors as possible.
-
-Any errors that occur during the translation process will produce errors
-referring to the problematic lines of signals of the concepts that are
-problematic.
-
-Using the tool from Workcraft
-=================================================================================================================
-
-This section will discuss how to use the concepts tool from within
-Workcraft.
-There are many other features of Workcraft, both as part
-of the STG plug in, some of which I will discuss in the context of
-concepts here, and as part of other modelling formalisms. More
-information on these can be found at <http://workcraft.org/>.
-
-Translating and authoring concepts
-----------------------------------
-
-First of all, Workcraft must be
-started. This can be done by running the start up script, located in the
-Workcraft
-directory in *Windows* and *Linux*. In *Windows*, this script is named
-“`workcraft.bat`“. In *Linux*, it is simply ”`workcraft`". In *OS X*,
-Workcraft can
-be started instead by double clicking the Workcraft icon, which is
-the app container for the necessary files.
-
-When Workcraft starts, you will be greeted by blank screen, as seen here:
-
-![Workcraft immediately after starting.](http://jrbeaumont.github.io/concepts-manual/images/blank_workcraft_screenshot.svg)
-
-
-Now, we need to open a new work, specifically a new STG work. Open the
-“New work” dialog using the menu bar, `File -> Create work...`, or by
-pressing `Ctrl-N` (`CMD-N` on *OS X*). This will bring up a menu as seen here:
-
-![The create work window.](http://jrbeaumont.github.io/concepts-manual/images/new_work_screenshot.svg)
-
-In this window, select “*Signal Transition Graph*’ and cick the “OK”
-button at the bottom of the window. This will the open a blank workspace
-in which we can create an STG, which will look similar this:
-
-![A new STG workspace](http://jrbeaumont.github.io/concepts-manual/images/new_stg_screenshot.svg)
-
-Now, we can start translating concepts. To do this, first we need to
-open the concepts dialog. This is done from the menu bar, by selecting
-the “*Conversion*” menu, and then the “*Translate concepts...*” option.
-The concepts dialog will look as shown here:
-
-![The concepts dialog.](http://jrbeaumont.github.io/concepts-manual/images/concepts_dialog_screenshot.svg)
-
-From within this dialog, one can write their own concepts, from the
-default template, or open an existing
-concepts file, with the *.hs* extension. When satisfied with the
-concepts written, a user can choose to save the file, if not already
-saved, and then translate these concepts.
-
-![The concepts dialog with a concept file opened.](http://jrbeaumont.github.io/concepts-manual/images/concepts_dialog_Celement.svg)
-
-This is the concepts dialog after
-we have opened the Celement with environment example, named
-“*Celement_with_env_1.hs*”, from the concepts tool examples
-directory. Clicking translate at this point will produce an STG
-representation of these concepts in the workspace.
-
-![The STG produced from translating the concepts.](http://jrbeaumont.github.io/concepts-manual/images/concepts_translated.svg)
-
-The translated concepts will look similar to in the above image.
-
-Now, a user can choose to insert more concepts, make changes to this
-STG, and once they are satisfied with it, can then perform various
-functions on this STG. One can perform transformations, verifications,
-simulations and synthesis on this STG using the menus within this
-workspace now. Any further changes to this STG, based on the results of
-these operations can be made to this STG or to the concepts file.
-
-Importing concepts directly
----------------------------
-
-In Workcraft
-it is also possible to import concepts directly from a file, without
-having to view the concepts first. This can be done from the “*File*”
-menu, by selecting the “*Import...*” option.
-
-![The STG produced from translating the concepts.](http://jrbeaumont.github.io/concepts-manual/images/import_menu_screenshot.svg)
-
-When importing concepts using this menu, ensure to set the “*Files of
-Type*” option to “*Concepts file (.hs)*”, as shown in the image above.
-
-Errors
-------
-
-If any errors are encountered during the translation process,
-Workcraft
-will produce a helpful error message. This usually can tell you with
-more detail what the issue that is causing the error is, but will ask
-you to refer to Workcraft’s console
-window for specific line numbers or signals which need to be corrected.
-These errors will include whether a signal has not been declared as an
-input or output, a signal has not had it’s initial state given, or even
-that the concepts tool has not been installed correctly.
 
 Writing concepts
 =========================================
@@ -321,6 +119,7 @@ This is “*Celement_with_env_1.hs*”.
 
 Concepts file layout
 --------------------
+
 ```haskell
 
 	module Concept where
@@ -341,7 +140,6 @@ Concepts file layout
 
 	    initialState = initialise a False <> initialise b False <> initialise c False
 ```
-
 
 The concepts file we will discuss is found in
 image above. The following describes important
@@ -430,8 +228,375 @@ of “`circuit`” definition, on Line 7. These user-defined concepts can be
 used both within other user-defined concepts, and within the circuit
 definition to be translated.
 
+Using the tool from command line
+================================
+
+With the tool installed, we can now start to use it to translate
+concepts to STGs. We will begin by discussing how it is used from
+command line. Usage as a back-end tool in Workcraft is discussed in
+the next section.
+
+The standard command for the tool is as follows:
+
+```
+  $ stack runghc <path-to-translate> [--stack-yaml <path-to-stack-file>] 
+ 		   		-- <path-to-concepts-file> [--include/-i] [OPTIONS...]
+```
+
+The different parts of this are as follows:
+
+-   `stack` - This will ensure that the dependencies and compiler are
+    installed when running.
+
+-   `runghc` - This runs the translation function.
+
+-   `<path-to-translate>` - This is file path pointing to the translate
+    code file, which performs the necessary operations to translate
+    concepts to STGs.
+
+-   `[–stack-yaml <path-to-stack-file>]` - This is optional. If running
+    the tool from outside of the directory, the path to the stack file
+    needs to be given.
+
+-   `<path-to-concepts-file>` - This is the path pointing to the file
+    containing the concepts to be translated.
+
+-   `[--include/-i]` - This is used to include other concept files 
+    which the concept file to translate imports, to use concepts 
+    specified in outside concepts files.
+
+-   `[OPTIONS]` - This is for some optional commands, `--fsm/-f` will 
+    translate the concept specification to an FSM, or `--help/-h` for 
+    a help message. Without any options, the tool will translate a 
+    specification to an STG automatically. 
+
+When running plato from command line, as long as the paths
+to the translate code, the concepts file and the `stack.yaml` file are
+correct, it doesn’t matter which directory the tool is run from. The
+`stack.yaml` file is located in the base of the concepts directory.
+
+Basic usage
+-----------
+
+Now, let’s use one of the examples included with plato to
+show the usage. These can be found in the `examples` directory of plato. 
+For this section, we will assume that we are currently in
+the plato directory. The example we will use is the file titled
+“`Celement_with_env_1.hs`”. This has the “.hs” file extension, as it is
+in fact a file using Haskell code, and all files containing concepts
+should feature this file extension. To translate this concepts file to
+an STG, the following command must be run:
+
+```
+  $ stack runghc translate/Main.hs -- examples/Celement_with_env_1.hs
+```
+
+When the translation is complete, the tool will output the following:
+
+```
+  .model out
+  .inputs A B
+  .outputs C
+  .internals
+  .graph
+  A0 A+
+  A+ A1
+  A1 A-
+  A- A0
+  B0 B+
+  B+ B1
+  B1 B-
+  B- B0
+  C0 C+
+  C+ C1
+  C1 C-
+  C- C0
+  A1 C+
+  C+ A1
+  B1 C+
+  C+ B1
+  C1 A-
+  A- C1
+  C1 B-
+  B- C1
+  A0 C-
+  C- A0
+  B0 C-
+  C- B0
+  C0 A+
+  A+ C0
+  C0 B+
+  B+ C0
+  .marking {A0 B0 C0}
+  .end
+```
+
+This output is the STG representation in *.g* format. *.g* files are a
+standard type used as input to tools, such as Petrify, Mpsat, and Workcraft. Therefore,
+this output can by copy-and-pasted into a file, and saved with the file
+etension *.g*, and then used as input to these tools.
+
+Plato can be used in a similar way, ensuring that the file
+paths to the translate code file, and the concepts input file, are
+correct. See the "Writing Concepts" section for information on how to layout
+a concepts file.
+
+Any errors that occur during the translation process will produce errors
+referring to the problematic lines of signals of the concepts that are
+problematic.
+
+Concept to FSM translation
+--------------------------
+
+Here we will show an example of a concept specification written for 
+translation to FSM. Concepts used to translate to STG and FSM are currently 
+very similar, but behind-the-scenes, this provides different information for 
+the translation tool. 
+
+Using the same example as before, a C-element with environment, let's re-write
+it in a different way, which will still produce the same result, this time for 
+FSM translation. NOTE: Any concept specification will work for either STG for
+FSM translation.
+
+```haskell
+module Concept where
+
+import Tuura.Concept.FSM
+
+-- C-element with environment circuit described using gate-level concepts
+circuit a b c = interface <> cElement a b c <> environment <> initialState
+  where
+    interface = inputs [a, b] <> outputs [c]
+
+    environment = inverter c a <> inverter c b
+
+    initialState = initialise a False <> initialise b False <> initialise c False
+```
+
+Notice that line two now imports `Tuura.Concept.FSM`, ensuring that it uses 
+the correct concepts for a correct Finite State Machine translation.
+
+This is a minor edit of the example file provided with plato, 
+*Celement\_with\_env2.hs*, which we have renamed for this purpose 
+*Celement\_with\_env\_FSM.hs*.
+
+The command to translate this is:
+
+```
+  $ stack runghc translate/Main.hs -- examples/Celement_with_env_FSM.hs -f
+```
+
+The FSM translation will produce the following output:
+
+```
+.inputs A B
+.outputs C
+.internals
+.state graph
+s7 A- s6
+s5 A- s4
+s2 A+ s3
+s0 A+ s1
+s7 B- s5
+s6 B- s4
+s1 B+ s3
+s0 B+ s2
+s4 C- s0
+s3 C+ s7
+.marking {s0}
+.end
+```
+
+This produces an FSM in the *.sg* format. Similar to the STG *.g* format, this
+can be copy-and-pasted into a file and saved with this *.sg* and used as an 
+input to various tools, including Workcraft.
+
+Again, any errors that occur during the translation process will produce 
+errors referring to the problematic lines of signals of the concepts that are 
+problematic. 
+
+Including imported concept files
+--------------------------------
+
+If one or more concept has been defined in one concept specification, which can
+be reused in another concept specification, rather than redefine this, we can
+import the file with this concept previously defined. For example, using the 
+example files we have provided for a buck controller, nameley *ZCAbsent.hs* and *ZCEarly.hs*. We can rewrite *zcAbsent* as:
+
+```haskell
+module ZCAbsent where
+
+import Tuura.Concept.STG
+
+--ZC absent scenario definition using concepts
+circuit uv oc zc gp gp_ack gn gn_ack = chargeFunc uv oc zc gp gp_ack gn gn_ack
+                                       <> uvFunc <> uvReact
+  where
+    uvFunc = rise uv ~> rise gp <> rise uv ~> fall gn
+
+    uvReact = rise gp_ack ~> fall uv <> fall gn_ack ~> fall uv
+
+chargeFunc uv oc zc gp gp_ack gn gn_ack = interface <> ocFunc <> ocReact
+                <> environmentConstraint <> noShortcircuit <> gpHandshake
+                <> gnHandshake <> initialState
+    where
+        interface = inputs [uv, oc, zc, gp_ack, gn_ack] <> outputs [gp, gn]
+        ocFunc = rise oc ~> fall gp <> rise oc ~> rise gn
+        ocReact = fall gp_ack ~> fall oc <> rise gn_ack ~> fall oc
+        environmentConstraint = me uv oc
+        noShortcircuit = me gp gn <> fall gn_ack ~> rise gp <> fall gp_ack ~> rise gn
+        gpHandshake = handshake gp gp_ack
+        gnHandshake = handshake gn gn_ack
+        initialState = initialise0 [uv, oc, zc, gp, gp_ack] <> initialise1 [gn, gn_ack]
+```
+
+This specification can be translated to an STG and FSM as with any other concept 
+specification. 
+
+`chargeFunc` features several concepts which can be reused in `ZCEarly`, and as
+such we can import the `ZCAbsent` file to reuse this `chargeFunc` concepts,
+without specifying it again. This file can be written as follows:
+
+```haskell
+module ZCEarly where
+
+import Tuura.Concept.STG
+import ZCAbsent
+
+--ZC early scenario definition using concepts
+circuit uv oc zc gp gp_ack gn gn_ack = chargeFunc uv oc zc gp gp_ack gn gn_ack
+            <> zcFunc <> zcReact <> uvFunc' <> uvReact' <> initialise zc False
+  where
+    zcFunc = rise zc ~> fall gn
+    zcReact = fall oc ~> rise zc <> rise gp ~> fall zc
+
+    uvFunc' = rise uv ~> rise gp
+    uvReact' = rise zc ~> rise uv <> fall zc ~> fall uv <> rise gp_ack ~> fall uv
+
+```
+
+Notice that this uses `chargeFunc` without specifying it, but that the third
+line imports ZCAbsent, the previous file.
+
+The command to translate the first file, `ZCAbsent`, is similar to our 
+previous example, in the "Basic usage" section.
+However, to translate the `ZCEarly` file to an STG, we need to ensure that the
+`ZCAbsent` file is included. This can be done using the following command:
+
+```
+  $ stack runghc translate/Main.hs -- examples/ZCEarly.hs -i examples/ZCAbsent.hs
+```
+
+Providing that the filepath following the `-i` points to the file wishing to be
+imported, this will produce an STG (or FSM if the `-f` flag is included).
+
+Using the tool from Workcraft
+======================================================================================
+
+This section will discuss how to use plato from within Workcraft.
+There are many other features of Workcraft, both as part
+of the STG plug in, some of which I will discuss in the context of
+concepts here, and as part of other modelling formalisms. More
+information on these can be found at <http://workcraft.org/>.
+
+Translating and authoring concepts
+----------------------------------
+
+First of all, Workcraft must be
+started. This can be done by running the start up script, located in the
+Workcraft
+directory in *Windows* and *Linux*. In *Windows*, this script is named
+“`workcraft.bat`“. In *Linux*, it is simply ”`workcraft`". In *OS X*,
+Workcraft can
+be started instead by double clicking the Workcraft icon, which is
+the app container for the necessary files.
+
+When Workcraft starts, you will be greeted by a blank screen, as seen here:
+
+![Workcraft immediately after starting.](http://jrbeaumont.github.io/concepts-manual/images/blank_workcraft_screenshot.svg)
+
+Now, we need to open a new work, specifically a new STG work. Open the
+“New work” dialog using the menu bar, `File -> Create work...`, or by
+pressing `Ctrl-N` (`CMD-N` on *OS X*). This will bring up a menu as seen here:
+
+![The create work window.](http://jrbeaumont.github.io/concepts-manual/images/new_work_screenshot.PNG)
+
+In this window, select “*Signal Transition Graph*’ and cick the “OK”
+button at the bottom of the window. This will the open a blank workspace
+in which we can create an STG, which will look similar this:
+
+![A new STG workspace](http://jrbeaumont.github.io/concepts-manual/images/new_stg_screenshot.svg)
+
+Now, we can start translating concepts. To do this, first we need to
+open the concepts dialog. This is done from the menu bar, by selecting
+the “*Conversion*” menu, and then the “*Translate concepts...*” option.
+The concepts dialog will look as shown here:
+
+![The concepts dialog.](http://jrbeaumont.github.io/concepts-manual/images/concepts_dialog_screenshot.PNG)
+
+From within this dialog, one can write their own concepts, from the
+default template, or open an existing
+concepts file, with the *.hs* extension. When satisfied with the
+concepts written, a user can choose to save the file, if not already
+saved, and then translate these concepts.
+
+![The concepts dialog with a concept file opened.](http://jrbeaumont.github.io/concepts-manual/images/concepts_dialog_ZCEarly.PNG)
+
+This is the concepts dialog after
+we have opened the ZCEarly with environment example. 
+Clicking translate at this point will cause the translation to fail, because, 
+as we said in the "Including imported concept files" section, we need to 
+include the imported ZCAbsent file. At the bottom of this dialog, there is a 
+button labeled "Included files". Clicking this opens the dialog as shown here:
+
+![The include dialog with no included files.](http://jrbeaumont.github.io/concepts-manual/images/include_dialog.PNG)
+
+This currently has no files included. Clicking "*Add*" will open a file chooser, 
+where you can navigate to the chosen file.
+
+![The include dialog with the ZCAbsent file added.](http://jrbeaumont.github.io/concepts-manual/images/include_dialog_ZCAbsent.PNG)
+
+ After all desired include files have been added, click OK to return to the 
+ concepts translation dialog. This example can now be succesfully translated 
+ by clicking "*Translate*".
+
+![The STG produced from translating the concepts.](http://jrbeaumont.github.io/concepts-manual/images/concepts_translated.PNG)
+
+The translated concepts will look similar to in the above image.
+
+Now, a user can choose to insert more concepts, make changes to this
+STG, and once they are satisfied with it, can then perform various
+functions on this STG. One can perform transformations, verifications,
+simulations and synthesis on this STG using the menus within this
+workspace now. Any further changes to this STG, based on the results of
+these operations can be made to this STG or to the concepts file.
+
+Importing concepts directly
+---------------------------
+
+In Workcraft it is also possible to import concepts directly from a file, 
+without having to view the concepts first. This can be done from the “*File*”
+menu, by selecting the “*Import...*” option.
+
+![The STG produced from translating the concepts.](http://jrbeaumont.github.io/concepts-manual/images/import_menu_screenshot.svg)
+
+When importing concepts using this menu, ensure to set the “*Files of
+Type*” option to “*Concepts file (.hs)*”, as shown in the image above.
+
+Errors
+------
+
+If any errors are encountered during the translation process,
+Workcraft will produce a helpful error message. This usually can tell you with
+more detail what the issue that is causing the error is, but will ask
+you to refer to Workcraft’s console
+window for specific line numbers or signals which need to be corrected.
+These errors will include whether a signal has not been declared as an
+input or output, a signal has not had it’s initial state given, or even
+that plato has not been installed correctly.
+
 Built-in concepts
---------------------------------------------
+-----------------
 
 There are several built-in concepts included in the library, for simple
 functions, such as setting the initial state, and some standard useful
@@ -562,11 +727,21 @@ the same as in the standard `handshake` concepts, but this includes
 initial states for the signals. For this concept, both signals will
 be initialised to 1, or high.
 
+`never [(Transition) a, (Transition) b, ...]` 
+
+A concept used to define lists of signal transitions which cannot all have 
+occured at the same time. `(Transition)` in this 
+case will be `rise` or `fall`. These lists are used to descripe states of the
+system which do not hold for the invariant. For example, the concept
+`never [rise a, rise b]` indicates that signals `a` and `b` can never be high 
+at the same time. Plato uses this information to determine whether states which
+are declared as `never` are reachable or not. 
+
 `me a b`
 
 A protocol-level concepts. This concept defines *Mutual Exclusion*
 between two signals. This means that when one of these signals is
-high, the other cannot transition high.
+high, the other cannot transition high, using the `never` concept.
 
 `meElement r1 r2 g1 g2`
 
@@ -595,7 +770,6 @@ standard OR gate. Signals `a` and `b` are inputs to the gate, and
 `rise c` to occur. Following this, both `fall a`and `fall b` must
 occur for `fall c` to occur.
 
-
 There are many operators and concepts. With these built-in concepts, we
 beleive that it is possible to generate STGs of various sizes and
 complexities using these, and user-defined concepts.
@@ -607,7 +781,7 @@ repo](https://github.com/tuura/concepts/issues), where these can be
 discussed.
 
 Features to be implemented
-======================================================
+===============================================================================
 
 Some features which we aim to be stanard functionality of the concepts
 tool are not implemented yet for various reasons. These will be
@@ -615,13 +789,13 @@ displayed here. We will also try and explain a work-around to use until
 these features are implemented.
 
 Conversations on these features can be found [in the list of issues in
-the github repo](https://github.com/tuura/concepts/issues). Any further
+the github repo](https://github.com/tuura/plato/issues). Any further
 problems or ideas for features can also be reported here.
 
 Define signal names for translated concepts
 -------------------------------------------
 
-Github issue: <https://github.com/tuura/concepts/issues/35>
+Github issue: <https://github.com/tuura/plato/issues/35>
 
 Currently, when concepts are translated, regardless of the names of
 signals used in the concept definition, the STG translated will have
@@ -632,7 +806,9 @@ signals when translated will produce a STG containing signals ’`A`’,
 signals defined in the `circuit`. For example, if the circuit definition
 is:
 
-`circuit x y z = ...`
+```haskell
+circuit x y z = ...
+```
 
 the signals in the translated STG will be ’`A`’ in place of ’`x`’, ’`B`’
 in place of ’`y`’ and ’`C`’ in place of ’`Z`’. The signal names will not
@@ -647,22 +823,3 @@ changing the property. Signals with the same name can be selected
 together (`shift-left mouse button`) and their name can be edited at
 once. This, however, is still not as simple as the singal names being
 included in the translation, and we aim to implement this feature soon.
-
-User-defined concepts to be reused without re-definition
---------------------------------------------------------
-
-Github issue: <https://github.com/tuura/concepts/issues/36>
-
-It is our aim to allow a user to define their own concepts to build a
-scenario STG, and then re-use the definition of some of their own
-concepts without having to re-define any of these concepts, to build
-another scenario STG, or in any other concept definition.
-
-This feature has not been implemented in this version of the concepts
-tool. This may require some new form of definition of these concepts, in
-order to be reused. It may also require the import of a concept file
-including the original concept definition. When the feature has been
-implemented, information on how to use this feature will be included in
-this manual.
-A work-around for this is simply to copy-and-paste the previous concept
-definition into the new concept file which would require this concept.
