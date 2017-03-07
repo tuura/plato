@@ -65,3 +65,6 @@ invariantError = map signal
 
 cartesianProduct :: [[a]] -> [[a]]
 cartesianProduct l = sequence l
+
+arcLists :: [Causality (Transition a)] -> [([Transition a], Transition a)]
+arcLists xs = [ ([f], t) | AndCausality (f, t) <- xs ] ++ [ (f, t) | OrCausality (f, t) <- xs ]

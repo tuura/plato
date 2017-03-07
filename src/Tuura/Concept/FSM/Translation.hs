@@ -84,7 +84,7 @@ translate circuit signs =
     case validate signs circuit of
       Valid -> do
           let allCause = addConsistency (arcs circuit) signs
-              sortedCause = concatMap handleArcs (groupSortOn snd allCause)
+              sortedCause = concatMap handleArcs (groupSortOn snd (arcLists allCause))
               initialState = getInitialState circuit signs
               allArcs = createAllArcs sortedCause
               reachables = findReachables allArcs initialState
@@ -111,16 +111,15 @@ getInitialState circuit signs = encToInt state
 fromBool :: Bool -> Tristate
 fromBool x = if x then triTrue else triFalse
 
-addConsistency :: Ord a => [([Transition a], Transition a)] -> [a] -> [([Transition a], Transition a)]
-addConsistency allArcs signs = nubOrd (allArcs ++ concatMap (\s -> [([rise s], fall s), ([fall s], rise s)]) signs)
+addConsistency :: Ord a => [Causality (Transition a)] -> [a] -> [Causality (Transition a)]
+addConsistency allArcs signs = nubOrd (allArcs ++ concatMap (\s -> [AndCausality (rise s, fall s), AndCausality (fall s, rise s)]) signs)
 
 handleArcs :: [([Transition a], Transition a)] -> [([Transition a], Transition a)]
-handleArcs arcLists = result
+handleArcs xs = map (\m -> (m, effect)) transCauses
         where
-            effect = snd (head arcLists)
-            effectCauses = map fst arcLists
+            effect = snd (head xs)
+            effectCauses = map fst xs
             transCauses = cartesianProduct effectCauses
-            result = map (\m -> (m, effect)) transCauses
 
 genFSM :: Show a => [a] -> [a] -> [a] -> [String] -> String -> String -> String
 genFSM inputSigns outputSigns internalSigns arcStrs initialState reachReport =

@@ -22,7 +22,8 @@ translate circuit signs =
     case validate signs circuit of
         Valid -> do
             let initStrs = map (\s -> (show s, (getDefined $ initial circuit s))) signs
-                arcStrs = nubOrd (concatMap handleArcs (groupSortOn snd (arcs circuit)))
+                allArcs = arcLists (arcs circuit)
+                arcStrs = nubOrd (concatMap handleArcs (groupSortOn snd allArcs))
                 invStrs = map genInvStrs (invariant circuit)
                 inputSigns = filter ((==Input) . interface circuit) signs
                 outputSigns = filter ((==Output) . interface circuit) signs
@@ -32,10 +33,10 @@ translate circuit signs =
             "Error. \n" ++ addErrors errs
 
 handleArcs :: Show a => [([Transition a], Transition a)] -> [String]
-handleArcs arcLists = addConsistencyTrans effect n ++ concatMap transition arcMap
+handleArcs xs = addConsistencyTrans effect n ++ concatMap transition arcMap
         where
-            effect = snd (head arcLists)
-            effectCauses = map fst arcLists
+            effect = snd (head xs)
+            effectCauses = map fst xs
             transCauses = cartesianProduct effectCauses
             n = length transCauses
             arcMap = concat (map (\m -> arcPairs m effect) (zip transCauses [0..(n-1)]))
