@@ -29,8 +29,7 @@ translate circuit signs =
                 outputSigns = filter ((==Output) . interface circuit) signs
                 internalSigns = filter ((==Internal) . interface circuit) signs
             genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStrs
-        Invalid errs ->
-            "Error. \n" ++ addErrors errs
+        Invalid errs -> addErrors errs
 
 handleArcs :: Show a => [([Transition a], Transition a)] -> [String]
 handleArcs xs = addConsistencyTrans effect n ++ concatMap transition arcMap

@@ -81,32 +81,33 @@ translateFSM circuitName ctype signs = do
 
 translate :: (Show a, Ord a) => CircuitConcept a -> [a] -> String
 translate circuit signs =
-    case validate signs circuit of
+    case validateInitialState signs circuit of
       Valid -> do
           let allCause = addConsistency (arcs circuit) signs
               sortedCause = concatMap handleArcs (groupSortOn snd (arcLists allCause))
               initialState = getInitialState circuit signs
               allArcs = createAllArcs sortedCause
               reachables = findReachables allArcs initialState
-              invariants = map encToInt (concatMap (\i -> getInvariantStates i signs) (invariant circuit))
+              invariants = concatMap (\i -> getInvariantStates i signs) (invariant circuit)
+              invariantNos = map encToInt invariants
               reachableArcs = removeUnreachables allArcs reachables
               inputSigns = filter ((==Input) . interface circuit) signs
               outputSigns = filter ((==Output) . interface circuit) signs
               internalSigns = filter ((==Internal) . interface circuit) signs
-              reachableInvariants = filter (`elem` reachables) invariants
-              unreachables = ([0..2^(length signs) - 1] \\ invariants) \\ reachables
-          if (reachableInvariants /= [])
-              then reachableInvariantStateError reachableInvariants
-            else do
-              let reachReport = genReachReport unreachables
-              genFSM inputSigns outputSigns internalSigns (map show reachableArcs) (show initialState) reachReport
-      Invalid errs ->
-          "Error. \n" ++ addErrors errs
+              reachableInvariants = filter (\i -> (encToInt i) `elem` reachables) invariants
+              unreachables = ([0..2^(length signs) - 1] \\ invariantNos) \\ reachables
+          case validateFSM signs circuit reachableInvariants (invariant circuit) of
+              Valid -> do
+                let reachReport = genReachReport unreachables
+                genFSM inputSigns outputSigns internalSigns (map show reachableArcs) (show initialState) reachReport
+              Invalid errs -> addErrors errs
+
+      Invalid errs -> addErrors errs
 
 getInitialState :: CircuitConcept a -> [a] -> Int
 getInitialState circuit signs = encToInt state
   where
-    state = map (fromBool  . getDefined . initial circuit ) signs
+    state = map (fromBool  . getDefined . initial circuit) signs
 
 fromBool :: Bool -> Tristate
 fromBool x = if x then triTrue else triFalse
@@ -120,6 +121,15 @@ handleArcs xs = map (\m -> (m, effect)) transCauses
             effect = snd (head xs)
             effectCauses = map fst xs
             transCauses = cartesianProduct effectCauses
+
+validateFSM :: Ord a => [a] -> CircuitConcept a -> [[Tristate]] -> [Invariant (Transition a)] -> ValidationResult a
+validateFSM signs circuit reachInvs invs
+    | invVio == [] && unused == [] = Valid
+    | otherwise = Invalid ((map UndefinedInitialState unused) ++ (map InvariantViolated invVio))
+  where
+    unused  = filter ((==Undefined) . initial circuit) signs
+    invsMapped = map (\(NeverAll is) -> (is, getInvariantStates (NeverAll is) signs)) invs
+    invVio = nubOrd (map fst (concatMap (\i -> filter (\(_, x) -> i `elem` x) invsMapped) reachInvs))
 
 genFSM :: Show a => [a] -> [a] -> [a] -> [String] -> String -> String -> String
 genFSM inputSigns outputSigns internalSigns arcStrs initialState reachReport =
