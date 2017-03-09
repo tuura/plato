@@ -1,6 +1,8 @@
 module Tuura.Plato.Translation where
 
 import Data.Char
+import Data.Monoid
+import qualified Data.List.NonEmpty as NonEmpty
 
 import Tuura.Concept.Circuit.Basic
 import Tuura.Concept.Circuit.Derived
@@ -14,7 +16,6 @@ instance Monoid (ValidationResult a) where
     mappend (Invalid es) Valid = Invalid es
     mappend Valid Valid = Valid
     mappend (Invalid es) (Invalid fs) = Invalid (fs ++ es)
-    -- mappend (Defined x) (Defined y) = if x == y then Defined x else Inconsistent
 
 data ValidationError a = UnusedSignal a
                        | InconsistentInitialState a
@@ -53,18 +54,18 @@ addErrors errs = "Error\n" ++
              ++ unlines (map show invVio) ++ "\n"
         else "")
     where
-        unused = [ a | UnusedSignal a <- errs ]
+        unused = [ a | UnusedSignal a             <- errs ]
         incons = [ a | InconsistentInitialState a <- errs ]
-        undefd = [ a | UndefinedInitialState a <- errs ]
-        invVio = [ a | InvariantViolated a <- errs ]
+        undefd = [ a | UndefinedInitialState a    <- errs ]
+        invVio = [ a | InvariantViolated a        <- errs ]
 
 validate :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
-validate signs circuit = (validateInitialState signs circuit) `mappend` (validateInterface signs circuit)
+validate signs circuit = (validateInitialState signs circuit) <> (validateInterface signs circuit)
 
 validateInitialState :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
 validateInitialState signs circuit
     | undef ++ inconsistent == [] = Valid
-    | otherwise = Invalid ((map UndefinedInitialState undef) ++ (map InconsistentInitialState inconsistent))
+    | otherwise = Invalid (map UndefinedInitialState undef ++ map InconsistentInitialState inconsistent)
   where
     undef        = filter ((==Undefined) . initial circuit) signs
     inconsistent = filter ((==Inconsistent) . initial circuit) signs
@@ -76,8 +77,8 @@ validateInterface signs circuit
   where
     unused       = filter ((==Unused) . interface circuit) signs
 
-cartesianProduct :: [[a]] -> [[a]]
-cartesianProduct l = sequence l
+cartesianProduct :: NonEmpty.NonEmpty [a] -> [[a]]
+cartesianProduct l = sequence (NonEmpty.toList l)
 
 arcLists :: [Causality (Transition a)] -> [([Transition a], Transition a)]
-arcLists xs = [ ([f], t) | AndCausality (f, t) <- xs ] ++ [ (f, t) | OrCausality (f, t) <- xs ]
+arcLists xs = [ ([f], t) | AndCausality f t <- xs ] ++ [ (f, t) | OrCausality f t <- xs ]

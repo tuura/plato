@@ -15,7 +15,7 @@ import Data.Monoid
 -- * s is the type of states
 -- * e is the type of events
 
-data Causality e = AndCausality (e, e) | OrCausality ([e], e) deriving (Ord, Eq, Show)
+data Causality e = AndCausality e e | OrCausality [e] e deriving (Ord, Eq, Show)
 
 data Interface = Unused | Input | Output | Internal deriving (Ord, Eq, Show)
 
@@ -58,10 +58,10 @@ instance Monoid (Concept s e a) where
                   }
 
 arcConcept :: e -> e -> Concept s e a
-arcConcept from to = mempty { arcs = [AndCausality (from, to)] }
+arcConcept from to = mempty { arcs = [AndCausality from to] }
 
 orCausality :: [e] -> e -> Concept s e a
-orCausality from to = mempty { arcs = [OrCausality (from, to)] }
+orCausality from to = mempty { arcs = [OrCausality from to] }
 
 initialConcept :: (a -> InitialValue) -> Concept s e a
 initialConcept f = mempty { initial = f }
