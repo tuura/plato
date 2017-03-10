@@ -1,17 +1,25 @@
 module Tuura.Plato.Translation where
 
 import Data.Char
-import Data.List.Extra
+import Data.Monoid
+import qualified Data.List.NonEmpty as NonEmpty
 
 import Tuura.Concept.Circuit.Basic
 import Tuura.Concept.Circuit.Derived
 
 data ValidationResult a = Valid | Invalid [ValidationError a] deriving Eq
 
+instance Monoid (ValidationResult a) where
+    mempty = mempty
+
+    mappend Valid x = x
+    mappend x Valid = x
+    mappend (Invalid es) (Invalid fs) = Invalid (fs ++ es)
+
 data ValidationError a = UnusedSignal a
                        | InconsistentInitialState a
                        | UndefinedInitialState a
-                       | InvariantViolated a
+                       | InvariantViolated [Transition a]
                        deriving Eq
 
 data Signal = Signal Int deriving Eq
@@ -27,41 +35,49 @@ instance Ord Signal
 
 -- TODO: Tidy up function, it looks ugly.
 addErrors :: (Eq a, Show a) => [ValidationError a] -> String
-addErrors errs =
-        if (unused errs) /= []
+addErrors errs = "Error\n" ++
+        (if unused /= []
         then "The following signals are not declared as input, output or internal: \n"
-             ++ unlines (map show (unused errs)) ++ "\n"
-        else "" ++
-        if (incons errs) /= []
+             ++ unlines (map show unused) ++ "\n"
+        else "") ++
+        (if incons /= []
         then "The following signals have inconsistent inital states: \n"
-             ++ unlines (map show (incons errs)) ++ "\n"
-        else "" ++
-        if (undefd errs) /= []
+             ++ unlines (map show incons) ++ "\n"
+        else "") ++
+        (if undefd /= []
         then "The following signals have undefined initial states: \n"
-             ++ unlines (map show (undefd errs)) ++ "\n"
-        else ""
+             ++ unlines (map show undefd) ++ "\n"
+        else "") ++
+        (if invVio /= []
+        then "The following state(s) are reachable but the invariant does not hold for them:\n"
+             ++ unlines (map show invVio) ++ "\n"
+        else "")
     where
-        unused es = [ a | UnusedSignal a <- es ]
-        incons es = [ a | InconsistentInitialState a <- es ]
-        undefd es = [ a | UndefinedInitialState a <- es ]
+        unused = [ a | UnusedSignal a             <- errs ]
+        incons = [ a | InconsistentInitialState a <- errs ]
+        undefd = [ a | UndefinedInitialState a    <- errs ]
+        invVio = [ a | InvariantViolated a        <- errs ]
 
 validate :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
-validate signs circuit
-    | unused ++ inconsistent ++ undef == [] = Valid
-    | otherwise = Invalid ((map UnusedSignal unused) ++ (map InconsistentInitialState inconsistent)
-                  ++ (map UndefinedInitialState undef))
+validate signs circuit = (validateInitialState signs circuit) <> (validateInterface signs circuit)
+
+validateInitialState :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
+validateInitialState signs circuit
+    | undef ++ inconsistent == [] = Valid
+    | otherwise = Invalid (map UndefinedInitialState undef ++ map InconsistentInitialState inconsistent)
+  where
+    undef        = filter ((==Undefined) . initial circuit) signs
+    inconsistent = filter ((==Inconsistent) . initial circuit) signs
+
+validateInterface :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
+validateInterface signs circuit
+    | unused == [] = Valid
+    | otherwise = Invalid (map UnusedSignal unused)
   where
     unused       = filter ((==Unused) . interface circuit) signs
-    inconsistent = filter ((==Inconsistent) . initial circuit) signs
-    undef        = filter ((==Undefined) . initial circuit) signs
 
-checkInitialStates :: Ord a => [a] -> Invariant (Transition a) -> (a -> InitialValue) -> [a]
-checkInitialStates signs (NeverAll es) initials = nubOrd (if (all (`elem` initialStates) es) then (invariantError es) else [])
-  where
-    initialStates = map (\s -> Transition { signal = s , newValue = getDefined $ initials s }) signs
+cartesianProduct :: NonEmpty.NonEmpty [a] -> [[a]]
+cartesianProduct l = sequence (NonEmpty.toList l)
 
-invariantError :: [Transition a] -> [a]
-invariantError = map signal
-
-cartesianProduct :: [[a]] -> [[a]]
-cartesianProduct l = sequence l
+arcLists :: [Causality (Transition a)] -> [([Transition a], Transition a)]
+arcLists xs = [ ([f], t) | AndCausality f t <- xs ] ++ [ (f, t) | OrCausality f t <- xs ]

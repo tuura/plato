@@ -1,4 +1,5 @@
 module Tuura.Concept.Circuit.Basic (
+    Causality (..),
     Interface (..),
     InitialValue (..),
     Invariant (..),
@@ -13,6 +14,8 @@ import Data.Monoid
 -- Abstract concepts
 -- * s is the type of states
 -- * e is the type of events
+
+data Causality e = AndCausality e e | OrCausality [e] e deriving (Ord, Eq, Show)
 
 data Interface = Unused | Input | Output | Internal deriving (Ord, Eq, Show)
 
@@ -38,7 +41,7 @@ data Invariant e = NeverAll [e] deriving (Eq, Show)
 data Concept s e a = Concept
                    {
                        initial   :: a -> InitialValue,
-                       arcs      :: [([e], e)],
+                       arcs      :: [Causality e],
                        interface :: a -> Interface,
                        invariant :: [Invariant e]
                    }
@@ -55,10 +58,10 @@ instance Monoid (Concept s e a) where
                   }
 
 arcConcept :: e -> e -> Concept s e a
-arcConcept from to = mempty { arcs = [([from], to)] }
+arcConcept from to = mempty { arcs = [AndCausality from to] }
 
 orCausality :: [e] -> e -> Concept s e a
-orCausality from to = mempty { arcs = [(from, to)] }
+orCausality from to = mempty { arcs = [OrCausality from to] }
 
 initialConcept :: (a -> InitialValue) -> Concept s e a
 initialConcept f = mempty { initial = f }

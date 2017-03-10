@@ -1,6 +1,8 @@
 module Tuura.Concept.STG.Translation where
 
 import Data.List.Extra
+import qualified Data.List.NonEmpty as NonEmpty
+import Data.List.NonEmpty (NonEmpty, groupAllWith)
 import Text.Printf
 
 import Tuura.Plato.Translation
@@ -22,20 +24,21 @@ translate circuit signs =
     case validate signs circuit of
         Valid -> do
             let initStrs = map (\s -> (show s, (getDefined $ initial circuit s))) signs
-                arcStrs = nubOrd (concatMap handleArcs (groupSortOn snd (arcs circuit)))
+                allArcs = arcLists (arcs circuit)
+                arcStrs = nubOrd (concatMap handleArcs (groupAllWith snd allArcs))
                 invStrs = map genInvStrs (invariant circuit)
                 inputSigns = filter ((==Input) . interface circuit) signs
                 outputSigns = filter ((==Output) . interface circuit) signs
                 internalSigns = filter ((==Internal) . interface circuit) signs
             genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStrs
-        Invalid errs ->
-            "Error. \n" ++ addErrors errs
+        Invalid errs -> addErrors errs
 
-handleArcs :: Show a => [([Transition a], Transition a)] -> [String]
-handleArcs arcLists = addConsistencyTrans effect n ++ concatMap transition arcMap
+-- Due to the caller, xs will never be empty, so `snd (head xs)` will never fail.
+handleArcs :: Show a => NonEmpty ([Transition a], Transition a) -> [String]
+handleArcs xs = addConsistencyTrans effect n ++ concatMap transition arcMap
         where
-            effect = snd (head arcLists)
-            effectCauses = map fst arcLists
+            effect = snd (NonEmpty.head xs)
+            effectCauses = NonEmpty.map fst xs
             transCauses = cartesianProduct effectCauses
             n = length transCauses
             arcMap = concat (map (\m -> arcPairs m effect) (zip transCauses [0..(n-1)]))
@@ -69,7 +72,7 @@ transition (f, t)
         | otherwise  = readArc (init (show f) ++ "0") t
 
 tmpl :: String
-tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internal %s", ".graph", "%s.marking {%s}", "%s.end"]
+tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internal %s", ".graph", "%s.marking {%s}", ".end%s"]
 
 output :: [(String, Bool)] -> [String]
 output = nubOrd . map fst
@@ -89,6 +92,6 @@ readArc f t = [f ++ " " ++ t, t ++ " " ++ f]
 genInvStrs :: (Ord a, Show a) => Invariant (Transition a) -> String
 genInvStrs (NeverAll es)
         | es        == [] = []
-        | otherwise = "# invariant = not (" ++  (intercalate " && " (map format es)) ++ ")"
+        | otherwise = "\ninvariant = not (" ++  (intercalate " && " (map format es)) ++ ")"
     where
         format e = if (newValue e) then show (signal e) else "not " ++ show (signal e)
