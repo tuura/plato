@@ -2,6 +2,7 @@ module Tuura.Concept.STG.Translation where
 
 import Data.List.Extra
 import qualified Data.List.NonEmpty as NonEmpty
+import Data.List.NonEmpty (NonEmpty, groupAllWith)
 import Text.Printf
 
 import Tuura.Plato.Translation
@@ -24,7 +25,7 @@ translate circuit signs =
         Valid -> do
             let initStrs = map (\s -> (show s, (getDefined $ initial circuit s))) signs
                 allArcs = arcLists (arcs circuit)
-                arcStrs = nubOrd (concatMap handleArcs (NonEmpty.groupAllWith snd allArcs))
+                arcStrs = nubOrd (concatMap handleArcs (groupAllWith snd allArcs))
                 invStrs = map genInvStrs (invariant circuit)
                 inputSigns = filter ((==Input) . interface circuit) signs
                 outputSigns = filter ((==Output) . interface circuit) signs
@@ -33,7 +34,7 @@ translate circuit signs =
         Invalid errs -> addErrors errs
 
 -- Due to the caller, xs will never be empty, so `snd (head xs)` will never fail.
-handleArcs :: Show a => NonEmpty.NonEmpty ([Transition a], Transition a) -> [String]
+handleArcs :: Show a => NonEmpty ([Transition a], Transition a) -> [String]
 handleArcs xs = addConsistencyTrans effect n ++ concatMap transition arcMap
         where
             effect = snd (NonEmpty.head xs)

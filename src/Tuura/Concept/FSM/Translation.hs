@@ -3,6 +3,7 @@ module Tuura.Concept.FSM.Translation where
 import Data.List
 import Data.List.Extra
 import qualified Data.List.NonEmpty as NonEmpty
+import Data.List.NonEmpty (NonEmpty, groupAllWith)
 import Data.Ord
 import qualified Data.Set as Set
 import Control.Monad
@@ -85,7 +86,7 @@ translate circuit signs =
     case validateInitialState signs circuit of
       Valid -> do
           let allCause = addConsistency (arcs circuit) signs
-              sortedCause = concatMap handleArcs (NonEmpty.groupAllWith snd (arcLists allCause))
+              sortedCause = concatMap handleArcs (groupAllWith snd (arcLists allCause))
               initialState = getInitialState circuit signs
               allArcs = createAllArcs sortedCause
               reachables = findReachables allArcs initialState
@@ -99,8 +100,8 @@ translate circuit signs =
               unreachables = ([0..2^(length signs) - 1] \\ invariantNos) \\ reachables
           case (validateFSM signs reachableInvariants (invariant circuit)) <> (validateInterface signs circuit) of
               Valid -> do
-                let reachReport = genReachReport unreachables
-                genFSM inputSigns outputSigns internalSigns (map show reachableArcs) (show initialState) reachReport
+                  let reachReport = genReachReport unreachables
+                  genFSM inputSigns outputSigns internalSigns (map show reachableArcs) (show initialState) reachReport
               Invalid errs -> addErrors errs
 
       Invalid errs -> addErrors errs
@@ -116,7 +117,7 @@ fromBool x = if x then triTrue else triFalse
 addConsistency :: Ord a => [Causality (Transition a)] -> [a] -> [Causality (Transition a)]
 addConsistency allArcs signs = nubOrd (allArcs ++ concatMap (\s -> [AndCausality (rise s) (fall s), AndCausality (fall s) (rise s)]) signs)
 
-handleArcs :: NonEmpty.NonEmpty ([Transition a], Transition a) -> [([Transition a], Transition a)]
+handleArcs :: NonEmpty ([Transition a], Transition a) -> [([Transition a], Transition a)]
 handleArcs xs = map (\m -> (m, effect)) transCauses
         where
             effect = snd (NonEmpty.head xs)

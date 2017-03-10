@@ -12,9 +12,8 @@ data ValidationResult a = Valid | Invalid [ValidationError a] deriving Eq
 instance Monoid (ValidationResult a) where
     mempty = mempty
 
-    mappend Valid (Invalid es) = Invalid es
-    mappend (Invalid es) Valid = Invalid es
-    mappend Valid Valid = Valid
+    mappend Valid x = x
+    mappend x Valid = x
     mappend (Invalid es) (Invalid fs) = Invalid (fs ++ es)
 
 data ValidationError a = UnusedSignal a
