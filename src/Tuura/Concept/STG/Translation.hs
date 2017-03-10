@@ -72,7 +72,7 @@ transition (f, t)
         | otherwise  = readArc (init (show f) ++ "0") t
 
 tmpl :: String
-tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internal %s", ".graph", "%s.marking {%s}", ".end%s"]
+tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internal %s", ".graph", "%s.marking {%s}", ".end", "%s"]
 
 output :: [(String, Bool)] -> [String]
 output = nubOrd . map fst
@@ -92,6 +92,6 @@ readArc f t = [f ++ " " ++ t, t ++ " " ++ f]
 genInvStrs :: (Ord a, Show a) => Invariant (Transition a) -> String
 genInvStrs (NeverAll es)
         | es        == [] = []
-        | otherwise = "\ninvariant = not (" ++  (intercalate " && " (map format es)) ++ ")"
+        | otherwise = "invariant = not (" ++  (intercalate " && " (map format es)) ++ ")"
     where
         format e = if (newValue e) then show (signal e) else "not " ++ show (signal e)
