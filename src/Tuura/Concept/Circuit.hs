@@ -9,6 +9,7 @@ module Tuura.Concept.Circuit (
     ) where
 
 import Tuura.Concept.Abstract
+--import Tuura.Concept.Signal
 import Data.Monoid
 
 -- Circuit primitives
@@ -65,6 +66,9 @@ never :: [(a, Bool)] -> CircuitConcept a
 never = invariantConcept . foldr ((.||.) . notEqual) (const False)
   where
     notEqual (a, v) = before $ Transition a v
+
+
+-- causality :: (Dependency t1 t2 ~ Causality) => Signal t1 a -> Signal t2 a -> (a, a)
 
 causality :: Eq a => Transition a -> Transition a -> CircuitConcept a
 causality cause effect =
