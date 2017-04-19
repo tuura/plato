@@ -149,7 +149,7 @@ genReachReport es
       unreachStates = [ "s" ++ show e | e <- es ]
 
 tmpl :: String
-tmpl = unlines [".inputs %s", ".outputs %s", ".internals %s", ".state graph", "%s.marking {s%s}", ".end%s"]
+tmpl = unlines [".inputs %s", ".outputs %s", ".internal %s", ".state graph", "%s.marking {s%s}", ".end%s"]
 
 fullList :: ([a], a) -> [a]
 fullList (l,t) = t:l
