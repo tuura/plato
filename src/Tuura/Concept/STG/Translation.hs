@@ -12,10 +12,11 @@ import Tuura.Concept.STG
 import qualified Language.Haskell.Interpreter as GHC
 import qualified Language.Haskell.Interpreter.Unsafe as GHC
 
-translateSTG :: (Show a, Ord a) => String -> String -> [a] -> GHC.Interpreter ()
+translateSTG :: (Show a, Ord a) => String -> String -> [a] -> GHC.Interpreter()
 translateSTG circuitName ctype signs = do
     circ <- GHC.unsafeInterpret circuitName ctype
-    apply <- GHC.unsafeInterpret "apply" $ "(" ++ ctype ++ ") -> CircuitConcept Signal"
+    apply <- GHC.unsafeInterpret "apply" $
+        "(" ++ ctype ++ ") -> CircuitConcept Signal"
     let circuit = apply circ
     GHC.liftIO $ putStr (translate circuit signs)
 
@@ -23,17 +24,19 @@ translate :: (Show a, Ord a) => CircuitConcept a -> [a] -> String
 translate circuit signs =
     case validate signs circuit of
         Valid -> do
-            let initStrs = map (\s -> (show s, (getDefined $ initial circuit s))) signs
+            let initStrs = map (\s ->
+                    (show s, (getDefined $ initial circuit s))) signs
                 allArcs = arcLists (arcs circuit)
-                arcStrs = nubOrd (concatMap handleArcs (groupAllWith snd allArcs))
-                invStrs = map genInvStrs (invariant circuit)
+                arcStrs = nubOrd (concatMap handleArcs
+                            (groupAllWith snd allArcs))
+                invStr = map genInvStrs (invariant circuit)
                 inputSigns = filter ((==Input) . interface circuit) signs
                 outputSigns = filter ((==Output) . interface circuit) signs
                 internalSigns = filter ((==Internal) . interface circuit) signs
-            genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStrs
+            genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStr
         Invalid errs -> addErrors errs
 
--- Due to the caller, xs will never be empty, so `snd (head xs)` will never fail.
+-- Due to the caller, xs will never be empty, so `snd (head xs)` never fails.
 handleArcs :: Show a => NonEmpty ([Transition a], Transition a) -> [String]
 handleArcs xs = addConsistencyTrans effect n ++ concatMap transition arcMap
         where
@@ -41,11 +44,14 @@ handleArcs xs = addConsistencyTrans effect n ++ concatMap transition arcMap
             effectCauses = NonEmpty.map fst xs
             transCauses = cartesianProduct effectCauses
             n = length transCauses
-            arcMap = concat (map (\m -> arcPairs m effect) (zip transCauses [0..(n-1)]))
+            arcMap = concat (map (\m -> arcPairs m effect)
+                                (zip transCauses [0..(n-1)]))
 
-genSTG :: Show a => [a] -> [a] -> [a] -> [String] -> [(String, Bool)] -> [String] -> String
-genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStrs =
-    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines allArcs) (unwords marks) (unlines invStrs)
+genSTG :: Show a => [a] -> [a] -> [a] -> [String] -> [(String, Bool)]
+            -> [String] -> String
+genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStr =
+    printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines allArcs)
+                                             (unwords marks) (unlines invStr)
     where
         allSigns = output initStrs
         outs = map show outputSigns
@@ -56,10 +62,14 @@ genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStrs =
 
 addConsistencyTrans :: Show a => Transition a -> Int -> [String]
 addConsistencyTrans effect n
-        | newValue effect = map (\x -> (printf "%s0 %s/%s\n" (init (show effect)) (show effect) (show x))
-            ++ (printf "%s/%s %s1" (show effect) (show x) (init (show effect)))) [1..n - 1]
-        | otherwise = map (\x -> (printf "%s1 %s/%s\n" (init (show effect)) (show effect) (show x))
-            ++ (printf "%s/%s %s0" (show effect) (show x) (init (show effect)))) [1..n - 1]
+        | newValue effect = map (\x ->
+          (printf "%s0 %s/%s\n" (init (show effect)) (show effect) (show x)) ++
+          (printf "%s/%s %s1" (show effect) (show x) (init (show effect))))
+          [1..n - 1]
+        | otherwise = map (\x ->
+          (printf "%s1 %s/%s\n" (init (show effect)) (show effect) (show x)) ++
+          (printf "%s/%s %s0" (show effect) (show x) (init (show effect))))
+          [1..n - 1]
 
 arcPairs :: Show a => ([a], Int) -> a -> [(a, String)]
 arcPairs (causes, n) effect
@@ -72,19 +82,30 @@ transition (f, t)
         | otherwise  = readArc (init (show f) ++ "0") t
 
 tmpl :: String
-tmpl = unlines [".model out", ".inputs %s", ".outputs %s", ".internal %s", ".graph", "%s.marking {%s}", ".end", "%s"]
+tmpl = unlines [".model out",
+                ".inputs %s",
+                ".outputs %s",
+                ".internal %s",
+                ".graph",
+                "%s.marking {%s}",
+                ".end",
+                "%s"]
 
 output :: [(String, Bool)] -> [String]
 output = nubOrd . map fst
 
 consistencyLoop :: String -> [String]
-consistencyLoop s = map (\f -> printf f s s) ["%s0 %s+", "%s+ %s1", "%s1 %s-", "%s- %s0"]
+consistencyLoop s = map (\f -> printf f s s)
+                    ["%s0 %s+", "%s+ %s1", "%s1 %s-", "%s- %s0"]
 
 initVals :: [String] -> [(String, Bool)] -> [String]
-initVals l symbInits = concat (map (\s -> [printf "%s%i" s $ initVal s symbInits]) l)
+initVals l symbs = concat (map (\s -> [printf "%s%i" s $ initVal s symbs]) l)
 
 initVal :: String -> [(String, Bool)] -> Int
-initVal s ls = sum (map (\x -> if (fst x == s) then fromEnum (snd x) else 0) ls)
+initVal s ls = sum (map (\x -> if (fst x == s)
+                               then fromEnum (snd x)
+                               else 0)
+                    ls)
 
 readArc :: String -> String -> [String]
 readArc f t = [f ++ " " ++ t, t ++ " " ++ f]
@@ -92,6 +113,10 @@ readArc f t = [f ++ " " ++ t, t ++ " " ++ f]
 genInvStrs :: (Ord a, Show a) => Invariant (Transition a) -> String
 genInvStrs (NeverAll es)
         | es        == [] = []
-        | otherwise = "invariant = not (" ++  (intercalate " && " (map format es)) ++ ")"
+        | otherwise = "invariant = not (" ++
+                      (intercalate " && " (map format es)) ++
+                      ")"
     where
-        format e = if (newValue e) then show (signal e) else "not " ++ show (signal e)
+        format e = if (newValue e)
+                   then show (signal e)
+                   else "not " ++ show (signal e)

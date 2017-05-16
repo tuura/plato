@@ -20,7 +20,8 @@ testDotGOutput = do
     putStrLn "=== testDotGOutput"
     assertEq threeSignalsConcept expected
   where
-    threeSignalsConcept = translate (inputs [a] <> outputs [b] <> internals [c] <> initialise0 [a, c] <> initialise1 [b]) signs
+    threeSignalsConcept = translate (inputs [a] <> outputs [b] <> internals [c]
+                       <> initialise0 [a, c] <> initialise1 [b]) signs
     a = Signal 0
     b = Signal 1
     c = Signal 2
@@ -52,7 +53,8 @@ testHandshakeConcept = do
     assertEq (sort (arcs handshakeConcept)) (sort expected)
   where
     handshakeConcept = inputs[a] <> outputs [b] <> handshake00 a b
-    expected = [Causality [rise a] (rise b), Causality [rise b] (fall a), Causality [fall a] (fall b), Causality [fall b] (rise a)]
+    expected = [Causality [rise a] (rise b), Causality [rise b] (fall a),
+                Causality [fall a] (fall b), Causality [fall b] (rise a)]
     [a, b] = map Signal [0 .. 1]
 
 testOrGateConcept :: IO ()
@@ -60,8 +62,10 @@ testOrGateConcept = do
     putStrLn "===testOrGateConcept"
     assertEq (sort (arcs orGateConcept)) (sort expected)
   where
-    orGateConcept = inputs [a, b] <> outputs [c] <> initialise0 [a, b, c] <> orGate a b c
-    expected = [Causality [rise a, rise b] (rise c), Causality [fall a] (fall c), Causality [fall b] (fall c)]
+    orGateConcept = inputs [a, b] <> outputs [c]
+                 <> initialise0 [a, b, c] <> orGate a b c
+    expected = [Causality [rise a, rise b] (rise c),
+                Causality [fall a] (fall c), Causality [fall b] (fall c)]
     [a, b, c] = map Signal [0..2]
 
 testTwoAndGates :: IO ()
@@ -69,18 +73,26 @@ testTwoAndGates = do
     putStrLn "===testTwoAndGates"
     assertEq (sort (arcs twoAndGatesConcept)) (sort expected)
   where
-    twoAndGatesConcept = inputs [a, b, c, d] <> outputs [out] <> initialise0 [a, b, c, d, out] <> andGate a b out <> andGate c d out
-    expected = [Causality [rise a] (rise out), Causality [rise b] (rise out), Causality [rise c] (rise out),
-                Causality [rise d] (rise out), Causality [fall a, fall b] (fall out), Causality [fall c, fall d] (fall out)]
+    twoAndGatesConcept = inputs [a, b, c, d] <> outputs [out]
+                      <> initialise0 [a, b, c, d, out] <> andGate a b out
+                      <> andGate c d out
+    expected = [Causality [rise a] (rise out), Causality [rise b] (rise out),
+                Causality [rise c] (rise out), Causality [rise d] (rise out),
+                Causality [fall a, fall b] (fall out),
+                Causality [fall c, fall d] (fall out)]
     [a, b, c, d, out] = map Signal [0..4]
 
 testTwoDifferentCElements :: IO ()
 testTwoDifferentCElements = do
     putStrLn "===testTwoDifferentCElements"
-    assertEq (sort (arcs cElementConcept)) (sort (arcs cElementConceptFromBuffers))
+    assertEq (sort (arcs cElementConcept))
+             (sort (arcs cElementConceptFromBuffers))
   where
-    cElementConcept = inputs [a, b] <> outputs [c] <> initialise0 [a, b, c] <> cElement a b c
-    cElementConceptFromBuffers = inputs [a, b] <> outputs [c] <> initialise0 [a, b, c] <> buffer a c <> buffer b c
+    cElementConcept = inputs [a, b] <> outputs [c]
+                   <> initialise0 [a, b, c] <> cElement a b c
+    cElementConceptFromBuffers = inputs [a, b] <> outputs [c]
+                              <> initialise0 [a, b, c] <> buffer a c
+                              <> buffer b c
     [a, b, c] = map Signal [0..2]
 
 assertEq :: (Eq a, Show a) => a -> a -> IO ()

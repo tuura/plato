@@ -23,6 +23,7 @@ zcAbsentScenario uv oc zc gp gp_ack gn gn_ack =
 
     initialState = initialise uv False <> initialise oc False
 
-    chargeFunc = ocFunc <> ocReact <> environmentConstraint <> circuitConstraint <> gpHandshake <> gnHandshake
+    chargeFunc = ocFunc <> ocReact <> environmentConstraint
+              <> circuitConstraint <> gpHandshake <> gnHandshake
 
     zcAbsent = silent zc
