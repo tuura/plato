@@ -52,7 +52,7 @@ testHandshakeConcept = do
     assertEq (sort (arcs handshakeConcept)) (sort expected)
   where
     handshakeConcept = inputs[a] <> outputs [b] <> handshake00 a b
-    expected = [AndCausality (rise a) (rise b), AndCausality (rise b) (fall a), AndCausality (fall a) (fall b), AndCausality (fall b) (rise a)]
+    expected = [Causality [rise a] (rise b), Causality [rise b] (fall a), Causality [fall a] (fall b), Causality [fall b] (rise a)]
     [a, b] = map Signal [0 .. 1]
 
 testOrGateConcept :: IO ()
@@ -61,7 +61,7 @@ testOrGateConcept = do
     assertEq (sort (arcs orGateConcept)) (sort expected)
   where
     orGateConcept = inputs [a, b] <> outputs [c] <> initialise0 [a, b, c] <> orGate a b c
-    expected = [OrCausality [rise a, rise b] (rise c), AndCausality (fall a) (fall c), AndCausality (fall b) (fall c)]
+    expected = [Causality [rise a, rise b] (rise c), Causality [fall a] (fall c), Causality [fall b] (fall c)]
     [a, b, c] = map Signal [0..2]
 
 testTwoAndGates :: IO ()
@@ -70,8 +70,8 @@ testTwoAndGates = do
     assertEq (sort (arcs twoAndGatesConcept)) (sort expected)
   where
     twoAndGatesConcept = inputs [a, b, c, d] <> outputs [out] <> initialise0 [a, b, c, d, out] <> andGate a b out <> andGate c d out
-    expected = [AndCausality (rise a) (rise out), AndCausality (rise b) (rise out), AndCausality (rise c) (rise out),
-                AndCausality (rise d) (rise out), OrCausality [fall a, fall b] (fall out), OrCausality [fall c, fall d] (fall out)]
+    expected = [Causality [rise a] (rise out), Causality [rise b] (rise out), Causality [rise c] (rise out),
+                Causality [rise d] (rise out), Causality [fall a, fall b] (fall out), Causality [fall c, fall d] (fall out)]
     [a, b, c, d, out] = map Signal [0..4]
 
 testTwoDifferentCElements :: IO ()

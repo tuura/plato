@@ -115,7 +115,7 @@ fromBool :: Bool -> Tristate
 fromBool x = if x then triTrue else triFalse
 
 addConsistency :: Ord a => [Causality (Transition a)] -> [a] -> [Causality (Transition a)]
-addConsistency allArcs signs = nubOrd (allArcs ++ concatMap (\s -> [AndCausality (rise s) (fall s), AndCausality (fall s) (rise s)]) signs)
+addConsistency allArcs signs = nubOrd (allArcs ++ concatMap (\s -> [Causality [rise s] (fall s), Causality [fall s] (rise s)]) signs)
 
 handleArcs :: NonEmpty ([Transition a], Transition a) -> [([Transition a], Transition a)]
 handleArcs xs = map (\m -> (m, effect)) transCauses

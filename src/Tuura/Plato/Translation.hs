@@ -80,4 +80,4 @@ cartesianProduct :: NonEmpty.NonEmpty [a] -> [[a]]
 cartesianProduct l = sequence (NonEmpty.toList l)
 
 arcLists :: [Causality (Transition a)] -> [([Transition a], Transition a)]
-arcLists xs = [ ([f], t) | AndCausality f t <- xs ] ++ [ (f, t) | OrCausality f t <- xs ]
+arcLists xs = [ (f, t) | Causality f t <- xs ]
