@@ -64,14 +64,12 @@ initialise :: Eq a => a -> Bool -> CircuitConcept a
 initialise a v = initialConcept $ \s -> if s == a then Defined v else Undefined
 
 initialise0 :: Eq a => [a] -> CircuitConcept a
-initialise0 as = if (as /= [])
-                 then initialise (head as) False <> initialise0 (tail as)
-                 else mempty
+initialise0 [] = mempty
+initialise0 as = initialise (head as) False <> initialise0 (tail as)
 
 initialise1 :: Eq a => [a] -> CircuitConcept a
-initialise1 as = if (as /= [])
-                 then initialise (head as) True <> initialise1 (tail as)
-                 else mempty
+initialise1 [] = mempty
+initialise1 as = initialise (head as) True <> initialise1 (tail as)
 
 (~>) :: Transition a -> Transition a -> CircuitConcept a
 (~>) = arcConcept

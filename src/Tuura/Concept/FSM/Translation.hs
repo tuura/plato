@@ -168,13 +168,12 @@ genFSM inputSigns outputSigns internalSigns arcStrs initState reachReport =
       ins = map show inputSigns
       ints = map show internalSigns
 
-genReachReport :: (Eq a, Show a) => [a] -> String
-genReachReport es
-        | es == []  = "\ninvariant = reachability\n"
-        | otherwise = "\nWarning:\n" ++
-                      "The following state(s) hold for the invariant " ++
-                      "but are not reachable:\n" ++
-                      unlines (unreachStates)
+genReachReport :: (Show a) => [a] -> String
+genReachReport [] = "\ninvariant = reachability\n"
+genReachReport es = "\nWarning:\n" ++
+                    "The following state(s) hold for the invariant " ++
+                    "but are not reachable:\n" ++
+                    unlines (unreachStates)
     where
       unreachStates = [ "s" ++ show e | e <- es ]
 
