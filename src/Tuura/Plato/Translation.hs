@@ -39,8 +39,8 @@ instance Ord Signal
 addErrors :: (Eq a, Show a) => [ValidationError a] -> String
 addErrors errs = "Error\n" ++
         (if unused /= []
-        then "The following signals are not declared as input, output or internal: \n"
-             ++ unlines (map show unused) ++ "\n"
+        then "The following signals are not declared as input, "
+             ++ "output or internal: \n" ++ unlines (map show unused) ++ "\n"
         else "") ++
         (if incons /= []
         then "The following signals have inconsistent inital states: \n"
@@ -51,8 +51,9 @@ addErrors errs = "Error\n" ++
              ++ unlines (map show undefd) ++ "\n"
         else "") ++
         (if invVio /= []
-        then "The following state(s) are reachable but the invariant does not hold for them:\n"
-             ++ unlines (map show invVio) ++ "\n"
+        then "The following state(s) are reachable " ++
+             "but the invariant does not hold for them:\n" ++
+             unlines (map show invVio) ++ "\n"
         else "")
     where
         unused = [ a | UnusedSignal a             <- errs ]
@@ -61,12 +62,14 @@ addErrors errs = "Error\n" ++
         invVio = [ a | InvariantViolated a        <- errs ]
 
 validate :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
-validate signs circuit = (validateInitialState signs circuit) <> (validateInterface signs circuit)
+validate signs circuit = (validateInitialState signs circuit)
+                      <> (validateInterface signs circuit)
 
 validateInitialState :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
 validateInitialState signs circuit
     | undef ++ inconsistent == [] = Valid
-    | otherwise = Invalid (map UndefinedInitialState undef ++ map InconsistentInitialState inconsistent)
+    | otherwise = Invalid (map UndefinedInitialState undef
+                        ++ map InconsistentInitialState inconsistent)
   where
     undef        = filter ((==Undefined) . initial circuit) signs
     inconsistent = filter ((==Inconsistent) . initial circuit) signs

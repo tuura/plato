@@ -58,7 +58,7 @@ signalsApply num = [
     "import Data.Char",
     "data Signal = Signal Int deriving Eq",
     "signs = [Signal i | i <- [0.." ++ show (num-1) ++ "]]",
-    "apply c = c " ++ unwords ["(signs !! " ++ show i ++ ")" | i <- [0..num-1]]]
+    "apply c = c " ++ unwords ["(signs !! " ++ show i ++")" | i <- [0..num-1]]]
 
 writeTmpFile :: [String] -> IO ()
 writeTmpFile ls =
@@ -89,7 +89,8 @@ loadModulesTopLevel paths = do
     mods <- GHC.getLoadedModules
     GHC.setTopLevelModules mods
 
-doWork :: Bool -> [String] -> GHC.Interpreter () {- TODO: much of this is duplicated -}
+{- TODO: much of this is duplicated -}
+doWork :: Bool -> [String] -> GHC.Interpreter ()
 doWork transFSM paths = do
     {- Load user's module to gather info. -}
     loadModulesTopLevel paths

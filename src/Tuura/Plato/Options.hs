@@ -19,7 +19,8 @@ defaultOptions   = Options
 options :: [OptDescr (Options -> Options)]
 options =
  [ Option ['i'] ["include"]
-     (ReqArg (\ d opts -> opts { optInclude = optInclude opts ++ [d] }) "FILEPATH")
+     (ReqArg (\ d opts -> opts { optInclude = optInclude opts ++ [d] })
+      "FILEPATH")
      "Concept file to be included"
  , Option ['f'] ["fsm"]
      (NoArg (\ opts -> opts { optFSM = True }))
@@ -33,10 +34,14 @@ getOptions :: IO Options
 getOptions = do
    argv <- getArgs
    result <- case getOpt Permute options argv of
-      (_, [] , _   ) -> ioError (userError ("\nNo input file given\n" ++ helpMessage))
-      (o, [n], []  ) -> return (foldl (flip id) defaultOptions {optInput = n} o)
-      (_, _  , []  ) -> ioError (userError ("\nToo many input files\n" ++ helpMessage))
-      (_, _  , errs) -> ioError (userError (concat errs ++ helpMessage))
+      (_, [] , _   ) -> ioError (userError
+                        ("\nNo input file given\n" ++ helpMessage))
+      (o, [n], []  ) -> return (foldl (flip id)
+                        defaultOptions {optInput = n} o)
+      (_, _  , []  ) -> ioError (userError
+                        ("\nToo many input files\n" ++ helpMessage))
+      (_, _  , errs) -> ioError (userError
+                        (concat errs ++ helpMessage))
    return result
     where
       helpMessage = usageInfo header options
