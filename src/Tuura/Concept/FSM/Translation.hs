@@ -81,7 +81,8 @@ instance Show a => Show (FsmArc a) where
 translateFSM :: (Show a, Ord a) => String -> String -> [a] -> GHC.Interpreter()
 translateFSM circuitName ctype signs = do
     circ <- GHC.unsafeInterpret circuitName ctype
-    apply <- GHC.unsafeInterpret "apply" $ "(" ++ ctype ++ ") -> CircuitConcept Signal"
+    apply <- GHC.unsafeInterpret "apply" $ "(" ++ ctype
+             ++ ") -> CircuitConcept Signal"
     let circuit = apply circ
     GHC.liftIO $ putStr (translate circuit signs)
 

@@ -86,15 +86,12 @@ cartesianProduct l = removeSupersets sortAllLists
   where
     sequenced    = sequence (NonEmpty.toList l)
     removeDupes  = map nub sequenced
-    removeNull   = filter (not . null) removeDupes
-    sortAllLists = map sort removeNull
+    sortAllLists = map sort removeDupes
 
 removeSupersets :: Eq a => [[a]] -> [[a]]
-removeSupersets s = filter (not . null) result
+removeSupersets s = [ x | (x:xs) <- tails sortByLength, not (check x xs) ]
   where
-    prev n        = take n s
     check current = any (`isSubsequenceOf` current)
-    result        = [ x | (x:xs) <- tails sortByLength, not (check x xs) ]
     sortByLength  = sortBy (comparing $ negate . length) s
 
 arcLists :: [Causality (Transition a)] -> [([Transition a], Transition a)]
