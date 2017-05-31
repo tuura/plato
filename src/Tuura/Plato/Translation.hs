@@ -82,23 +82,20 @@ validateInterface signs circuit
     unused       = filter ((==Unused) . interface circuit) signs
 
 cartesianProduct :: Ord a => NonEmpty.NonEmpty [a] -> [[a]]
-cartesianProduct l = removeSupersets sortByLength
+cartesianProduct l = removeSupersets sortAllLists
   where
     sequenced    = sequence (NonEmpty.toList l)
     removeDupes  = map nub sequenced
     removeNull   = filter (not . null) removeDupes
     sortAllLists = map sort removeNull
-    sortByLength = sortBy (comparing length) sortAllLists
 
 removeSupersets :: Eq a => [[a]] -> [[a]]
 removeSupersets s = filter (not . null) result
   where
     prev n        = take n s
     check current = any (`isSubsequenceOf` current)
-    result        = map (\x -> if check (s!!x) (prev x)
-                        then []
-                        else s!!x
-                 )[0..(length s) - 1]
+    result        = [ x | (x:xs) <- tails sortByLength, not (check x xs) ]
+    sortByLength  = sortBy (comparing $ negate . length) s
 
 arcLists :: [Causality (Transition a)] -> [([Transition a], Transition a)]
 arcLists xs = [ (f, t) | Causality f t <- xs ]
