@@ -37,7 +37,7 @@ translate circuit signs =
         Invalid errs -> addErrors errs
 
 -- Due to the caller, xs will never be empty, so `snd (head xs)` never fails.
-handleArcs :: Show a => NonEmpty ([Transition a], Transition a) -> [String]
+handleArcs :: (Ord a, Show a) => NonEmpty ([Transition a], Transition a) -> [String]
 handleArcs xs = addConsistencyTrans effect n ++ concatMap transition arcMap
         where
             effect = snd (NonEmpty.head xs)
@@ -51,7 +51,7 @@ genSTG :: Show a => [a] -> [a] -> [a] -> [String] -> [(String, Bool)]
             -> [String] -> String
 genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStr =
     printf tmpl (unwords ins) (unwords outs) (unwords ints) (unlines allArcs)
-                                             (unwords marks) (unlines invStr)
+                (unwords marks) (unlines invStr)
     where
         allSigns = output initStrs
         outs = map show outputSigns
@@ -105,7 +105,7 @@ initVal :: String -> [(String, Bool)] -> Int
 initVal s ls = sum (map (\x -> if (fst x == s)
                                then fromEnum (snd x)
                                else 0)
-                    ls)
+                   ls)
 
 readArc :: String -> String -> [String]
 readArc f t = [f ++ " " ++ t, t ++ " " ++ f]

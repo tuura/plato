@@ -1,7 +1,9 @@
 module Tuura.Plato.Translation where
 
 import Data.Char
+import Data.List
 import Data.Monoid
+import Data.Ord
 import qualified Data.List.NonEmpty as NonEmpty
 
 import Tuura.Concept.Circuit.Basic
@@ -76,8 +78,30 @@ validateInterface signs circuit
   where
     unused       = filter ((==Unused) . interface circuit) signs
 
-cartesianProduct :: NonEmpty.NonEmpty [a] -> [[a]]
-cartesianProduct l = sequence (NonEmpty.toList l)
+cartesianProduct :: Ord a => NonEmpty.NonEmpty [a] -> [[a]]
+cartesianProduct l = removeSupersets sortByLength
+  where
+    sequenced    = sequence (NonEmpty.toList l)
+    removeDupes  = map nub sequenced
+    removeNull   = filter (not . null) removeDupes
+    sortAllLists = map sort removeNull
+    sortByLength = sortBy (comparing length) sortAllLists
+
+removeSupersets :: Eq a => [[a]] -> [[a]]
+removeSupersets s = filter (not . null) result
+  where
+    prev n  = take n s
+    check x = checkForSupersets (s!!x) (prev x)
+    result  = map (\x -> if check x
+                        then []
+                        else s!!x
+                 )[0..(length s) - 1]
+
+checkForSupersets :: Eq a => [a] -> [[a]] -> Bool
+checkForSupersets current previous = any (`elem` subs) previous
+  where
+    subs = subsequences current
+
 
 arcLists :: [Causality (Transition a)] -> [([Transition a], Transition a)]
 arcLists xs = [ (f, t) | Causality f t <- xs ]

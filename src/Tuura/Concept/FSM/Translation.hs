@@ -133,7 +133,7 @@ addConsistency allArcs signs = nubOrd (allArcs ++ concatMap (\s ->
                                 Causality [fall s] (rise s)])
                                signs)
 
-handleArcs :: NonEmpty ([Transition a], Transition a) ->
+handleArcs :: Ord a => NonEmpty ([Transition a], Transition a) ->
               [([Transition a], Transition a)]
 handleArcs xs = map (\m -> (m, effect)) transCauses
         where
