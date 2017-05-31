@@ -90,18 +90,12 @@ cartesianProduct l = removeSupersets sortByLength
 removeSupersets :: Eq a => [[a]] -> [[a]]
 removeSupersets s = filter (not . null) result
   where
-    prev n  = take n s
-    check x = checkForSupersets (s!!x) (prev x)
-    result  = map (\x -> if check x
+    prev n        = take n s
+    check current = any (`isSubsequenceOf` current)
+    result        = map (\x -> if check (s!!x) (prev x)
                         then []
                         else s!!x
                  )[0..(length s) - 1]
-
-checkForSupersets :: Eq a => [a] -> [[a]] -> Bool
-checkForSupersets current previous = any (`elem` subs) previous
-  where
-    subs = subsequences current
-
 
 arcLists :: [Causality (Transition a)] -> [([Transition a], Transition a)]
 arcLists xs = [ (f, t) | Causality f t <- xs ]
