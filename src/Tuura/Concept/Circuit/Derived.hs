@@ -1,7 +1,7 @@
 module Tuura.Concept.Circuit.Derived (
     State (..), Transition (..),
     rise, fall, toggle, oldValue, before, after,
-    CircuitConcept,
+    CircuitConcept, flipSpec,
     consistency, initialise,
     initialise0, initialise1,
     (~>), (~|~>),
@@ -56,6 +56,19 @@ after :: Transition a -> State a -> Bool
 after t (State value) = value (signal t) == newValue t
 
 type CircuitConcept a = Concept (State a) (Transition a) a
+
+flipSpec :: CircuitConcept a -> CircuitConcept a
+flipSpec c = mempty
+         {
+           initial = initial c,
+           arcs = flipCausalities,
+           interface = interface c,
+           invariant = invariant c
+         }
+  where
+    flipCausalities = map (\(f, t) -> createFlipCause f t) arcLists
+    createFlipCause f t = Causality (map toggle f) (toggle t)
+    arcLists = [ (f, t) | Causality f t <- (arcs c) ]
 
 consistency :: CircuitConcept a
 consistency = mempty
