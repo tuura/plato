@@ -57,18 +57,17 @@ after t (State value) = value (signal t) == newValue t
 
 type CircuitConcept a = Concept (State a) (Transition a) a
 
+dualCausality :: Causality (Transition a) -> Causality (Transition a)
+dualCausality (Causality f t) = Causality (map toggle f) (toggle t)
+
 dual :: CircuitConcept a -> CircuitConcept a
 dual c = mempty
          {
            initial = initial c,
-           arcs = flipCausalities,
+           arcs = map dualCausality (arcs c),
            interface = interface c,
            invariant = invariant c
          }
-  where
-    flipCausalities = map (\(f, t) -> createFlipCause f t) arcLists
-    createFlipCause f t = Causality (map toggle f) (toggle t)
-    arcLists = [ (f, t) | Causality f t <- (arcs c) ]
 
 consistency :: CircuitConcept a
 consistency = mempty
