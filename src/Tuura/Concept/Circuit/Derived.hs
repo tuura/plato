@@ -1,7 +1,7 @@
 module Tuura.Concept.Circuit.Derived (
     State (..), Transition (..),
     rise, fall, toggle, oldValue, before, after,
-    CircuitConcept, flipSpec,
+    CircuitConcept, dual,
     consistency, initialise,
     initialise0, initialise1,
     (~>), (~|~>),
@@ -57,8 +57,8 @@ after t (State value) = value (signal t) == newValue t
 
 type CircuitConcept a = Concept (State a) (Transition a) a
 
-flipSpec :: CircuitConcept a -> CircuitConcept a
-flipSpec c = mempty
+dual :: CircuitConcept a -> CircuitConcept a
+dual c = mempty
          {
            initial = initial c,
            arcs = flipCausalities,
