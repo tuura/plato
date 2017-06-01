@@ -60,13 +60,29 @@ type CircuitConcept a = Concept (State a) (Transition a) a
 dualCausality :: Causality (Transition a) -> Causality (Transition a)
 dualCausality (Causality f t) = Causality (map toggle f) (toggle t)
 
+-- dualInitialState :: (Eq a, Num a) => (a -> InitialValue) -> a -> CircuitConcept a
+-- dualInitialState i n
+--     | (i n) == Undefined    = mempty
+--     | (i n) == Inconsistent = mempty
+--     | otherwise = initialise n (not (getDefined (i n))) <> (dualInitialState i (n+1))
+
+dualInitial :: (a -> InitialValue) -> (a -> InitialValue)
+dualInitial f = dualValue . f
+
+dualValue :: InitialValue -> InitialValue
+dualValue (Defined v) = Defined (not v)
+dualValue x = x
+
+dualInvariant :: Invariant (Transition e) -> Invariant (Transition e)
+dualInvariant (NeverAll es) = NeverAll (map toggle es)
+
 dual :: CircuitConcept a -> CircuitConcept a
 dual c = mempty
          {
-           initial = initial c,
+           initial = dualInitial (initial c),
            arcs = map dualCausality (arcs c),
            interface = interface c,
-           invariant = invariant c
+           invariant = map dualInvariant (invariant c)
          }
 
 consistency :: CircuitConcept a
