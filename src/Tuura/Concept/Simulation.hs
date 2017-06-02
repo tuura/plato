@@ -23,7 +23,8 @@ allTransitions :: (Enum a, Bounded a) => [Transition a]
 allTransitions =
     [Transition a b | a <- [minBound .. maxBound], b <- [False, True]]
 
-enabledTransitions :: (Enum a, Bounded a, Monad m) => CircuitConcept a -> Simulation a m [Transition a]
+enabledTransitions :: (Enum a, Bounded a, Monad m) => CircuitConcept a
+                      -> Simulation a m [Transition a]
 enabledTransitions c = do
     s <- get
     return $ filter (\t -> excited c t s) allTransitions

@@ -43,7 +43,8 @@ data Signal = A | B | C deriving (Eq, Show, Enum, Bounded)
 shouldBe :: (Eq a, Show a) => a -> a -> Simulation Signal IO ()
 shouldBe x y = lift $ assertEq x y
 
-shouldReturn :: (Eq a, Show a) => Simulation Signal IO a -> a -> Simulation Signal IO ()
+shouldReturn :: (Eq a, Show a) => Simulation Signal IO a -> a ->
+                Simulation Signal IO ()
 shouldReturn x y = x >>= (`shouldBe` y)
 
 bufferSimulation :: Simulation Signal IO ()
@@ -85,7 +86,8 @@ cElementGateLevelSimulation = do
     enabledTransitions circuit `shouldReturn` [fall A, fall B]
   where
     initialState = State $ const False
-    circuit      = consistency <> cElement A B C <> inverter C A <> inverter C B
+    circuit      = consistency <> cElement A B C
+                <> inverter C A <> inverter C B
 
 cElementProtocolLevelSimulation :: Simulation Signal IO ()
 cElementProtocolLevelSimulation = do

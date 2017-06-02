@@ -15,7 +15,7 @@ import Data.Monoid
 -- * s is the type of states
 -- * e is the type of events
 
-data Causality e = AndCausality e e | OrCausality [e] e deriving (Ord, Eq, Show)
+data Causality e = Causality [e] e deriving (Ord, Eq, Show)
 
 data Interface = Unused | Input | Output | Internal deriving (Ord, Eq, Show)
 
@@ -24,7 +24,8 @@ instance Monoid Interface where
 
     mappend = max
 
-data InitialValue = Undefined | Defined { getDefined :: Bool } | Inconsistent deriving (Eq, Show)
+data InitialValue = Undefined | Defined { getDefined :: Bool } | Inconsistent
+                    deriving (Eq, Show)
 
 instance Monoid InitialValue where
     mempty = Undefined
@@ -33,11 +34,13 @@ instance Monoid InitialValue where
     mappend _ Inconsistent = Inconsistent
     mappend Undefined x = x
     mappend x Undefined = x
-    mappend (Defined x) (Defined y) = if x == y then Defined x else Inconsistent
+    mappend (Defined x) (Defined y) = if x == y
+                                      then Defined x
+                                      else Inconsistent
 
 data Invariant e = NeverAll [e] deriving (Eq, Show)
 
--- Note, type parameter s is unused in this implementation and may be removed later.
+-- Note, type parameter s is unused in this implementation and may be removed.
 data Concept s e a = Concept
                    {
                        initial   :: a -> InitialValue,
@@ -58,10 +61,10 @@ instance Monoid (Concept s e a) where
                   }
 
 arcConcept :: e -> e -> Concept s e a
-arcConcept from to = mempty { arcs = [AndCausality from to] }
+arcConcept from to = mempty { arcs = [Causality [from] to] }
 
 orCausality :: [e] -> e -> Concept s e a
-orCausality from to = mempty { arcs = [OrCausality from to] }
+orCausality from to = mempty { arcs = [Causality from to] }
 
 initialConcept :: (a -> InitialValue) -> Concept s e a
 initialConcept f = mempty { initial = f }

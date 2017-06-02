@@ -64,10 +64,12 @@ initialise :: Eq a => a -> Bool -> CircuitConcept a
 initialise a v = initialConcept $ \s -> if s == a then Defined v else Undefined
 
 initialise0 :: Eq a => [a] -> CircuitConcept a
-initialise0 as = if (as /= []) then initialise (head as) False <> initialise0 (tail as) else mempty
+initialise0 [] = mempty
+initialise0 as = initialise (head as) False <> initialise0 (tail as)
 
 initialise1 :: Eq a => [a] -> CircuitConcept a
-initialise1 as = if (as /= []) then initialise (head as) True <> initialise1 (tail as) else mempty
+initialise1 [] = mempty
+initialise1 as = initialise (head as) True <> initialise1 (tail as)
 
 (~>) :: Transition a -> Transition a -> CircuitConcept a
 (~>) = arcConcept
@@ -89,10 +91,12 @@ meElement :: a -> a -> a -> a -> CircuitConcept a
 meElement r1 r2 g1 g2 = buffer r1 g1 <> buffer r2 g2 <> me g1 g2
 
 andGate :: a -> a -> a -> CircuitConcept a
-andGate a b c = rise a ~> rise c <> rise b ~> rise c <> [fall a, fall b] ~|~> fall c
+andGate a b c = rise a ~> rise c <> rise b ~> rise c
+             <> [fall a, fall b] ~|~> fall c
 
 orGate :: a -> a -> a -> CircuitConcept a
-orGate a b c = [rise a, rise b] ~|~> rise c <> fall a ~> fall c <> fall b ~> fall c
+orGate a b c = [rise a, rise b] ~|~> rise c
+            <> fall a ~> fall c <> fall b ~> fall c
 
 -- Protocol-level concepts
 handshake :: a -> a -> CircuitConcept a
@@ -112,10 +116,19 @@ never es = invariantConcept (NeverAll es)
 
 -- Signal type declaration concepts
 inputs :: Eq a => [a] -> CircuitConcept a
-inputs ins = interfaceConcept $ \s -> if s `elem` ins then Input else Unused
+inputs ins = interfaceConcept $ \s ->
+             if s `elem` ins
+             then Input
+             else Unused
 
 outputs :: Eq a => [a] -> CircuitConcept a
-outputs outs = interfaceConcept $ \s -> if s `elem` outs then Output else Unused
+outputs outs = interfaceConcept $ \s ->
+               if s `elem` outs
+               then Output
+               else Unused
 
 internals :: Eq a => [a] -> CircuitConcept a
-internals ints = interfaceConcept $ \s -> if s `elem` ints then Internal else Unused
+internals ints = interfaceConcept $ \s ->
+                 if s `elem` ints
+                 then Internal
+                 else Unused
