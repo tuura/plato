@@ -35,6 +35,7 @@ instance Ord Signal
     where
         compare (Signal x) (Signal y) = compare x y
 
+-- Prepare output explaining errors to users.
 -- TODO: Tidy up function, it looks ugly.
 addErrors :: (Eq a, Show a) => [ValidationError a] -> String
 addErrors errs = "Error\n" ++
@@ -61,10 +62,13 @@ addErrors errs = "Error\n" ++
         undefd = [ a | UndefinedInitialState a    <- errs ]
         invVio = [ a | InvariantViolated a        <- errs ]
 
+-- Validate initial states and interface.
 validate :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
 validate signs circuit = (validateInitialState signs circuit)
                       <> (validateInterface signs circuit)
 
+-- Validate initial state - If there are any undefined or inconsistent
+-- initial states, then these will populate the list.
 validateInitialState :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
 validateInitialState signs circuit
     | undef ++ inconsistent == [] = Valid
@@ -74,6 +78,8 @@ validateInitialState signs circuit
     undef        = filter ((==Undefined) . initial circuit) signs
     inconsistent = filter ((==Inconsistent) . initial circuit) signs
 
+-- Validate interface - If there are any unused signals then these
+-- will populate the list.
 validateInterface :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
 validateInterface signs circuit
     | unused == [] = Valid
@@ -81,6 +87,8 @@ validateInterface signs circuit
   where
     unused       = filter ((==Unused) . interface circuit) signs
 
+-- Perform cartesian product on list of lists. This will also sort and remove
+-- duplicates in sublists, and remove supersets for the most compact form.
 cartesianProduct :: Ord a => NonEmpty.NonEmpty [a] -> [[a]]
 cartesianProduct l = removeSupersets sortAllLists
   where
@@ -88,11 +96,14 @@ cartesianProduct l = removeSupersets sortAllLists
     removeDupes  = map nub sequenced
     sortAllLists = map sort removeDupes
 
+-- Sort list of lists from largest length to shortest, then remove any lists
+-- that have shorter subsequences within the rest of the list.
 removeSupersets :: Eq a => [[a]] -> [[a]]
 removeSupersets s = [ x | (x:xs) <- tails sortByLength, not (check x xs) ]
   where
     check current = any (`isSubsequenceOf` current)
     sortByLength  = sortBy (comparing $ negate . length) s
 
+--Create a tuple containing a list of possible causes, for each effect.
 arcLists :: [Causality (Transition a)] -> [([Transition a], Transition a)]
 arcLists xs = [ (f, t) | Causality f t <- xs ]

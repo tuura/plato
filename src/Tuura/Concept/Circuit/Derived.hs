@@ -57,16 +57,22 @@ after t (State value) = value (signal t) == newValue t
 
 type CircuitConcept a = Concept (State a) (Transition a) a
 
+-- Create causalities with all opposite transition direction to
+-- the given specification, for all possible causes and effects.
 dualCausality :: Causality (Transition a) -> Causality (Transition a)
 dualCausality (Causality f t) = Causality (map toggle f) (toggle t)
 
+-- Give the opposite initial states to the given specification.
 dualInitialValue :: InitialValue -> InitialValue
 dualInitialValue (Defined v) = Defined (not v)
 dualInitialValue x = x
 
+-- Negate the given invariant, to provide the opposite never states.
 dualInvariant :: Invariant (Transition e) -> Invariant (Transition e)
 dualInvariant (NeverAll es) = NeverAll (map toggle es)
 
+-- Provide the dual of a specification, with every causality, initial state
+-- and invariant being opposite to the given.
 dual :: CircuitConcept a -> CircuitConcept a
 dual c = mempty
          {

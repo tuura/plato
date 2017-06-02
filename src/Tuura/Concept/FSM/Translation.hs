@@ -35,6 +35,8 @@ instance Show a => Show (TransitionX a) where
     show (TransitionX s (Tristate (Just False))) = show s ++ "-"
     show (TransitionX s (Tristate Nothing     )) = show s ++ "x"
 
+-- Tristate used for findind before and after states from signal transitions.
+-- The signals involved will be either TriTrue or TriFalse. All others are TriX.
 data Tristate = Tristate (Maybe Bool)
     deriving Eq
 
@@ -78,6 +80,7 @@ instance Show a => Show (FsmArc a) where
                                        ++ show tran ++ " s"
                                        ++ show tenc
 
+-- Function to take a concept specification, and translate it to a FSM.
 translateFSM :: (Show a, Ord a) => String -> String -> [a] -> GHC.Interpreter()
 translateFSM circuitName ctype signs = do
     circ <- GHC.unsafeInterpret circuitName ctype
@@ -86,6 +89,8 @@ translateFSM circuitName ctype signs = do
     let circuit = apply circ
     GHC.liftIO $ putStr (translate circuit signs)
 
+-- Function which performs the translation from concept specification to FSM
+-- providing the FSM in .sg format. Will return errors if validation fails.
 translate :: (Show a, Ord a) => CircuitConcept a -> [a] -> String
 translate circuit signs =
     case validateInitialState signs circuit of
@@ -116,14 +121,19 @@ translate circuit signs =
 
       Invalid errs -> addErrors errs
 
+-- Find the numeric value of the initial state.
 getInitialState :: CircuitConcept a -> [a] -> Int
 getInitialState circuit signs = encToInt state
   where
     state = map (fromBool  . getDefined . initial circuit) signs
 
+-- From a boolean, return the Tristate version.
+-- Used to find Tristate encodings of before and after states of signals.
 fromBool :: Bool -> Tristate
 fromBool x = if x then triTrue else triFalse
 
+-- Create signal transition loops, ensuring a signal can transition both high
+-- and low in the FSM. For each signal, add: rise ~> fall <> fall ~> rise.
 addConsistency :: Ord a => [Causality (Transition a)] -> [a]
                         -> [Causality (Transition a)]
 addConsistency allArcs signs = nubOrd (allArcs ++ consisArcs)
@@ -131,6 +141,8 @@ addConsistency allArcs signs = nubOrd (allArcs ++ consisArcs)
     consisArcs = concatMap (genConsis) signs
     genConsis s = [Causality [rise s] (fall s), Causality [fall s] (rise s)]
 
+-- Take causalities and apply the cartesian product to them. This combines them
+-- so to create lists of required causes for each effect, which produce arcs.
 handleArcs :: Ord a => NonEmpty ([Transition a], Transition a)
                     -> [([Transition a], Transition a)]
 handleArcs xs = map (\m -> (m, effect)) transCauses
@@ -139,6 +151,8 @@ handleArcs xs = map (\m -> (m, effect)) transCauses
     effectCauses = NonEmpty.map fst xs
     transCauses = cartesianProduct effectCauses
 
+-- Check that no reachable states violate the invariant. This function attempts
+-- to reach every state, checking whether it is in the invariant or not.
 validateFSM :: Ord a => [a] -> [[Tristate]] -> [Invariant (Transition a)]
                      -> ValidationResult a
 validateFSM signs reachInvs invs
@@ -150,7 +164,7 @@ validateFSM signs reachInvs invs
     mapInvs = map (\(NeverAll is) -> (is, invStates is)) invs
     invStates is = getInvariantStates signs (NeverAll is)
 
-
+-- Function to generate the .sg format output from the translated FSM.
 genFSM :: Show a => [a] -> [a] -> [a] -> [String] -> String -> String -> String
 genFSM inputSigns outputSigns internalSigns arcStrs initState reachReport =
      printf tmpl (unwords ins)
@@ -164,6 +178,8 @@ genFSM inputSigns outputSigns internalSigns arcStrs initState reachReport =
     ins = map show inputSigns
     ints = map show internalSigns
 
+-- Generate a report for the user about whether there are reachable states
+-- which hold for the invariant.
 genReachReport :: (Show a) => [a] -> String
 genReachReport [] = "\ninvariant = reachability\n"
 genReachReport es = "\nWarning:\n" ++
@@ -173,6 +189,7 @@ genReachReport es = "\nWarning:\n" ++
   where
     unreachStates = [ "s" ++ show e | e <- es ]
 
+-- Template for the .sg file. Each "%s" will be replaced by a string.
 tmpl :: String
 tmpl = unlines [".inputs %s",
                 ".outputs %s",
@@ -181,9 +198,11 @@ tmpl = unlines [".inputs %s",
                 "%s.marking {s%s}",
                 ".end%s"]
 
+-- Provide a list of all transitions in tuple, both cause and effect.
 fullList :: ([a], a) -> [a]
 fullList (l,t) = t:l
 
+-- Provide a list of dont care transitions.
 fullListm :: ([TransitionX a], Transition a) -> [TransitionX a]
 fullListm (l,t) = (toTransitionX t):l
 
@@ -198,6 +217,7 @@ removeDupes xs = map removeDupe1 xs
     effect x = snd x
     causes x = fst x
 
+-- Convert transitions to TransitionX format.
 toTransitionX :: Transition a -> TransitionX a
 toTransitionX = liftM2 TransitionX signal (Tristate . Just . newValue)
 
@@ -209,6 +229,8 @@ onlySignals = map (map signal)
 getAllSignals :: Ord a => [[Transition a]] -> [a]
 getAllSignals = sort . foldl union [] . onlySignals
 
+-- Signals which are not involved in a causality need a "dont care" or TriX
+-- which this function provides.
 addMissingSignals :: Ord a => [([Transition a], Transition a)] -> CausalityX a
 addMissingSignals x = zip
                       (zipWith (++) newTransitions oldTransitions)
@@ -222,11 +244,15 @@ addMissingSignals x = zip
     transitionList =  map fullList
     missingSignals y = map (getAllSignals y \\) (onlySignals y)
 
+-- Take a list of transitions and convert it to a Tristate format containing
+-- TriTrue, TriFalse and TriX (or don't care) states.
 encode :: Ord a => [TransitionX a] -> [Tristate]
 encode  = map mnewValue . sortTransitions
   where
     sortTransitions = sortBy (comparing msignal)
 
+-- From the causalities, create arcs which contains previous and next states
+-- in Tristate format, and the original transition.
 createArcs :: Ord a => [([Transition a], Transition a)] -> [FsmArcX a]
 createArcs xs = zipWith3 createArc makeSrcEncs makeDestEncs activeTransitions
   where
@@ -238,6 +264,8 @@ createArcs xs = zipWith3 createArc makeSrcEncs makeDestEncs activeTransitions
     invert = liftM2 Transition signal (not . newValue)
     activeTransitions = (map snd .  addMissingSignals) xs
 
+-- Convert the invariant into a Tristate format, so we know what states should
+-- never be reached.
 getInvariantStates :: Ord a =>  [a] -> Invariant (Transition a) -> [[Tristate]]
 getInvariantStates allSigns (NeverAll es) = expand (encode newTransitions)
   where
@@ -252,10 +280,12 @@ getInvariantStates allSigns (NeverAll es) = expand (encode newTransitions)
            let newFalse = replaceAtIndex triFalse t n
            expand newTrue ++ expand newFalse
 
+-- Replace one element of a list at the specified index.
 replaceAtIndex :: a -> [a] -> Int -> [a]
 replaceAtIndex item ls n = a ++ (item:b)
   where (a, (_:b)) = splitAt n ls
 
+-- Replace a TriX with both a 0 and 1, creating two new states.
 expandX :: FsmArcX a -> [FsmArcX a]
 expandX xs = case elemIndex triX (srcEncx xs) of
     Nothing -> [xs]
@@ -268,6 +298,7 @@ expandX xs = case elemIndex triX (srcEncx xs) of
         where
           makeArc s d = FsmArcX s (transx xs) d
 
+-- Replace all TriXs with a 0 and 1 in every source and destination encoding.
 expandAllXs :: [FsmArcX a] -> [FsmArcX a]
 expandAllXs = concatMap expandX
 
@@ -277,15 +308,19 @@ readBin :: Integral a => String -> Maybe a
 readBin = fmap fst . listToMaybe . readInt 2 (`elem` "01") digitToInt
 
 -- State encoding to Sn where n is reverse of encoding in b10
+-- Creates decimal values for state names using encoding.
 encToInt :: [Tristate] -> Int
 encToInt enc = fromMaybe 0 ((readBin . concatMap show . reverse) enc)
 
+-- Convert an encodings containing no TriX to FsmArc format.
 fsmarcxToFsmarc :: FsmArcX a -> FsmArc a
 fsmarcxToFsmarc arc = FsmArc newSourceEnc (transx arc) newDestEnc
   where
     newSourceEnc = (encToInt . srcEncx) arc
     newDestEnc   = (encToInt . destEncx) arc
 
+-- If some states are unreachable, remove them from the list to reduce the size
+-- of the resulting FSM.
 removeUnreachables :: [FsmArc a] -> [Int] -> [FsmArc a]
 removeUnreachables xs reachables = filter (\s -> checkDest s && checkSrc s) xs
   where
@@ -296,9 +331,11 @@ removeUnreachables xs reachables = filter (\s -> checkDest s && checkSrc s) xs
 createAllArcs :: Ord a => [([Transition a], Transition a)] -> [FsmArc a]
 createAllArcs = map fsmarcxToFsmarc . expandAllXs . createArcs
 
+-- Visit each state that can be reached, and list them.
 findReachables :: Ord a => [FsmArc a] -> Int -> [Int]
 findReachables allArcs initState = nubOrd (visit initState allArcs Set.empty)
 
+-- Visit a state, then visit it's children.
 visit :: Ord a => Int -> [FsmArc a] -> Set.Set Int -> [Int]
 visit state allArcs visited = [state] ++ concatMap
                                          (\s -> visit s allArcs newVisited)
