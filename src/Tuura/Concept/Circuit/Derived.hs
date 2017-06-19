@@ -1,7 +1,7 @@
 module Tuura.Concept.Circuit.Derived (
     State (..), Transition (..),
     rise, fall, toggle, oldValue, before, after,
-    CircuitConcept, dual,
+    CircuitConcept, dual, bubble,
     consistency, initialise,
     initialise0, initialise1,
     (~>), (~|~>),
@@ -57,6 +57,8 @@ after t (State value) = value (signal t) == newValue t
 
 type CircuitConcept a = Concept (State a) (Transition a) a
 
+-- Concept transformations
+
 -- Create causalities with all opposite transition direction to
 -- the given specification, for all possible causes and effects.
 dualCausality :: Causality (Transition a) -> Causality (Transition a)
@@ -81,6 +83,23 @@ dual c = mempty
            interface = interface c,
            invariant = fmap dualInvariant (invariant c)
          }
+
+bubble :: Eq a => a -> CircuitConcept a -> CircuitConcept a
+bubble s c = mempty
+             {
+                initial = initial c,
+                arcs = map (bubbleBySignal s) (arcs c),
+                interface = interface c,
+                invariant = invariant c
+             }
+  where
+
+bubbleBySignal :: Eq a => a -> Causality (Transition a) -> Causality (Transition a)
+bubbleBySignal s (Causality f t)
+    | signal t == s = Causality f (toggle t)
+    | otherwise     = Causality (map invertCauses f) t
+  where
+    invertCauses c = if (signal c == s) then toggle c else c
 
 consistency :: CircuitConcept a
 consistency = mempty
