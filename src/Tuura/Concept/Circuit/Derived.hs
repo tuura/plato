@@ -88,18 +88,22 @@ bubble :: Eq a => a -> CircuitConcept a -> CircuitConcept a
 bubble s c = mempty
              {
                 initial = initial c,
-                arcs = map (bubbleBySignal s) (arcs c),
+                arcs = fmap (bubbleCausality s) (arcs c),
                 interface = interface c,
-                invariant = invariant c
+                invariant = fmap (bubbleInvariant s) (invariant c)
              }
-  where
 
-bubbleBySignal :: Eq a => a -> Causality (Transition a) -> Causality (Transition a)
-bubbleBySignal s (Causality f t)
+bubbleCausality :: Eq a => a -> Causality (Transition a) -> Causality (Transition a)
+bubbleCausality s (Causality f t)
     | signal t == s = Causality f (toggle t)
     | otherwise     = Causality (map invertCauses f) t
   where
     invertCauses c = if (signal c == s) then toggle c else c
+
+bubbleInvariant :: Eq a => a -> Invariant (Transition a) -> Invariant (Transition a)
+bubbleInvariant s (NeverAll es) = NeverAll (map invertInvars es)
+  where
+    invertInvars i = if (signal i == s) then toggle i else i
 
 consistency :: CircuitConcept a
 consistency = mempty
