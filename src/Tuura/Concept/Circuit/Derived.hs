@@ -92,8 +92,8 @@ bubbleInitialValue s f y = if (y == s) then bubbleVal (f y) else f y
     bubbleVal x = x
 
 -- Perform the inversion for just transitions of the given signal
-invertSignal :: Eq a => a -> Transition a -> Transition a
-invertSignal a t
+toggleSpecific :: Eq a => a -> Transition a -> Transition a
+toggleSpecific a t
     | signal t == a = toggle t
     | otherwise     = t
 
@@ -101,13 +101,13 @@ invertSignal a t
 bubbleCausality :: Eq a => a -> Causality (Transition a)
                         -> Causality (Transition a)
 bubbleCausality s (Causality f t)
-    | signal t == s = Causality (map (invertSignal s) f) (toggle t)
-    | otherwise     = Causality (map (invertSignal s) f) t
+    | signal t == s = Causality (map (toggleSpecific s) f) (toggle t)
+    | otherwise     = Causality (map (toggleSpecific s) f) t
 
 -- Invert the invariant transition of the selected signal.
 bubbleInvariant :: Eq a => a -> Invariant (Transition a)
                         -> Invariant (Transition a)
-bubbleInvariant s (NeverAll es) = NeverAll (map (invertSignal s) es)
+bubbleInvariant s (NeverAll es) = NeverAll (map (toggleSpecific s) es)
 
 bubble :: Eq a => a -> CircuitConcept a -> CircuitConcept a
 bubble s c = mempty
