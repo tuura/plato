@@ -90,12 +90,10 @@ validateInterface signs circuit
 -- Perform cartesian product on list of lists. This will also sort and remove
 -- duplicates in sublists, and remove supersets for the most compact form.
 cartesianProduct :: Ord a => NonEmpty.NonEmpty [Transition a] -> [[Transition a]]
-cartesianProduct l = removeSupersets sortAllLists
+cartesianProduct l = removeSupersets $ removeRedundancies $ 
+                       map (sort . nub) sequenced
   where
     sequenced    = sequence (NonEmpty.toList l)
-    removeDupes  = map nub sequenced
-    removeRedun  = removeRedundancies removeDupes
-    sortAllLists = map sort removeRedun
 
 -- Sort list of lists from largest length to shortest, then remove any lists
 -- that have shorter subsequences within the rest of the list.
@@ -106,9 +104,7 @@ removeSupersets s = [ x | (x:xs) <- tails sortByLength, not (check x xs) ]
     sortByLength  = sortBy (comparing $ negate . length) s
 
 removeRedundancies :: Eq a => [[Transition a]] -> [[Transition a]]
-removeRedundancies s = filter (\ts -> 
-                         all (\t -> not ((toggle t) `elem` ts)) ts
-                       ) s
+removeRedundancies = filter (\ts -> all (\t -> not ((toggle t) `elem` ts)) ts)
 
 --Create a tuple containing a list of possible causes, for each effect.
 arcLists :: [Causality (Transition a)] -> [([Transition a], Transition a)]
