@@ -6,7 +6,7 @@ module Tuura.Concept.Circuit.Derived (
     initialise0, initialise1,
     (~>), (~|~>),
     buffer, inverter, cElement, meElement,
-    andGate, orGate, me, never, handshake,
+    andGate, orGate, xorGate, me, never, handshake,
     handshake00, handshake11, inputs,
     outputs, internals
     ) where
@@ -160,6 +160,10 @@ andGate a b c = rise a ~> rise c <> rise b ~> rise c
 orGate :: a -> a -> a -> CircuitConcept a
 orGate a b c = [rise a, rise b] ~|~> rise c
             <> fall a ~> fall c <> fall b ~> fall c
+
+xorGate :: a -> a -> a -> CircuitConcept a
+xorGate a b c = [rise a, rise b] ~|~> rise c <> [fall a, fall b] ~|~> rise c
+             <> [rise a, fall b] ~|~> fall c <> [fall a, rise b] ~|~> fall c
 
 -- Protocol-level concepts
 handshake :: a -> a -> CircuitConcept a
