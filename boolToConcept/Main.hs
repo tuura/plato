@@ -34,18 +34,46 @@ main = do
     right (Right x) = x
 
 createConceptSpec :: [String] -> Expr -> Expr -> String
-createConceptSpec vars set reset = do
-    let mod        = "module Concept where\n\n"
-        circuit    = "circuit " ++ unwords vars ++ " out = "
-        topConcept = "outRise <> outFall <> interface <> initialState\n"
-        wh         = "  where\n"
-        outRise    = "    outRise = \n" ++ generateConcepts set
-    mod ++ circuit ++ topConcept ++ wh ++ outRise
+createConceptSpec vars set reset = mod ++ imp
+                                ++ circuit ++ topConcept ++ wh
+                                ++ outRise ++ outFall
+                                ++ inInter ++ outInter
+                                ++ initState
+    where
+      mod        = "module Concept where \n\n"
+      imp        = "import Tuura.Concept.STG \n\n"
+      circuit    = "circuit " ++ unwords vars ++ " out = "
+      topConcept = "outRise <> outFall <> interface <> initialState\n"
+      wh         = "  where\n"
+      rConcept   = intersperse "<>" $ map (genConcepts True) (listOrs set)
+      outRise    = "    outRise = " ++ unwords rConcept
+      fConcept   = intersperse "<>" $ map (genConcepts False) (listOrs reset)
+      outFall    = "\n    outFall = " ++ unwords fConcept
+      inputVars  = intersperse "," vars
+      inInter    = "\n    interface = inputs [" ++ unwords inputVars ++ "]"
+      outInter   = " <> outputs [out]"
+      initState  = "\n    initialState = "
+                ++ "initialise0 [" ++ unwords inputVars ++ " , out]"
 
-generateConcepts :: Expr -> String
-generateConcepts (And a b) = generateConcepts a ++
-                  " AND " ++ generateConcepts b
-generateConcepts (Or a b) = "(" ++ generateConcepts a ++ " OR " ++ generateConcepts b ++ ")"
-generateConcepts (SubExpr a) = generateConcepts a
-generateConcepts (Var a) = a
-generateConcepts (Not (Var a)) = "!" ++ a
+genConcepts :: Bool -> [Expr] -> String
+genConcepts v e
+    | (length e) == 1 = causes ++ op ++ effect
+    | otherwise       = "[" ++ causes ++ "]" ++ op ++ effect
+  where
+    causes = unwords $ intersperse "," $ map (direction) e
+    direction (Var a)       = "rise " ++ a
+    direction (Not (Var a)) = "fall " ++ a
+    direction a = "error " ++ show a
+    op       = if (length e > 1) then " ~|~> " else " ~> "
+    effect   = if (v) then "rise out" else "fall out"
+
+listOrs :: Expr -> [[Expr]]
+listOrs (And a b) = listOrs a ++ listOrs b
+listOrs (Or a b) = [orVars (Or a b)]
+listOrs (SubExpr a) = listOrs a
+listOrs a = [[a]]
+
+orVars :: Expr -> [Expr]
+orVars (Or a b) = orVars a ++ orVars b
+orVars (SubExpr a) = orVars a
+orVars a = [a]
