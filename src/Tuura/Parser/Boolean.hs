@@ -26,15 +26,12 @@ not (SubExpr e) = not e
 not (Var c)     = Not (Var c)
 
 or :: Expr -> Expr -> Expr
-or (And (Or a b) (Var c)) d = And (Or a b) (Or (Var c) d)
-or (Or a b) (Var c) =  Or a (Or b (Var c))
--- or (SubExpr a) (Var b) = SubExpr (Or (SubExpr a) (Var b))
--- or (SubExpr a) (Not (Var b)) = SubExpr (Or (SubExpr a) (Not (Var b)))
+or (And a (Var b)) c = And a (or (Var b) c)
+or (And a (Not b)) c = And a (or (Not b) c)
+or (And a (Or b c)) d = And a ((or (Or b c) d))
+or (Or a b) (Var c) = or a (or b (Var c))
+or (Or a b) (Not c) = or a (or b (Not c))
 or a b = Or a b
-
-and :: Expr -> Expr -> Expr
-and (SubExpr a) (Var b) = And (SubExpr a) (Var b)
-and a b = And a b
 
 listVars :: Expr -> [String]
 listVars (Var a)   = [a]

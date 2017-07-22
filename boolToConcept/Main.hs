@@ -43,9 +43,9 @@ createConceptSpec vars set reset = do
     mod ++ circuit ++ topConcept ++ wh ++ outRise
 
 generateConcepts :: Expr -> String
-generateConcepts (And a b) = "(" ++ generateConcepts a ++ ")" ++
-                  " AND " ++ "(" ++ generateConcepts b ++ ")"
-generateConcepts (Or a b) = generateConcepts a ++ " OR " ++ generateConcepts b
-generateConcepts (SubExpr a) = "[" ++ generateConcepts a ++ "] "
+generateConcepts (And a b) = generateConcepts a ++
+                  " AND " ++ generateConcepts b
+generateConcepts (Or a b) = "(" ++ generateConcepts a ++ " OR " ++ generateConcepts b ++ ")"
+generateConcepts (SubExpr a) = generateConcepts a
 generateConcepts (Var a) = a
 generateConcepts (Not (Var a)) = "!" ++ a
