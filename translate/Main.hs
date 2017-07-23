@@ -19,10 +19,7 @@ import qualified Tuura.Concept.STG.Simulation as STG
 import qualified Tuura.Concept.STG.Translation as STG
 
 import Tuura.Plato.Options
-
-import Tuura.Plato.Options
-
-import Tuura.Plato.Options
+import Tuura.Plato.BooleanFunctions
 
 import qualified Language.Haskell.Interpreter as GHC
 import qualified Language.Haskell.Interpreter.Unsafe as GHC
@@ -30,10 +27,13 @@ import qualified Language.Haskell.Interpreter.Unsafe as GHC
 main :: IO ()
 main = do
     options <- getOptions
-    let input = optInput options
-    let paths = [input] ++ optInclude options
-    r <- GHC.runInterpreter $ doWork (optFSM options) paths
-    either (putStrLn . displayException) return r
+    if (optBool options) then
+      fromBooleanFunctions
+    else do
+      let input = optInput options
+      let paths = [input] ++ optInclude options
+      r <- GHC.runInterpreter $ doWork (optFSM options) paths
+      either (putStrLn . displayException) return r
 
 {- Our own Signal type. Contains the signal index, from 0 to x-1 if
  - there are x signals. -}

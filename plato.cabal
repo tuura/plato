@@ -28,7 +28,8 @@ library
                       Tuura.Concept.FSM.Translation,
                       Tuura.Parser.Boolean,
                       Tuura.Plato.Options,
-                      Tuura.Plato.Translation
+                      Tuura.Plato.Translation,
+                      Tuura.Plato.BooleanFunctions
     other-modules:    Tuura.Concept.Abstract,
                       Tuura.Concept.Circuit,
                       Tuura.Concept.Circuit.Basic,
