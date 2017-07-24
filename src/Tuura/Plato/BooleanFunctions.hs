@@ -3,29 +3,20 @@ module Tuura.Plato.BooleanFunctions (
 
 import Tuura.Parser.Boolean
 import Data.List
-import System.IO
 
-fromBooleanFunctions :: IO ()
-fromBooleanFunctions = do
-    putStr "set function:   "
-    hFlush stdout
-    setString   <- getLine
-    putStr "reset function: "
-    hFlush stdout
-    resetString <- getLine
+fromBooleanFunctions :: String -> String -> (Bool, String)
+fromBooleanFunctions setString resetString = do
     let setResult = parseExpr setString
     let resetResult = parseExpr resetString
-    if (left setResult /= "") then do
-      putStr "parse error at "
-      print $ left setResult
-    else if (left resetResult /= "") then do
-      putStr "parse error at "
-      print $ left resetResult
-    else do
+    if (left setResult /= "")
+      then (False, "parse error at " ++ left setResult)
+    else if (left resetResult /= "")
+      then (False, "parse error at " ++ left resetResult)
+      else do
       let set = right setResult
       let reset = right resetResult
       let allVars = nub $ (listVars set) ++ (listVars reset)
-      putStrLn $ createConceptSpec allVars set reset
+      (True, createConceptSpec allVars set reset)
   where
     right (Right x) = x
     right (Left _) = right (parseExpr "")

@@ -13,17 +13,20 @@ import qualified Language.Haskell.Interpreter as GHC
 import qualified Language.Haskell.Interpreter.Unsafe as GHC
 
 -- Function to take a concept specification, and translate it to a STG.
-translateSTG :: (Show a, Ord a) => String -> String -> [a] -> GHC.Interpreter()
-translateSTG circuitName ctype signs = do
+translateSTG :: (Show a, Ord a) => String -> String -> [a] -> (String -> IO ()) -> GHC.Interpreter()
+translateSTG circuitName ctype signs out = do
     circ <- GHC.unsafeInterpret circuitName ctype
     apply <- GHC.unsafeInterpret "apply" $
         "(" ++ ctype ++ ") -> CircuitConcept Signal"
     let circuit = apply circ
-    GHC.liftIO $ putStr (translate circuit signs)
+    let result = translate circuit signs
+    case (fst result) of
+      True -> GHC.liftIO $ out (snd result)
+      False -> GHC.liftIO $ putStrLn (snd result)
 
 -- Function which performs the translation from concept specification to STG
 -- providing the STG in .g format. Will return errors if validation fails.
-translate :: (Show a, Ord a) => CircuitConcept a -> [a] -> String
+translate :: (Show a, Ord a) => CircuitConcept a -> [a] -> (Bool, String)
 translate circuit signs =
     case validate signs circuit of
         Valid -> do
@@ -35,8 +38,8 @@ translate circuit signs =
                 inputSigns = filter ((==Input) . interface circuit) signs
                 outputSigns = filter ((==Output) . interface circuit) signs
                 internalSigns = filter ((==Internal) . interface circuit) signs
-            genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStr
-        Invalid errs -> addErrors errs
+            (True, genSTG inputSigns outputSigns internalSigns arcStrs initStrs invStr)
+        Invalid errs -> (False, addErrors errs)
   where
     getInit = initial circuit
 

@@ -27,13 +27,23 @@ import qualified Language.Haskell.Interpreter.Unsafe as GHC
 main :: IO ()
 main = do
     options <- getOptions
-    if (optBool options) then
-      fromBooleanFunctions
+    if (optBool options) then do
+      putStr "set function:   "
+      set <- getLine
+      putStr "reset function: "
+      reset <- getLine
+      let result = fromBooleanFunctions set reset
+      if (fst result)
+        then optOutput options $ snd result
+        else putStrLn $ snd result
     else do
       let input = optInput options
       let paths = [input] ++ optInclude options
-      r <- GHC.runInterpreter $ doWork (optFSM options) paths
-      either (putStrLn . displayException) return r
+      r <- GHC.runInterpreter $ doWork (optFSM options) paths (optOutput options)
+      case r of
+        (Left err) -> putStrLn $ displayException err
+        (Right a) -> putStr ""
+      -- either (putStrLn . displayException) return r
 
 {- Our own Signal type. Contains the signal index, from 0 to x-1 if
  - there are x signals. -}
@@ -90,8 +100,8 @@ loadModulesTopLevel paths = do
     GHC.setTopLevelModules mods
 
 {- TODO: much of this is duplicated -}
-doWork :: Bool -> [String] -> GHC.Interpreter ()
-doWork transFSM paths = do
+doWork :: Bool -> [String] -> (String -> IO ()) -> GHC.Interpreter ()
+doWork transFSM paths output = do
     {- Load user's module to gather info. -}
     loadModulesTopLevel paths
     {- Use the circuit's type to gather how many signals it takes. -}
@@ -106,7 +116,7 @@ doWork transFSM paths = do
     {- Obtain the circuit in terms of any signal (takes them as args). -}
     let ctype = strRepeat numSigns "Signal ->" ++ "CircuitConcept Signal"
     if transFSM then do
-        FSM.translateFSM circuitName ctype signs
+        FSM.translateFSM circuitName ctype signs output
     else
-        STG.translateSTG circuitName ctype signs
+        STG.translateSTG circuitName ctype signs output
     return ()
