@@ -29,6 +29,7 @@ library
                       Tuura.Parser.Boolean,
                       Tuura.Plato.Translate.Options,
                       Tuura.Plato.Translate.Translation,
+                      Tuura.Plato.BoolToConcept.Options,
                       Tuura.Plato.BoolToConcept.BooleanFunctions
     other-modules:    Tuura.Concept.Abstract,
                       Tuura.Concept.Circuit,

@@ -1,11 +1,11 @@
 module Tuura.Plato.BoolToConcept.BooleanFunctions (
-  fromBooleanFunctions) where
+  fromFunctions) where
 
 import Tuura.Parser.Boolean
 import Data.List
 
-fromBooleanFunctions :: String -> String -> (Bool, String)
-fromBooleanFunctions setString resetString = do
+fromFunctions :: String -> String -> (Bool, String)
+fromFunctions setString resetString = do
     let setResult = parseExpr setString
     let resetResult = parseExpr resetString
     if (left setResult /= "")
