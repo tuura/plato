@@ -18,7 +18,7 @@ main = do
 testDotGOutput :: IO ()
 testDotGOutput = do
     putStrLn "=== testDotGOutput"
-    assertEq threeSignalsConcept expected
+    assertEq (snd threeSignalsConcept) expected
   where
     threeSignalsConcept = translate (inputs [a] <> outputs [b] <> internals [c]
                        <> initialise0 [a, c] <> initialise1 [b]) signs
