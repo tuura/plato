@@ -1,10 +1,12 @@
 module Tuura.Plato.Options (Options(..), getOptions) where
 
+import Data.Foldable (foldlM)
 import System.Console.GetOpt
 import System.Environment
 
 data Options = Options
     { optInput   :: String
+    , optOutput  :: String -> IO ()
     , optInclude :: [String]
     , optFSM     :: Bool
     , optBool    :: Bool
@@ -13,25 +15,29 @@ data Options = Options
 defaultOptions :: Options
 defaultOptions   = Options
     { optInput   = ""
+    , optOutput  = putStrLn
     , optInclude = []
     , optFSM     = False
     , optBool    = False
     , optHelp    = False }
 
-options :: [OptDescr (Options -> Options)]
+options :: [OptDescr (Options -> IO Options)]
 options =
  [ Option ['i'] ["include"]
-     (ReqArg (\ d opts -> opts { optInclude = optInclude opts ++ [d] })
+     (ReqArg (\ d opts -> return opts { optInclude = optInclude opts ++ [d] })
       "FILEPATH")
-     "Concept file to be included"
+      "Concept file to be included"
+ , Option ['o'] ["output"]
+     (ReqArg (\ f opts -> return opts { optOutput = writeFile f }) "FILE")
+     "Write output to a file"
  , Option ['f'] ["fsm"]
-     (NoArg (\ opts -> opts { optFSM = True }))
+     (NoArg (\ opts -> return opts { optFSM = True }))
      "Translate concept specification to an FSM"
  , Option ['b'] ["boolean"]
-     (NoArg (\ opts -> opts { optBool = True }))
+     (NoArg (\ opts -> return opts { optBool = True }))
      "Create concept specification from Boolean set and reset functions"
  , Option ['h'] ["help"]
-     (NoArg (\ opts -> opts { optHelp = True }))
+     (NoArg (\ opts -> return opts { optHelp = True }))
      "Show this help message"
  ]
 
@@ -39,18 +45,20 @@ getOptions :: IO Options
 getOptions = do
    argv <- getArgs
    result <- case getOpt Permute options argv of
-      (o, [n], []  ) -> return (foldl (flip id)
-                        defaultOptions {optInput = n} o)
-      (o, [],  []  ) -> return (foldl (flip id)
-                        defaultOptions o)
-      (_, [] , _   ) -> ioError (userError
-                        ("\nNo input file given\n" ++ helpMessage))
-      (_, _  , []  ) -> ioError (userError
-                        ("\nToo many input files\n" ++ helpMessage))
-      (_, _  , errs) -> ioError (userError
-                        (concat errs ++ helpMessage))
+      (o, [n], []  ) -> foldlM (flip id) defaultOptions {optInput = n} o
+      (o, [],  []  ) -> foldlM (flip id) defaultOptions o
+      (_, [] , _   ) -> ioError (userError ("\nNo input file given\n" ++ helpMessage))
+      (_, _  , []  ) -> ioError (userError ("\nToo many input files\n" ++ helpMessage))
+      (_, _  , errs) -> ioError (userError (concat errs ++ helpMessage))
    _ <- validateOptions result
    return $ result
+
+    -- result <- case getOpt Permute options argv of
+    --     (opts, [] , []  ) -> foldlM (flip id) defaultOptions opts
+    --     (opts, [f], []  ) -> foldlM (flip id)
+    --                          defaultOptions { optInput = readFile f } opts
+    --     (_   , _  , []  ) -> ioError $ userError "Multiple input files"
+    --     (_   , _  , errs) -> ioError . userError $ concat errs
 
 helpMessage :: String
 helpMessage = usageInfo header options
