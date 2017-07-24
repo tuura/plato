@@ -9,7 +9,6 @@ import Tuura.Parser.Boolean
 main :: IO ()
 main = do
     options <- getOptions
-    -- case (optSet options) of
     if (optSet options == []) then do
         putStr "set function:   "
         set <- getLine
@@ -21,10 +20,9 @@ main = do
         let reset = optReset options
         output (doWork set reset) (optOutput options)
 
-
 doWork :: String -> String -> (Bool, String)
 doWork set reset =
-    if (reset == "")
+    if (reset == [])
       then fromFunctions set ("!(" ++ set ++ ")")
       else fromFunctions set reset
 

@@ -39,11 +39,18 @@ getOptions :: IO Options
 getOptions = do
    argv <- getArgs
    result <- case getOpt Permute options argv of
-      -- (o, [n], []  ) -> ioError (userError ("Unknown flag\n" ++ helpMessage ++ n))
       (o, [],  []  ) -> foldlM (flip id) defaultOptions o
-      -- (_, _  , []  ) -> ioError (userError ("\nToo many input files\n" ++ helpMessage))
       (_, _  , errs) -> ioError (userError (concat errs ++ helpMessage))
+   _ <- validateOptions result
    return $ result
+
+validateOptions :: Options -> IO Options
+validateOptions ops
+  | optSet ops == [] && optReset ops /= [] = ioError
+      (userError ("A reset function cannot be used on it's own.\n" ++
+                  "Please provide just a set function, or both a set and " ++
+                  "reset function.\n" ++ helpMessage))
+  | otherwise = return ops
 
 helpMessage :: String
 helpMessage = usageInfo header options

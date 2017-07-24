@@ -49,20 +49,14 @@ instance Show Expr where
 
 parseExpr :: String -> Either ParseError Expr
 parseExpr = parse expr ""
-  where expr      = buildExpressionParser operators term <?> "compound expression"
-        term      = parens expr <|> variable <?> "full expression"
-        operators = [ [Prefix (string "NOT" >> spaces >> return not), Prefix (string "!" >> return not), Postfix (string "'" >> return not)]
+  where expr = buildExpressionParser operators term <?> "compound expression"
+        term = parens expr <|> variable <?> "full expression"
+        operators = [ [Prefix (string "NOT" >> spaces >> return not),
+                       Prefix (string "!" >> return not),
+                       Postfix (string "'" >> return not)]
                     , [binary "AND" And, binary "*" And, binary "&" And,
                        binary "OR" or, binary "|" or, binary "+" or] ]
           where binary n c = Infix (string n *> spaces *> pure c) AssocLeft
         variable = Var     <$> (many1 letter <* spaces) <?> "variable"
-        parens p = SubExpr <$> (char '(' *> spaces *> p <* char ')' <* spaces) <?> "parens"
-
--- main :: IO ()
--- main = case parseExpr "(!x * y') + (a * b | z)" of
---          Left err -> do
---            putStr "parse error at "
---            print err
---          Right x -> do
---           putStrLn $ show $ nub (listVars x)
---           putStrLn $ show x
+        parens p = SubExpr <$> (char '(' *> spaces *> p <* char ')' <* spaces)
+                           <?> "parens"
