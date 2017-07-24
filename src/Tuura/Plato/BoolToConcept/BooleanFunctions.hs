@@ -1,4 +1,4 @@
-module Tuura.Plato.BooleanFunctions (
+module Tuura.Plato.BoolToConcept.BooleanFunctions (
   fromBooleanFunctions) where
 
 import Tuura.Parser.Boolean

@@ -14,7 +14,7 @@ import Text.Printf
 
 import Tuura.Concept.FSM
 
-import Tuura.Plato.Translation
+import Tuura.Plato.Translate.Translation
 
 import qualified Language.Haskell.Interpreter as GHC
 import qualified Language.Haskell.Interpreter.Unsafe as GHC

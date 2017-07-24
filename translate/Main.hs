@@ -18,7 +18,7 @@ import qualified Tuura.Concept.STG as STG hiding (Concept, CircuitConcept)
 import qualified Tuura.Concept.STG.Simulation as STG
 import qualified Tuura.Concept.STG.Translation as STG
 
-import Tuura.Plato.Options
+import Tuura.Plato.Translate.Options
 
 import qualified Language.Haskell.Interpreter as GHC
 import qualified Language.Haskell.Interpreter.Unsafe as GHC

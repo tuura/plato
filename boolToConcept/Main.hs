@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Tuura.Plato.BooleanFunctions
+import Tuura.Plato.BoolToConcept.BooleanFunctions
 
 main :: IO ()
 main = do

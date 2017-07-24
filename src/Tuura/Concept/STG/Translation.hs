@@ -5,7 +5,7 @@ import qualified Data.List.NonEmpty as NonEmpty
 import Data.List.NonEmpty (NonEmpty, groupAllWith)
 import Text.Printf
 
-import Tuura.Plato.Translation
+import Tuura.Plato.Translate.Translation
 
 import Tuura.Concept.STG
 

@@ -1,4 +1,4 @@
-module Tuura.Plato.Translation where
+module Tuura.Plato.Translate.Translation where
 
 import Data.Char
 import Data.List
@@ -90,7 +90,7 @@ validateInterface signs circuit
 -- Perform cartesian product on list of lists. This will also sort and remove
 -- duplicates in sublists, and remove supersets for the most compact form.
 cartesianProduct :: Ord a => NonEmpty.NonEmpty [Transition a] -> [[Transition a]]
-cartesianProduct l = removeSupersets $ removeRedundancies $ 
+cartesianProduct l = removeSupersets $ removeRedundancies $
                        map (sort . nub) sequenced
   where
     sequenced    = sequence (NonEmpty.toList l)

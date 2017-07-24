@@ -5,7 +5,7 @@ import Data.List
 import Tuura.Concept.STG
 import Tuura.Concept.STG.Translation
 
-import Tuura.Plato.Translation
+import Tuura.Plato.Translate.Translation
 
 main :: IO ()
 main = do
