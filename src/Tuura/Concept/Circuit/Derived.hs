@@ -4,7 +4,7 @@ module Tuura.Concept.Circuit.Derived (
     CircuitConcept, dual, bubble,
     consistency, initialise,
     initialise0, initialise1,
-    (~>), (~|~>),
+    (~>), (~|~>), (~&~>),
     buffer, inverter, cElement, meElement,
     andGate, orGate, xorGate, me, never, handshake,
     handshake00, handshake11, inputs,
@@ -139,6 +139,9 @@ initialise1 as = initialise (head as) True <> initialise1 (tail as)
 
 (~|~>) :: [Transition a] -> Transition a -> CircuitConcept a
 (~|~>) = orCausality
+
+(~&~>) :: [Transition a] -> Transition a -> CircuitConcept a
+(~&~>) = andCausality
 
 -- Gate-level concepts
 buffer :: a -> a -> CircuitConcept a

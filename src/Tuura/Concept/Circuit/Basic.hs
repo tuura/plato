@@ -5,8 +5,8 @@ module Tuura.Concept.Circuit.Basic (
     Invariant (..),
     Concept (..),
     initialConcept, arcConcept,
-    orCausality, interfaceConcept,
-    invariantConcept
+    orCausality, andCausality,
+    interfaceConcept, invariantConcept
     ) where
 
 import Data.Monoid
@@ -65,6 +65,9 @@ arcConcept from to = mempty { arcs = [Causality [from] to] }
 
 orCausality :: [e] -> e -> Concept s e a
 orCausality from to = mempty { arcs = [Causality from to] }
+
+andCausality :: [e] -> e -> Concept s e a
+andCausality from to = mconcat $ map (\f -> mempty {arcs = [Causality [f] to]}) from
 
 initialConcept :: (a -> InitialValue) -> Concept s e a
 initialConcept f = mempty { initial = f }
