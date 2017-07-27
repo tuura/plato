@@ -3,6 +3,8 @@ module Tuura.Plato.BoolToConcept.BooleanFunctions (
 
 import Tuura.Parser.Boolean
 import Data.List
+import Data.Foldable
+import Data.Maybe
 
 fromFunctions :: String -> String -> (Bool, String)
 fromFunctions setString resetString = do
@@ -15,15 +17,33 @@ fromFunctions setString resetString = do
       else do
       let set = right setResult
       let reset = right resetResult
-      let allVars = nub $ (listVars set) ++ (listVars reset)
-      (True, createConceptSpec allVars set reset)
+      let setVars = nub $ toList set
+      let resetVars = nub $ toList reset
+      let cnfSet = convertToCNF set setVars
+      let cnfReset = convertToCNF reset resetVars
+      let allVars = nub $ setVars ++ resetVars
+      (True, createConceptSpec allVars cnfSet cnfReset)
+      -- (True, show $ cnfSet)
   where
     right (Right x) = x
     right (Left _) = right (parseExpr "")
     left  (Left x) = show x
     left _ = ""
 
-createConceptSpec :: [String] -> Expr -> Expr -> String
+convertToCNF :: Eq a => (Expr a) -> [a] -> (Expr a)
+convertToCNF expr vars = ands $ map (\v -> ors (map (\f -> (genVar (v !! f) (vars !! f))) [0.. (length vars - 1)])) fs
+  where
+    values = mapM (const [False, True]) vars
+    fs = filter (\v -> not $ eval expr (\x -> getValue x vars v)) values
+    genVar val var = if (val) then Var var else Not (Var var)
+
+ors :: [Expr a] -> Expr a
+ors x = SubExpr (foldl Or (head x) (tail x))
+
+ands :: [Expr a] -> Expr a
+ands x = foldl And (head x) (tail x)
+
+createConceptSpec :: [String] -> (Expr String) -> (Expr String) -> String
 createConceptSpec vars set reset = modName ++ imp
                                 ++ circuit ++ topConcept ++ wh
                                 ++ outRise ++ outFall
@@ -45,7 +65,7 @@ createConceptSpec vars set reset = modName ++ imp
       initState  = "\n    initialState = "
                 ++ "initialise0 [" ++ unwords inputVars ++ " , out]"
 
-genConcepts :: Bool -> [Expr] -> String
+genConcepts :: Bool -> [(Expr String)] -> String
 genConcepts v e
     | (length e) == 1 = causes ++ op ++ effect
     | otherwise       = "[" ++ causes ++ "]" ++ op ++ effect
@@ -53,17 +73,27 @@ genConcepts v e
     causes = unwords $ intersperse "," $ map (direction) e
     direction (Var a)       = "rise " ++ a
     direction (Not (Var a)) = "fall " ++ a
-    direction a = "error " ++ show a
+    direction _ = "error"
     op       = if (length e > 1) then " ~|~> " else " ~> "
     effect   = if (v) then "rise out" else "fall out"
 
-listOrs :: Expr -> [[Expr]]
+listOrs :: (Expr String) -> [[(Expr String)]]
 listOrs (And a b) = listOrs a ++ listOrs b
 listOrs (Or a b) = [orVars (Or a b)]
 listOrs (SubExpr a) = listOrs a
 listOrs a = [[a]]
 
-orVars :: Expr -> [Expr]
+orVars :: (Expr String) -> [(Expr String)]
 orVars (Or a b) = orVars a ++ orVars b
 orVars (SubExpr a) = orVars a
 orVars a = [a]
+
+eval :: (Expr a) -> (a -> Bool) -> Bool
+eval (Var a) f     = f a
+eval (Not a) f     = not (eval a f)
+eval (And a b) f   = eval a f && eval b f
+eval (Or a b) f    = eval a f || eval b f
+eval (SubExpr a) f = eval a f
+
+getValue :: Eq a => a -> [a] -> [Bool] -> Bool
+getValue var vars values = fromJust $ lookup var $ zip vars values
