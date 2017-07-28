@@ -23,7 +23,7 @@ fromFunctions setString resetString = do
       let cnfReset = convertToCNF reset resetVars
       let allVars = nub $ setVars ++ resetVars
       (True, createConceptSpec allVars cnfSet cnfReset)
-      -- (True, show $ cnfSet)
+      -- (True, "set:   " ++ (show cnfSet) ++ "\n" ++ "reset: " ++  (show cnfReset))
   where
     right (Right x) = x
     right (Left _) = right (parseExpr "")
@@ -35,7 +35,7 @@ convertToCNF expr vars = ands $ map (\v -> ors (map (\f -> (genVar (v !! f) (var
   where
     values = mapM (const [False, True]) vars
     fs = filter (\v -> not $ eval expr (\x -> getValue x vars v)) values
-    genVar val var = if (val) then Var var else Not (Var var)
+    genVar val var = if (val) then Not (Var var) else (Var var)
 
 ors :: [Expr a] -> Expr a
 ors x = SubExpr (foldl Or (head x) (tail x))
