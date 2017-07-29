@@ -3,8 +3,16 @@ module Tuura.Plato.BoolToConcept.BooleanFunctions (
 
 import Tuura.Parser.Boolean
 import Data.List
+import Data.List.Extra
 import Data.Foldable
 import Data.Maybe
+import Data.Ord
+
+type CNF a = [[Literal a]]
+
+type DNF a = [[Literal a]]
+
+data Literal a = Literal { variable :: a, polarity :: Bool } deriving (Eq, Ord)
 
 fromFunctions :: String -> String -> (Bool, String)
 fromFunctions setString resetString = do
@@ -30,12 +38,14 @@ fromFunctions setString resetString = do
     left  (Left x) = show x
     left _ = ""
 
-convertToCNF :: Eq a => (Expr a) -> [a] -> (Expr a)
-convertToCNF expr vars = ands $ map (\v -> ors (map (\f -> (genVar (v !! f) (vars !! f))) [0.. (length vars - 1)])) fs
+convertToCNF :: Ord a => (Expr a) -> [a] -> (Expr a)
+convertToCNF expr vars = ands $ map ors cnf
   where
     values = mapM (const [False, True]) vars
     fs = filter (\v -> not $ eval expr (\x -> getValue x vars v)) values
-    genVar val var = if (val) then Not (Var var) else (Var var)
+    genVar val var = Literal var val
+    sim = simplifyCNF vars $ map (\v -> (map (\f -> (genVar (v !! f) (vars !! f))) [0..(length vars - 1)])) fs
+    cnf = map (map (\s -> if (polarity s) then (Not (Var (variable s))) else (Var (variable s)))) sim
 
 ors :: [Expr a] -> Expr a
 ors x = SubExpr (foldl Or (head x) (tail x))
@@ -97,3 +107,43 @@ eval (SubExpr a) f = eval a f
 
 getValue :: Eq a => a -> [a] -> [Bool] -> Bool
 getValue var vars values = fromJust $ lookup var $ zip vars values
+
+simplifyDNF :: Ord a => DNF a -> DNF a
+simplifyDNF x = removeRedundancies $ removeSupersets $
+             map (sort . nub) sequenced
+  where
+    sequenced = sequence x
+
+simplifyCNF :: Ord a => [a] -> CNF a -> CNF a
+simplifyCNF vars c = sort $ removeSupersets $ removeCancels vars c
+
+removeCancels :: Eq a => [a] -> CNF a -> CNF a
+removeCancels [] whole = whole
+removeCancels vars whole = removeCancels (tail vars) newWhole
+  where
+    var  = Literal (head vars) True
+    nVar = Literal (head vars) False
+    relevant = filter (var `elem`) whole
+    nRelevant = map (replace [var] [nVar]) relevant
+    existInWhole = filter (`elem` whole) nRelevant
+    toBeRemoved = map (replace [nVar] [var]) existInWhole
+    allToBeRemoved = existInWhole ++ toBeRemoved
+    removed = whole \\ allToBeRemoved
+    replacements = map (delete var) toBeRemoved
+    newWhole = whole ++ replacements
+
+convertCNFtoDNF :: Ord a => CNF a -> DNF a
+convertCNFtoDNF l = map (sort . nub) (sequence l)
+
+-- Sort list of lists from largest length to shortest, then remove any lists
+-- that have shorter subsequences within the rest of the list.
+removeSupersets :: Eq a => CNF a -> CNF a
+removeSupersets s = [ x | (x:xs) <- tails sortByLength, not (check x xs) ]
+  where
+    check current = any (`isSubsequenceOf` current)
+    sortByLength  = sortBy (comparing $ negate . length) s
+
+removeRedundancies :: Eq a => CNF a -> CNF a
+removeRedundancies = filter (\ts -> all (\t -> not ((neg t) `elem` ts)) ts)
+  where
+    neg x = Literal { variable = variable x, polarity = not $ polarity x}
