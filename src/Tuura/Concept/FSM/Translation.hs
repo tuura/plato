@@ -15,6 +15,7 @@ import Text.Printf
 import Tuura.Concept.FSM
 
 import Tuura.Plato.Translate.Translation
+import Tuura.Plato.BoolToConcept.BooleanFunctions
 
 import qualified Language.Haskell.Interpreter as GHC
 import qualified Language.Haskell.Interpreter.Unsafe as GHC
@@ -150,8 +151,9 @@ handleArcs :: Ord a => NonEmpty ([Transition a], Transition a)
 handleArcs xs = map (\m -> (m, effect)) transCauses
   where
     effect = snd (NonEmpty.head xs)
-    effectCauses = NonEmpty.map fst xs
-    transCauses = cartesianProduct effectCauses
+    effectCauses = NonEmpty.toList $ NonEmpty.map fst xs
+    dnfCauses = simplifyDNF . convertCNFtoDNF . simplifyCNF $ (map toLiteral effectCauses)
+    transCauses = map toTransitions dnfCauses
 
 -- Check that no reachable states violate the invariant. This function attempts
 -- to reach every state, checking whether it is in the invariant or not.

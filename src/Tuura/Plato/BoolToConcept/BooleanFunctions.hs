@@ -1,5 +1,7 @@
 module Tuura.Plato.BoolToConcept.BooleanFunctions (
-  fromFunctions) where
+  CNF, DNF, Literal (..),
+  fromFunctions,
+  simplifyCNF, simplifyDNF, convertCNFtoDNF) where
 
 import Tuura.Parser.Boolean
 import Data.List
@@ -44,7 +46,7 @@ convertToCNF expr = cnf
     values = mapM (const [False, True]) vars
     fs = filter (\v -> not $ eval expr (\x -> getValue x vars v)) values
     genVar val var = Literal var val
-    sim = simplifyCNF vars $ map (\v -> nub $ (map (\f -> (genVar (v !! f) (vars !! f))) [0..(length vars - 1)])) fs
+    sim = simplifyCNF $ map (\v -> nub $ (map (\f -> (genVar (v !! f) (vars !! f))) [0..(length vars - 1)])) fs
     cnf = map (map (\s -> Literal (variable s) (not $ polarity s))) sim
 
 createConceptSpec :: [String] -> CNF String -> CNF String -> String
@@ -91,13 +93,12 @@ getValue :: Eq a => a -> [a] -> [Bool] -> Bool
 getValue var vars values = fromJust $ lookup var $ zip vars values
 
 simplifyDNF :: Ord a => DNF a -> DNF a
-simplifyDNF x = removeRedundancies $ removeSupersets $
-             map (sort . nub) sequenced
-  where
-    sequenced = sequence x
+simplifyDNF x = removeRedundancies $ removeSupersets x
 
-simplifyCNF :: Ord a => [a] -> CNF a -> CNF a
-simplifyCNF vars c = sort $ removeSupersets $ removeCancels vars c
+simplifyCNF :: Ord a => CNF a -> CNF a
+simplifyCNF c = sort $ removeSupersets $ removeCancels vars c
+  where
+    vars = nub $ concatMap (map variable) c
 
 removeCancels :: Eq a => [a] -> CNF a -> CNF a
 removeCancels [] whole = whole

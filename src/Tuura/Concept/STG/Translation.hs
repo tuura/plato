@@ -6,6 +6,7 @@ import Data.List.NonEmpty (NonEmpty, groupAllWith)
 import Text.Printf
 
 import Tuura.Plato.Translate.Translation
+import Tuura.Plato.BoolToConcept.BooleanFunctions
 
 import Tuura.Concept.STG
 
@@ -49,8 +50,9 @@ handleArcs :: (Ord a, Show a) => NonEmpty ([Transition a], Transition a) -> [Str
 handleArcs xs = addConsistencyTrans effect n ++ concatMap transition arcMap
   where
     effect = snd (NonEmpty.head xs)
-    effectCauses = NonEmpty.map fst xs
-    transCauses = cartesianProduct effectCauses
+    effectCauses = NonEmpty.toList $ NonEmpty.map fst xs
+    dnfCauses = simplifyDNF . convertCNFtoDNF . simplifyCNF $ map (toLiteral) effectCauses
+    transCauses = map toTransitions dnfCauses
     n = length transCauses
     arcMap = concatMap (\m -> arcPairs m effect) zipCauseNos
     zipCauseNos = zip transCauses [0..(n - 1)]
