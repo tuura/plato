@@ -6,7 +6,7 @@ import Data.Monoid
 import Tuura.Concept.Circuit.Basic
 import Tuura.Concept.Circuit.Derived
 
-import Tuura.Plato.BoolToConcept.BooleanFunctions
+import Tuura.Boolean
 
 data ValidationResult a = Valid | Invalid [ValidationError a] deriving Eq
 

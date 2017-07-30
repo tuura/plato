@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts, DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 
-module Tuura.Parser.Boolean (
+module Tuura.Boolean.Parser (
     Expr (..),
     parseExpr) where
 

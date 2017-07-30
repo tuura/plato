@@ -2,9 +2,8 @@ module Main (main) where
 
 import Prelude hiding (not)
 
-import Tuura.Plato.BoolToConcept.BooleanFunctions
-import Tuura.Plato.BoolToConcept.Options
-import Tuura.Parser.Boolean
+import Tuura.Plato.BoolToConcept
+import Tuura.Boolean.Options
 
 main :: IO ()
 main = do

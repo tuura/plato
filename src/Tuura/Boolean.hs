@@ -1,9 +1,10 @@
-module Tuura.Plato.BoolToConcept.BooleanFunctions (
+module Tuura.Boolean (
+  module Tuura.Boolean.Parser,
   CNF, DNF, Literal (..),
-  fromFunctions,
+  convertToCNF, genConcepts,
   simplifyCNF, simplifyDNF, convertCNFtoDNF) where
 
-import Tuura.Parser.Boolean
+import Tuura.Boolean.Parser
 import Data.List
 import Data.List.Extra
 import Data.Foldable
@@ -16,29 +17,6 @@ type DNF a = [[Literal a]]
 
 data Literal a = Literal { variable :: a, polarity :: Bool } deriving (Eq, Ord)
 
-fromFunctions :: String -> String -> (Bool, String)
-fromFunctions setString resetString = do
-    let setResult = parseExpr setString
-    let resetResult = parseExpr resetString
-    if (left setResult /= "")
-      then (False, "parse error at " ++ left setResult)
-    else if (left resetResult /= "")
-      then (False, "parse error at " ++ left resetResult)
-      else do
-      let set = right setResult
-      let reset = right resetResult
-      let setVars = nub $ toList set
-      let resetVars = nub $ toList reset
-      let cnfSet = convertToCNF set
-      let cnfReset = convertToCNF reset
-      let allVars = nub $ setVars ++ resetVars
-      (True, createConceptSpec allVars cnfSet cnfReset)
-  where
-    right (Right x) = x
-    right (Left _) = right (parseExpr "")
-    left  (Left x) = show x
-    left _ = ""
-
 convertToCNF :: Ord a => (Expr a) -> CNF a
 convertToCNF expr = cnf
   where
@@ -48,28 +26,6 @@ convertToCNF expr = cnf
     genVar val var = Literal var val
     sim = simplifyCNF $ map (\v -> nub $ (map (\f -> (genVar (v !! f) (vars !! f))) [0..(length vars - 1)])) fs
     cnf = map (map (\s -> Literal (variable s) (not $ polarity s))) sim
-
-createConceptSpec :: [String] -> CNF String -> CNF String -> String
-createConceptSpec vars set reset = modName ++ imp
-                                ++ circuit ++ topConcept ++ wh
-                                ++ outRise ++ outFall
-                                ++ inInter ++ outInter
-                                ++ initState
-    where
-      modName    = "\nmodule Concept where \n\n"
-      imp        = "import Tuura.Concept.STG \n\n"
-      circuit    = "circuit " ++ unwords vars ++ " out = "
-      topConcept = "outRise <> outFall <> interface <> initialState\n"
-      wh         = "  where\n"
-      rConcept   = intersperse "<>" $ map (genConcepts True) set
-      outRise    = "    outRise = " ++ unwords rConcept
-      fConcept   = intersperse "<>" $ map (genConcepts False) reset
-      outFall    = "\n    outFall = " ++ unwords fConcept
-      inputVars  = intersperse "," vars
-      inInter    = "\n    interface = inputs [" ++ unwords inputVars ++ "]"
-      outInter   = " <> outputs [out]"
-      initState  = "\n    initialState = "
-                ++ "initialise0 [" ++ unwords inputVars ++ " , out]"
 
 genConcepts :: Bool -> [Literal String] -> String
 genConcepts v e

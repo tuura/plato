@@ -15,7 +15,7 @@ import Text.Printf
 import Tuura.Concept.FSM
 
 import Tuura.Plato.Translate.Translation
-import Tuura.Plato.BoolToConcept.BooleanFunctions
+import Tuura.Boolean
 
 import qualified Language.Haskell.Interpreter as GHC
 import qualified Language.Haskell.Interpreter.Unsafe as GHC

@@ -6,7 +6,7 @@ import Data.List.NonEmpty (NonEmpty, groupAllWith)
 import Text.Printf
 
 import Tuura.Plato.Translate.Translation
-import Tuura.Plato.BoolToConcept.BooleanFunctions
+import Tuura.Boolean
 
 import Tuura.Concept.STG
 
