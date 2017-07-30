@@ -27,33 +27,27 @@ fromFunctions setString resetString = do
       let reset = right resetResult
       let setVars = nub $ toList set
       let resetVars = nub $ toList reset
-      let cnfSet = convertToCNF set setVars
-      let cnfReset = convertToCNF reset resetVars
+      let cnfSet = convertToCNF set
+      let cnfReset = convertToCNF reset
       let allVars = nub $ setVars ++ resetVars
       (True, createConceptSpec allVars cnfSet cnfReset)
-      -- (True, "set:   " ++ (show cnfSet) ++ "\n" ++ "reset: " ++  (show cnfReset))
   where
     right (Right x) = x
     right (Left _) = right (parseExpr "")
     left  (Left x) = show x
     left _ = ""
 
-convertToCNF :: Ord a => (Expr a) -> [a] -> (Expr a)
-convertToCNF expr vars = ands $ map ors cnf
+convertToCNF :: Ord a => (Expr a) -> CNF a
+convertToCNF expr = cnf
   where
+    vars = toList expr
     values = mapM (const [False, True]) vars
     fs = filter (\v -> not $ eval expr (\x -> getValue x vars v)) values
     genVar val var = Literal var val
-    sim = simplifyCNF vars $ map (\v -> (map (\f -> (genVar (v !! f) (vars !! f))) [0..(length vars - 1)])) fs
-    cnf = map (map (\s -> if (polarity s) then (Not (Var (variable s))) else (Var (variable s)))) sim
+    sim = simplifyCNF vars $ map (\v -> nub $ (map (\f -> (genVar (v !! f) (vars !! f))) [0..(length vars - 1)])) fs
+    cnf = map (map (\s -> Literal (variable s) (not $ polarity s))) sim
 
-ors :: [Expr a] -> Expr a
-ors x = SubExpr (foldl Or (head x) (tail x))
-
-ands :: [Expr a] -> Expr a
-ands x = foldl And (head x) (tail x)
-
-createConceptSpec :: [String] -> (Expr String) -> (Expr String) -> String
+createConceptSpec :: [String] -> CNF String -> CNF String -> String
 createConceptSpec vars set reset = modName ++ imp
                                 ++ circuit ++ topConcept ++ wh
                                 ++ outRise ++ outFall
@@ -65,9 +59,9 @@ createConceptSpec vars set reset = modName ++ imp
       circuit    = "circuit " ++ unwords vars ++ " out = "
       topConcept = "outRise <> outFall <> interface <> initialState\n"
       wh         = "  where\n"
-      rConcept   = intersperse "<>" $ map (genConcepts True) (listOrs set)
+      rConcept   = intersperse "<>" $ map (genConcepts True) set
       outRise    = "    outRise = " ++ unwords rConcept
-      fConcept   = intersperse "<>" $ map (genConcepts False) (listOrs reset)
+      fConcept   = intersperse "<>" $ map (genConcepts False) reset
       outFall    = "\n    outFall = " ++ unwords fConcept
       inputVars  = intersperse "," vars
       inInter    = "\n    interface = inputs [" ++ unwords inputVars ++ "]"
@@ -75,28 +69,16 @@ createConceptSpec vars set reset = modName ++ imp
       initState  = "\n    initialState = "
                 ++ "initialise0 [" ++ unwords inputVars ++ " , out]"
 
-genConcepts :: Bool -> [(Expr String)] -> String
+genConcepts :: Bool -> [Literal String] -> String
 genConcepts v e
     | (length e) == 1 = causes ++ op ++ effect
     | otherwise       = "[" ++ causes ++ "]" ++ op ++ effect
   where
     causes = unwords $ intersperse "," $ map (direction) e
-    direction (Var a)       = "rise " ++ a
-    direction (Not (Var a)) = "fall " ++ a
-    direction _ = "error"
+    direction (Literal a True)  = "rise " ++ a
+    direction (Literal a False) = "fall " ++ a
     op       = if (length e > 1) then " ~|~> " else " ~> "
     effect   = if (v) then "rise out" else "fall out"
-
-listOrs :: (Expr String) -> [[(Expr String)]]
-listOrs (And a b) = listOrs a ++ listOrs b
-listOrs (Or a b) = [orVars (Or a b)]
-listOrs (SubExpr a) = listOrs a
-listOrs a = [[a]]
-
-orVars :: (Expr String) -> [(Expr String)]
-orVars (Or a b) = orVars a ++ orVars b
-orVars (SubExpr a) = orVars a
-orVars a = [a]
 
 eval :: (Expr a) -> (a -> Bool) -> Bool
 eval (Var a) f     = f a
@@ -119,16 +101,14 @@ simplifyCNF vars c = sort $ removeSupersets $ removeCancels vars c
 
 removeCancels :: Eq a => [a] -> CNF a -> CNF a
 removeCancels [] whole = whole
-removeCancels vars whole = removeCancels (tail vars) newWhole
+removeCancels (v:vs) whole = removeCancels vs newWhole
   where
-    var  = Literal (head vars) True
-    nVar = Literal (head vars) False
+    var = Literal v True
+    nVar = Literal v False
     relevant = filter (var `elem`) whole
     nRelevant = map (replace [var] [nVar]) relevant
     existInWhole = filter (`elem` whole) nRelevant
     toBeRemoved = map (replace [nVar] [var]) existInWhole
-    allToBeRemoved = existInWhole ++ toBeRemoved
-    removed = whole \\ allToBeRemoved
     replacements = map (delete var) toBeRemoved
     newWhole = whole ++ replacements
 
