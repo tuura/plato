@@ -15,14 +15,7 @@ data Expr a = Var a
           | And (Expr a) (Expr a)
           | Or (Expr a) (Expr a)
           | SubExpr (Expr a)
-            deriving (Functor, Foldable, Traversable)
-
-instance Show a => Show (Expr a) where
-  show (Not e)     = "!" ++ show e
-  show (And e1 e2) = show e1 ++ " * " ++ show e2
-  show (Or e1 e2)  = show e1 ++ " + "  ++ show e2
-  show (Var c)     = show c
-  show (SubExpr e) = "(" ++ show e ++ ")"
+            deriving (Functor, Foldable, Traversable, Show)
 
 parseExpr :: String -> Either ParseError (Expr String)
 parseExpr = parse expr ""
@@ -31,8 +24,8 @@ parseExpr = parse expr ""
         operators = [ [Prefix (string "NOT" >> spaces >> return Not),
                        Prefix (string "!" >> return Not),
                        Postfix (string "'" >> return Not)]
-                    , [binary "AND" And, binary "*" And, binary "&" And,
-                       binary "OR" Or, binary "|" Or, binary "+" Or] ]
+                    , [binary "AND" And, binary "*" And, binary "&" And],
+                      [binary "OR" Or, binary "|" Or, binary "+" Or] ]
           where binary n c = Infix (string n *> spaces *> pure c) AssocLeft
         variable = Var <$> (many1 letter <* spaces) <?> "variable"
         parens p = SubExpr <$> (char '(' *> spaces *> p <* char ')' <* spaces)
