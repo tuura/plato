@@ -8,6 +8,7 @@ data Options = Options
     { optSet     :: String
     , optReset   :: String
     , optOutput  :: String -> IO ()
+    , optEffect  :: String
     , optHelp    :: Bool }
 
 defaultOptions :: Options
@@ -15,6 +16,7 @@ defaultOptions  = Options
     { optSet    = []
     , optReset  = []
     , optOutput = putStrLn
+    , optEffect = "out"
     , optHelp   = False }
 
 options :: [OptDescr (Options -> IO Options)]
@@ -30,6 +32,9 @@ options =
  , Option ['o'] ["output"]
      (ReqArg (\ f opts -> return opts { optOutput = writeFile f }) "FILE")
      "Write output to a file"
+ , Option ['e'] ["effect-signal"]
+     (ReqArg (\ e opts -> return opts { optEffect = e }) "STRING")
+     "Name of output signal from set/reset functions"
  , Option ['h'] ["help"]
      (NoArg (\ opts -> return opts { optHelp = True }))
      "Show this help message"

@@ -5,8 +5,8 @@ import Data.Foldable
 
 import Tuura.Boolean
 
-fromFunctions :: String -> String -> (Bool, String)
-fromFunctions setString resetString = do
+fromFunctions :: String -> String -> String -> (Bool, String)
+fromFunctions setString resetString effect = do
     let setResult = parseExpr setString
     let resetResult = parseExpr resetString
     if left setResult /= ""
@@ -21,31 +21,31 @@ fromFunctions setString resetString = do
       let cnfSet = simplifyCNF $ convertToCNF set
       let cnfReset = simplifyCNF $ convertToCNF reset
       let allVars = nub $ setVars ++ resetVars
-      (True, createConceptSpec allVars cnfSet cnfReset)
+      (True, createConceptSpec allVars cnfSet cnfReset effect)
   where
     right (Right x) = x
     right (Left _) = right (parseExpr "")
     left  (Left x) = show x
     left _ = ""
 
-createConceptSpec :: [String] -> CNF String -> CNF String -> String
-createConceptSpec vars set reset = modName ++ imp
-                                ++ circuit ++ topConcept ++ wh
-                                ++ outRise ++ outFall
-                                ++ inInter ++ outInter
-                                ++ initState
+createConceptSpec :: [String] -> CNF String -> CNF String -> String -> String
+createConceptSpec vars set reset effect = modName ++ imp
+                                       ++ circuit ++ topConcept ++ wh
+                                       ++ outRise ++ outFall
+                                       ++ inInter ++ outInter
+                                       ++ initState
     where
       modName    = "\nmodule Concept where \n\n"
       imp        = "import Tuura.Concept.STG \n\n"
-      circuit    = "circuit " ++ unwords vars ++ " out = "
+      circuit    = "circuit " ++ unwords vars ++ " " ++ effect ++ " = "
       topConcept = "outRise <> outFall <> interface <> initialState\n"
       wh         = "  where\n"
-      rConcept   = intersperse "<>" $ map (genConcepts True) (fromCNF set)
+      rConcept   = intersperse "<>" $ map (genConcepts True effect) (fromCNF set)
       outRise    = "    outRise = " ++ unwords rConcept
-      fConcept   = intersperse "<>" $ map (genConcepts False) (fromCNF reset)
+      fConcept   = intersperse "<>" $ map (genConcepts False effect) (fromCNF reset)
       outFall    = "\n    outFall = " ++ unwords fConcept
       inputVars  = intersperse "," vars
       inInter    = "\n    interface = inputs [" ++ unwords inputVars ++ "]"
-      outInter   = " <> outputs [out]"
+      outInter   = " <> outputs [" ++ effect ++ "]"
       initState  = "\n    initialState = "
-                ++ "initialise0 [" ++ unwords inputVars ++ " , out]"
+                ++ "initialise0 [" ++ unwords inputVars ++ " , " ++ effect ++ "]"

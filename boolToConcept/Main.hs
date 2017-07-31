@@ -8,22 +8,23 @@ import Tuura.Plato.BoolToConcept.Options
 main :: IO ()
 main = do
     options <- getOptions
+    let effect = optEffect options
     if null $ optSet options then do
         putStr "set function:   "
         set <- getLine
         putStr "reset function: "
         reset <- getLine
-        output (doWork set reset) (optOutput options)
+        output (doWork set reset effect) (optOutput options)
     else do
         let set = optSet options
-        let reset = optReset options
-        output (doWork set reset) (optOutput options)
+            reset = optReset options
+        output (doWork set reset effect) (optOutput options)
 
-doWork :: String -> String -> (Bool, String)
-doWork set reset =
+doWork :: String -> String -> String -> (Bool, String)
+doWork set reset effect =
     if null reset
-      then fromFunctions set ("!(" ++ set ++ ")")
-      else fromFunctions set reset
+      then fromFunctions set ("!(" ++ set ++ ")") effect
+      else fromFunctions set reset effect
 
 output :: (Bool, String) -> (String -> IO ()) -> IO ()
 output (pass, result) out =

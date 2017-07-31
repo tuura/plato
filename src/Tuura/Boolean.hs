@@ -28,15 +28,15 @@ convertToCNF expr = cnf
     getValue vs vals v = fromJust $ lookup v $ zip vs vals
 
 -- Generates a concept for output signal to rise if v = True, fall if v = False
-genConcepts :: Bool -> [Literal String] -> String
-genConcepts v e
+genConcepts :: Bool -> String -> [Literal String] -> String
+genConcepts v o e
     | length e == 1 = causes ++ " ~> " ++ effect
     | otherwise       = "[" ++ causes ++ "]" ++ " ~|~> " ++ effect
   where
     causes = unwords $ intersperse "," $ map direction e
     direction (Literal a True)  = "rise " ++ a
     direction (Literal a False) = "fall " ++ a
-    effect   = if v then "rise out" else "fall out"
+    effect   = (if v then "rise " else "fall ") ++ o
 
 eval :: Expr a -> (a -> Bool) -> Bool
 eval (Var a) f     = f a
