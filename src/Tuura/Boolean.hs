@@ -24,7 +24,7 @@ convertToCNF expr = cnf
     values = mapM (const [False, True]) vars
     fs = filter (not . eval expr . getValue vars) values
     sim = CNF $ map (\v -> nub $ map (\f -> Literal (vars !! f) (v !! f)) [0..(length vars - 1)]) fs
-    cnf = CNF $ map (map (\s -> Literal (variable s) (not $ polarity s))) (fromCNF sim)
+    cnf = CNF $ map (map invert) (fromCNF sim)
     getValue vs vals v = fromJust $ lookup v $ zip vs vals
 
 -- Generates a concept for output signal to rise if v = True, fall if v = False
@@ -44,6 +44,9 @@ eval (Not a) f     = not (eval a f)
 eval (And a b) f   = eval a f && eval b f
 eval (Or a b) f    = eval a f || eval b f
 eval (SubExpr a) f = eval a f
+
+invert :: Literal a -> Literal a
+invert l = Literal (variable l) (not $ polarity l)
 
 simplifyDNF :: Ord a => DNF a -> DNF a
 simplifyDNF x = DNF (removeRedundancies $ removeSupersets $ fromDNF x)
@@ -78,6 +81,4 @@ removeSupersets s = [ x | (x:xs) <- tails sortByLength, not (check x xs) ]
     sortByLength  = sortBy (comparing $ negate . length) s
 
 removeRedundancies :: Eq a => [[Literal a]] -> [[Literal a]]
-removeRedundancies = filter (\ts -> all (\t -> neg t `notElem` ts) ts)
-  where
-    neg x = Literal { variable = variable x, polarity = not $ polarity x}
+removeRedundancies = filter (\ts -> all (\t -> invert t `notElem` ts) ts)
