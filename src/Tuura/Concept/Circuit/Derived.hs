@@ -88,7 +88,7 @@ dual c = mempty
 
 -- Give the opposite initial state for the chosen signal
 bubbleInitialValue :: Eq a => a -> (a -> InitialValue) -> (a -> InitialValue)
-bubbleInitialValue s f y = if (y == s) then bubbleVal (f y) else f y
+bubbleInitialValue s f y = if y == s then bubbleVal (f y) else f y
   where
     bubbleVal (Defined v) = Defined (not v)
     bubbleVal x = x
@@ -207,8 +207,8 @@ combinationalGate setFunction sig = riseConcepts <> fallConcepts
     where
       riseConcepts = mconcat $ map (toConcept True) (toTransitions r)
       fallConcepts = mconcat $ map (toConcept False) (toTransitions f)
-      resetFunction = Not (setFunction)
+      resetFunction = Not setFunction
       toConcept v c = c ~|~> Transition sig v
-      r = fromCNF $ convertToCNF setFunction
-      f = fromCNF $ convertToCNF resetFunction
-      toTransitions cnf = map (map (\l -> (Transition (variable l) (polarity l)))) cnf
+      r = fromCNF $ simplifyCNF $ convertToCNF setFunction
+      f = fromCNF $ simplifyCNF $ convertToCNF resetFunction
+      toTransitions = map (map (\l -> Transition (variable l) (polarity l)))

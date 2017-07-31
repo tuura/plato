@@ -42,11 +42,11 @@ getOptions = do
       (o, [],  []  ) -> foldlM (flip id) defaultOptions o
       (_, _  , errs) -> ioError (userError (concat errs ++ helpMessage))
    _ <- validateOptions result
-   return $ result
+   return result
 
 validateOptions :: Options -> IO Options
 validateOptions ops
-  | optSet ops == [] && optReset ops /= [] = ioError
+  | null (optSet ops) && optReset ops /= [] = ioError
       (userError ("A reset function cannot be used on it's own.\n" ++
                   "Please provide just a set function, or both a set and " ++
                   "reset function.\n" ++ helpMessage))

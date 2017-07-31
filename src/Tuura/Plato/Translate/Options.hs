@@ -45,7 +45,7 @@ getOptions = do
       (_, [] , _   ) -> ioError (userError ("\nNo input file given\n" ++ helpMessage))
       (_, _  , []  ) -> ioError (userError ("\nToo many input files\n" ++ helpMessage))
       (_, _  , errs) -> ioError (userError (concat errs ++ helpMessage))
-   return $ result
+   return result
 
 helpMessage :: String
 helpMessage = usageInfo header options

@@ -9,17 +9,17 @@ fromFunctions :: String -> String -> (Bool, String)
 fromFunctions setString resetString = do
     let setResult = parseExpr setString
     let resetResult = parseExpr resetString
-    if (left setResult /= "")
+    if left setResult /= ""
       then (False, "parse error at " ++ left setResult)
-    else if (left resetResult /= "")
+    else if left resetResult /= ""
       then (False, "parse error at " ++ left resetResult)
       else do
       let set = right setResult
       let reset = right resetResult
       let setVars = nub $ toList set
       let resetVars = nub $ toList reset
-      let cnfSet = convertToCNF set
-      let cnfReset = convertToCNF reset
+      let cnfSet = simplifyCNF $ convertToCNF set
+      let cnfReset = simplifyCNF $ convertToCNF reset
       let allVars = nub $ setVars ++ resetVars
       (True, createConceptSpec allVars cnfSet cnfReset)
   where

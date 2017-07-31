@@ -60,15 +60,15 @@ addErrors errs = "Error\n" ++
         invVio = [ a | InvariantViolated a        <- errs ]
 
 -- Validate initial states and interface.
-validate :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
-validate signs circuit = (validateInitialState signs circuit)
-                      <> (validateInterface signs circuit)
+validate :: [a] -> CircuitConcept a -> ValidationResult a
+validate signs circuit = validateInitialState signs circuit
+                      <> validateInterface signs circuit
 
 -- Validate initial state - If there are any undefined or inconsistent
 -- initial states, then these will populate the list.
-validateInitialState :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
+validateInitialState :: [a] -> CircuitConcept a -> ValidationResult a
 validateInitialState signs circuit
-    | undef ++ inconsistent == [] = Valid
+    | null (undef ++ inconsistent) = Valid
     | otherwise = Invalid (map UndefinedInitialState undef
                         ++ map InconsistentInitialState inconsistent)
   where
@@ -77,10 +77,10 @@ validateInitialState signs circuit
 
 -- Validate interface - If there are any unused signals then these
 -- will populate the list.
-validateInterface :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
+validateInterface :: [a] -> CircuitConcept a -> ValidationResult a
 validateInterface signs circuit
-    | unused == [] = Valid
-    | otherwise = Invalid (map UnusedSignal unused)
+    | null unused = Valid
+    | otherwise   = Invalid (map UnusedSignal unused)
   where
     unused       = filter ((==Unused) . interface circuit) signs
 

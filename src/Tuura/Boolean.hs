@@ -20,33 +20,30 @@ data Literal a = Literal { variable :: a, polarity :: Bool } deriving (Eq, Ord)
 convertToCNF :: Eq a => Expr a -> CNF a
 convertToCNF expr = cnf
   where
-    vars = toList expr
+    vars = nub $ toList expr
     values = mapM (const [False, True]) vars
-    fs = filter (\v -> not $ eval expr (\x -> getValue x vars v)) values
-    genVar val var = Literal var val
-    sim = simplifyCNF $ CNF $ map (\v -> nub $ (map (\f -> (genVar (v !! f) (vars !! f))) [0..(length vars - 1)])) fs
+    fs = filter (not . eval expr . getValue vars) values
+    sim = CNF $ map (\v -> nub $ map (\f -> Literal (vars !! f) (v !! f)) [0..(length vars - 1)]) fs
     cnf = CNF $ map (map (\s -> Literal (variable s) (not $ polarity s))) (fromCNF sim)
+    getValue vs vals v = fromJust $ lookup v $ zip vs vals
 
+-- Generates a concept for output signal to rise if v = True, fall if v = False
 genConcepts :: Bool -> [Literal String] -> String
 genConcepts v e
-    | (length e) == 1 = causes ++ op ++ effect
-    | otherwise       = "[" ++ causes ++ "]" ++ op ++ effect
+    | length e == 1 = causes ++ " ~> " ++ effect
+    | otherwise       = "[" ++ causes ++ "]" ++ " ~|~> " ++ effect
   where
-    causes = unwords $ intersperse "," $ map (direction) e
+    causes = unwords $ intersperse "," $ map direction e
     direction (Literal a True)  = "rise " ++ a
     direction (Literal a False) = "fall " ++ a
-    op       = if (length e > 1) then " ~|~> " else " ~> "
-    effect   = if (v) then "rise out" else "fall out"
+    effect   = if v then "rise out" else "fall out"
 
-eval :: (Expr a) -> (a -> Bool) -> Bool
+eval :: Expr a -> (a -> Bool) -> Bool
 eval (Var a) f     = f a
 eval (Not a) f     = not (eval a f)
 eval (And a b) f   = eval a f && eval b f
 eval (Or a b) f    = eval a f || eval b f
 eval (SubExpr a) f = eval a f
-
-getValue :: Eq a => a -> [a] -> [Bool] -> Bool
-getValue var vars values = fromJust $ lookup var $ zip vars values
 
 simplifyDNF :: Ord a => DNF a -> DNF a
 simplifyDNF x = DNF (removeRedundancies $ removeSupersets $ fromDNF x)
@@ -64,7 +61,7 @@ removeCancels (v:vs) whole = removeCancels vs newWhole
     nVar = Literal v False
     relevant = filter (var `elem`) (fromCNF whole)
     nRelevant = map (replace [var] [nVar]) relevant
-    existInWhole = filter (`elem` (fromCNF whole)) nRelevant
+    existInWhole = filter (`elem` fromCNF whole) nRelevant
     toBeRemoved = map (replace [nVar] [var]) existInWhole
     replacements = map (delete var) toBeRemoved
     newWhole = CNF (fromCNF whole ++ replacements)
@@ -81,6 +78,6 @@ removeSupersets s = [ x | (x:xs) <- tails sortByLength, not (check x xs) ]
     sortByLength  = sortBy (comparing $ negate . length) s
 
 removeRedundancies :: Eq a => [[Literal a]] -> [[Literal a]]
-removeRedundancies = filter (\ts -> all (\t -> not ((neg t) `elem` ts)) ts)
+removeRedundancies = filter (\ts -> all (\t -> neg t `notElem` ts) ts)
   where
     neg x = Literal { variable = variable x, polarity = not $ polarity x}

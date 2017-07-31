@@ -101,8 +101,7 @@ doWork transFSM paths output = do
     signs <- GHC.interpret "signs" (GHC.as :: [Signal])
     {- Obtain the circuit in terms of any signal (takes them as args). -}
     let ctype = strRepeat numSigns "Signal ->" ++ "CircuitConcept Signal"
-    if transFSM then do
-        FSM.translateFSM circuitName ctype signs output
-    else
-        STG.translateSTG circuitName ctype signs output
+    if transFSM
+      then FSM.translateFSM circuitName ctype signs output
+      else STG.translateSTG circuitName ctype signs output
     return ()
