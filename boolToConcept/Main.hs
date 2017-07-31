@@ -3,7 +3,7 @@ module Main (main) where
 import Prelude hiding (not)
 
 import Tuura.Plato.BoolToConcept
-import Tuura.Boolean.Options
+import Tuura.Plato.BoolToConcept.Options
 
 main :: IO ()
 main = do

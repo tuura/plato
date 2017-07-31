@@ -1,4 +1,4 @@
-module Tuura.Boolean.Options (Options(..), getOptions) where
+module Tuura.Plato.BoolToConcept.Options (Options(..), getOptions) where
 
 import Data.Foldable (foldlM)
 import System.Console.GetOpt
