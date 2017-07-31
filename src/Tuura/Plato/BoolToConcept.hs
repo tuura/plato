@@ -40,9 +40,9 @@ createConceptSpec vars set reset = modName ++ imp
       circuit    = "circuit " ++ unwords vars ++ " out = "
       topConcept = "outRise <> outFall <> interface <> initialState\n"
       wh         = "  where\n"
-      rConcept   = intersperse "<>" $ map (genConcepts True) set
+      rConcept   = intersperse "<>" $ map (genConcepts True) (fromCNF set)
       outRise    = "    outRise = " ++ unwords rConcept
-      fConcept   = intersperse "<>" $ map (genConcepts False) reset
+      fConcept   = intersperse "<>" $ map (genConcepts False) (fromCNF reset)
       outFall    = "\n    outFall = " ++ unwords fConcept
       inputVars  = intersperse "," vars
       inInter    = "\n    interface = inputs [" ++ unwords inputVars ++ "]"

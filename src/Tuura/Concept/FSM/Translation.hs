@@ -151,8 +151,8 @@ handleArcs xs = map (\m -> (m, effect)) transCauses
   where
     effect = snd (NonEmpty.head xs)
     effectCauses = NonEmpty.toList $ NonEmpty.map fst xs
-    dnfCauses = simplifyDNF . convertCNFtoDNF . simplifyCNF $ (map toLiteral effectCauses)
-    transCauses = map toTransitions dnfCauses
+    dnfCauses = simplifyDNF . convertCNFtoDNF . simplifyCNF $ CNF (map toLiteral effectCauses)
+    transCauses = map toTransitions (fromDNF dnfCauses)
 
 -- Check that no reachable states violate the invariant. This function attempts
 -- to reach every state, checking whether it is in the invariant or not.

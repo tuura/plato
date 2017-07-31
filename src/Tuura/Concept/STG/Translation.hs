@@ -51,8 +51,8 @@ handleArcs xs = addConsistencyTrans effect n ++ concatMap transition arcMap
   where
     effect = snd (NonEmpty.head xs)
     effectCauses = NonEmpty.toList $ NonEmpty.map fst xs
-    dnfCauses = simplifyDNF . convertCNFtoDNF . simplifyCNF $ map (toLiteral) effectCauses
-    transCauses = map toTransitions dnfCauses
+    dnfCauses = simplifyDNF . convertCNFtoDNF . simplifyCNF $ CNF (map (toLiteral) effectCauses)
+    transCauses = map toTransitions (fromDNF dnfCauses)
     n = length transCauses
     arcMap = concatMap (\m -> arcPairs m effect) zipCauseNos
     zipCauseNos = zip transCauses [0..(n - 1)]
