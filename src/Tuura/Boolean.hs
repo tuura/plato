@@ -17,7 +17,7 @@ type DNF a = [[Literal a]]
 
 data Literal a = Literal { variable :: a, polarity :: Bool } deriving (Eq, Ord)
 
-convertToCNF :: Ord a => (Expr a) -> CNF a
+convertToCNF :: Eq a => (Expr a) -> CNF a
 convertToCNF expr = cnf
   where
     vars = toList expr
@@ -51,8 +51,8 @@ getValue var vars values = fromJust $ lookup var $ zip vars values
 simplifyDNF :: Ord a => DNF a -> DNF a
 simplifyDNF x = removeRedundancies $ removeSupersets x
 
-simplifyCNF :: Ord a => CNF a -> CNF a
-simplifyCNF c = sort $ removeSupersets $ removeCancels vars c
+simplifyCNF :: Eq a => CNF a -> CNF a
+simplifyCNF c = removeSupersets $ removeCancels vars c
   where
     vars = nub $ concatMap (map variable) c
 

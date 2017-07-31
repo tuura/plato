@@ -1,4 +1,5 @@
 module Tuura.Concept.Circuit.Derived (
+    module Tuura.Boolean,
     State (..), Transition (..),
     rise, fall, toggle, oldValue, before, after,
     CircuitConcept, dual, bubble,
@@ -8,11 +9,12 @@ module Tuura.Concept.Circuit.Derived (
     buffer, inverter, cElement, meElement,
     andGate, orGate, xorGate, me, never, handshake,
     handshake00, handshake11, inputs,
-    outputs, internals
+    outputs, internals, combinationalGate
     ) where
 
 import Tuura.Concept.Circuit.Basic
 import Data.Monoid
+import Tuura.Boolean
 
 -- Circuit primitives
 -- Parameter a stands for the alphabet of signals
@@ -199,3 +201,14 @@ internals ints = interfaceConcept $ \s ->
                  if s `elem` ints
                  then Internal
                  else Unused
+
+combinationalGate :: Eq a => Expr a -> a -> CircuitConcept a
+combinationalGate setFunction sig = riseConcepts <> fallConcepts
+    where
+      riseConcepts = mconcat $ map (toConcept True) (toTransitions r)
+      fallConcepts = mconcat $ map (toConcept False) (toTransitions f)
+      resetFunction = Not (setFunction)
+      toConcept v c = c ~|~> Transition sig v
+      r = convertToCNF setFunction
+      f = convertToCNF resetFunction
+      toTransitions cnf = map (map (\l -> (Transition (variable l) (polarity l)))) cnf
