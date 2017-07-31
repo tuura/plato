@@ -4,12 +4,14 @@ module Tuura.Boolean (
   convertToCNF, genConcepts,
   simplifyCNF, simplifyDNF, convertCNFtoDNF) where
 
-import Tuura.Boolean.Parser
 import Data.List
 import Data.List.Extra
 import Data.Foldable
 import Data.Maybe
 import Data.Ord
+
+import Tuura.Boolean.Parser
+import Tuura.Concept.Circuit
 
 newtype CNF a = CNF { fromCNF :: [[Literal a]] }
 
@@ -28,15 +30,15 @@ convertToCNF expr = cnf
     getValue vs vals v = fromJust $ lookup v $ zip vs vals
 
 -- Generates a concept for output signal to rise if v = True, fall if v = False
-genConcepts :: Bool -> String -> [Literal String] -> String
-genConcepts v o e
-    | length e == 1 = causes ++ " ~> " ++ effect
-    | otherwise       = "[" ++ causes ++ "]" ++ " ~|~> " ++ effect
+genConcepts :: Transition String -> [Literal String] -> String
+genConcepts effect e
+    | length e == 1 = causes ++ " ~> " ++ eff
+    | otherwise       = "[" ++ causes ++ "]" ++ " ~|~> " ++ eff
   where
     causes = unwords $ intersperse "," $ map direction e
     direction (Literal a True)  = "rise " ++ a
     direction (Literal a False) = "fall " ++ a
-    effect   = (if v then "rise " else "fall ") ++ o
+    eff   = (if newValue effect then "rise " else "fall ") ++ signal effect
 
 eval :: Expr a -> (a -> Bool) -> Bool
 eval (Var a) f     = f a
@@ -48,14 +50,20 @@ eval (SubExpr a) f = eval a f
 invert :: Literal a -> Literal a
 invert l = Literal (variable l) (not $ polarity l)
 
+-- Take a DNF and remove any redundancies and supersets for a more compact form.
 simplifyDNF :: Ord a => DNF a -> DNF a
 simplifyDNF x = DNF (removeRedundancies $ removeSupersets $ fromDNF x)
 
+-- Take a CNF and remove any sets that also exist with one negated variable
+-- then remove any supersets that still exist.
 simplifyCNF :: Eq a => CNF a -> CNF a
 simplifyCNF c = CNF (removeSupersets $ fromCNF $ removeCancels vars c)
   where
     vars = nub $ concatMap (map variable) (fromCNF c)
 
+-- For each variable in the expression, get all subexpressions which contain it
+-- then find any of these with the current variable negated, remove these from
+-- the expression and add these subexpressions without the current variable.
 removeCancels :: Eq a => [a] -> CNF a -> CNF a
 removeCancels [] whole = whole
 removeCancels (v:vs) whole = removeCancels vs newWhole
@@ -69,6 +77,8 @@ removeCancels (v:vs) whole = removeCancels vs newWhole
     replacements = map (delete var) toBeRemoved
     newWhole = CNF (fromCNF whole ++ replacements)
 
+-- Apply cartesian produce to a CNF function to get DNF,
+-- needed to produce STGs and FSMs.
 convertCNFtoDNF :: Ord a => CNF a -> DNF a
 convertCNFtoDNF l = DNF $ map (sort . nub) (sequence (fromCNF l))
 
@@ -80,5 +90,7 @@ removeSupersets s = [ x | (x:xs) <- tails sortByLength, not (check x xs) ]
     check current = any (`isSubsequenceOf` current)
     sortByLength  = sortBy (comparing $ negate . length) s
 
+-- Redundancies are subexpressions where one of the variables exists in another
+-- subexpression, but negated. Both of these can be removed from the expression.
 removeRedundancies :: Eq a => [[Literal a]] -> [[Literal a]]
 removeRedundancies = filter (\ts -> all (\t -> invert t `notElem` ts) ts)

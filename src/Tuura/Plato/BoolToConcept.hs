@@ -4,6 +4,7 @@ import Data.List
 import Data.Foldable
 
 import Tuura.Boolean
+import Tuura.Concept.Circuit
 
 fromFunctions :: String -> String -> String -> (Bool, String)
 fromFunctions setString resetString effect = do
@@ -40,9 +41,9 @@ createConceptSpec vars set reset effect = modName ++ imp
       circuit    = "circuit " ++ unwords vars ++ " " ++ effect ++ " = "
       topConcept = "outRise <> outFall <> interface <> initialState\n"
       wh         = "  where\n"
-      rConcept   = intersperse "<>" $ map (genConcepts True effect) (fromCNF set)
+      rConcept   = intersperse "<>" $ map (genConcepts (Transition effect True)) (fromCNF set)
       outRise    = "    outRise = " ++ unwords rConcept
-      fConcept   = intersperse "<>" $ map (genConcepts False effect) (fromCNF reset)
+      fConcept   = intersperse "<>" $ map (genConcepts (Transition effect False)) (fromCNF reset)
       outFall    = "\n    outFall = " ++ unwords fConcept
       inputVars  = intersperse "," vars
       inInter    = "\n    interface = inputs [" ++ unwords inputVars ++ "]"
