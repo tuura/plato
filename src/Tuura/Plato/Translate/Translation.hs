@@ -1,10 +1,7 @@
-module Tuura.Plato.Translation where
+module Tuura.Plato.Translate.Translation where
 
 import Data.Char
-import Data.List
 import Data.Monoid
-import Data.Ord
-import qualified Data.List.NonEmpty as NonEmpty
 
 import Tuura.Concept.Circuit.Basic
 import Tuura.Concept.Circuit.Derived
@@ -63,15 +60,15 @@ addErrors errs = "Error\n" ++
         invVio = [ a | InvariantViolated a        <- errs ]
 
 -- Validate initial states and interface.
-validate :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
-validate signs circuit = (validateInitialState signs circuit)
-                      <> (validateInterface signs circuit)
+validate :: [a] -> CircuitConcept a -> ValidationResult a
+validate signs circuit = validateInitialState signs circuit
+                      <> validateInterface signs circuit
 
 -- Validate initial state - If there are any undefined or inconsistent
 -- initial states, then these will populate the list.
-validateInitialState :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
+validateInitialState :: [a] -> CircuitConcept a -> ValidationResult a
 validateInitialState signs circuit
-    | undef ++ inconsistent == [] = Valid
+    | null (undef ++ inconsistent) = Valid
     | otherwise = Invalid (map UndefinedInitialState undef
                         ++ map InconsistentInitialState inconsistent)
   where
@@ -80,31 +77,18 @@ validateInitialState signs circuit
 
 -- Validate interface - If there are any unused signals then these
 -- will populate the list.
-validateInterface :: Ord a => [a] -> CircuitConcept a -> ValidationResult a
+validateInterface :: [a] -> CircuitConcept a -> ValidationResult a
 validateInterface signs circuit
-    | unused == [] = Valid
-    | otherwise = Invalid (map UnusedSignal unused)
+    | null unused = Valid
+    | otherwise   = Invalid (map UnusedSignal unused)
   where
     unused       = filter ((==Unused) . interface circuit) signs
 
--- Perform cartesian product on list of lists. This will also sort and remove
--- duplicates in sublists, and remove supersets for the most compact form.
-cartesianProduct :: Ord a => NonEmpty.NonEmpty [Transition a] -> [[Transition a]]
-cartesianProduct l = removeSupersets $ removeRedundancies $ 
-                       map (sort . nub) sequenced
-  where
-    sequenced    = sequence (NonEmpty.toList l)
+toLiteral :: [Transition a] -> [Literal a]
+toLiteral = map (\t -> Literal (signal t) (newValue t))
 
--- Sort list of lists from largest length to shortest, then remove any lists
--- that have shorter subsequences within the rest of the list.
-removeSupersets :: Eq a => [[Transition a]] -> [[Transition a]]
-removeSupersets s = [ x | (x:xs) <- tails sortByLength, not (check x xs) ]
-  where
-    check current = any (`isSubsequenceOf` current)
-    sortByLength  = sortBy (comparing $ negate . length) s
-
-removeRedundancies :: Eq a => [[Transition a]] -> [[Transition a]]
-removeRedundancies = filter (\ts -> all (\t -> not ((toggle t) `elem` ts)) ts)
+toTransitions :: [Literal a] -> [Transition a]
+toTransitions = map (\l -> Transition (variable l) (polarity l))
 
 --Create a tuple containing a list of possible causes, for each effect.
 arcLists :: [Causality (Transition a)] -> [([Transition a], Transition a)]

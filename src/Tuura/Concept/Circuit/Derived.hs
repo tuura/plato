@@ -1,4 +1,5 @@
 module Tuura.Concept.Circuit.Derived (
+    module Tuura.Boolean,
     State (..), Transition (..),
     rise, fall, toggle, oldValue, before, after,
     CircuitConcept, dual, bubble,
@@ -8,11 +9,12 @@ module Tuura.Concept.Circuit.Derived (
     buffer, inverter, cElement, meElement,
     andGate, orGate, xorGate, me, never, handshake,
     handshake00, handshake11, inputs,
-    outputs, internals
+    outputs, internals, function, complexGate
     ) where
 
 import Tuura.Concept.Circuit.Basic
 import Data.Monoid
+import Tuura.Boolean
 
 -- Circuit primitives
 -- Parameter a stands for the alphabet of signals
@@ -86,7 +88,7 @@ dual c = mempty
 
 -- Give the opposite initial state for the chosen signal
 bubbleInitialValue :: Eq a => a -> (a -> InitialValue) -> (a -> InitialValue)
-bubbleInitialValue s f y = if (y == s) then bubbleVal (f y) else f y
+bubbleInitialValue s f y = if y == s then bubbleVal (f y) else f y
   where
     bubbleVal (Defined v) = Defined (not v)
     bubbleVal x = x
@@ -202,3 +204,14 @@ internals ints = interfaceConcept $ \s ->
                  if s `elem` ints
                  then Internal
                  else Unused
+
+function :: Eq a => Expr a -> Transition a -> CircuitConcept a
+function cause effect = mconcat $ map (toConcept) (toTransitions cnf)
+  where
+    toConcept c = c ~|~> effect
+    cnf = fromCNF $ simplifyCNF $ convertToCNF cause
+    toTransitions = map (map (\l -> Transition (variable l) (polarity l)))
+
+complexGate :: Eq a => Expr a -> Expr a -> a -> CircuitConcept a
+complexGate set reset sig = function set (rise sig)
+                         <> function reset (fall sig)

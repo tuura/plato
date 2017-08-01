@@ -18,11 +18,7 @@ import qualified Tuura.Concept.STG as STG hiding (Concept, CircuitConcept)
 import qualified Tuura.Concept.STG.Simulation as STG
 import qualified Tuura.Concept.STG.Translation as STG
 
-import Tuura.Plato.Options
-
-import Tuura.Plato.Options
-
-import Tuura.Plato.Options
+import Tuura.Plato.Translate.Options
 
 import qualified Language.Haskell.Interpreter as GHC
 import qualified Language.Haskell.Interpreter.Unsafe as GHC
@@ -32,7 +28,7 @@ main = do
     options <- getOptions
     let input = optInput options
     let paths = [input] ++ optInclude options
-    r <- GHC.runInterpreter $ doWork (optFSM options) paths
+    r <- GHC.runInterpreter $ doWork (optFSM options) paths (optOutput options)
     either (putStrLn . displayException) return r
 
 {- Our own Signal type. Contains the signal index, from 0 to x-1 if
@@ -90,8 +86,8 @@ loadModulesTopLevel paths = do
     GHC.setTopLevelModules mods
 
 {- TODO: much of this is duplicated -}
-doWork :: Bool -> [String] -> GHC.Interpreter ()
-doWork transFSM paths = do
+doWork :: Bool -> [String] -> (String -> IO ()) -> GHC.Interpreter ()
+doWork transFSM paths output = do
     {- Load user's module to gather info. -}
     loadModulesTopLevel paths
     {- Use the circuit's type to gather how many signals it takes. -}
@@ -105,8 +101,7 @@ doWork transFSM paths = do
     signs <- GHC.interpret "signs" (GHC.as :: [Signal])
     {- Obtain the circuit in terms of any signal (takes them as args). -}
     let ctype = strRepeat numSigns "Signal ->" ++ "CircuitConcept Signal"
-    if transFSM then do
-        FSM.translateFSM circuitName ctype signs
-    else
-        STG.translateSTG circuitName ctype signs
+    if transFSM
+      then FSM.translateFSM circuitName ctype signs output
+      else STG.translateSTG circuitName ctype signs output
     return ()
