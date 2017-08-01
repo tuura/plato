@@ -9,7 +9,7 @@ module Tuura.Concept.Circuit.Derived (
     buffer, inverter, cElement, meElement,
     andGate, orGate, xorGate, me, never, handshake,
     handshake00, handshake11, inputs,
-    outputs, internals, combinationalGate
+    outputs, internals, function, complexGate
     ) where
 
 import Tuura.Concept.Circuit.Basic
@@ -202,13 +202,13 @@ internals ints = interfaceConcept $ \s ->
                  then Internal
                  else Unused
 
-combinationalGate :: Eq a => Expr a -> a -> CircuitConcept a
-combinationalGate setFunction sig = riseConcepts <> fallConcepts
-    where
-      riseConcepts = mconcat $ map (toConcept True) (toTransitions r)
-      fallConcepts = mconcat $ map (toConcept False) (toTransitions f)
-      resetFunction = Not setFunction
-      toConcept v c = c ~|~> Transition sig v
-      r = fromCNF $ simplifyCNF $ convertToCNF setFunction
-      f = fromCNF $ simplifyCNF $ convertToCNF resetFunction
-      toTransitions = map (map (\l -> Transition (variable l) (polarity l)))
+function :: Eq a => Expr a -> Transition a -> CircuitConcept a
+function cause effect = mconcat $ map (toConcept) (toTransitions cnf)
+  where
+    toConcept c = c ~|~> effect
+    cnf = fromCNF $ simplifyCNF $ convertToCNF cause
+    toTransitions = map (map (\l -> Transition (variable l) (polarity l)))
+
+complexGate :: Eq a => Expr a -> Expr a -> a -> CircuitConcept a
+complexGate set reset sig = function set (Transition sig True)
+                         <> function reset (Transition sig False)
