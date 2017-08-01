@@ -25,11 +25,10 @@ convertToCNF expr = cnf
     vars = nub $ toList expr
     values = mapM (const [False, True]) vars
     fs = filter (not . eval expr . getValue vars) values
-    sim = CNF $ map (\v -> nub $ map (\f -> Literal (vars !! f) (v !! f)) [0..(length vars - 1)]) fs
-    cnf = CNF $ map (map invert) (fromCNF sim)
+    cnf = CNF $ map (\v -> map (\f -> Literal (vars !! f) (not $ v !! f)) [0..(length vars - 1)]) fs
     getValue vs vals v = fromJust $ lookup v $ zip vs vals
 
--- Generates a concept for output signal to rise if v = True, fall if v = False
+-- Generates a concept based on the effect transition, rise/fall as appropriate
 genConcepts :: Transition String -> [Literal String] -> String
 genConcepts effect e
     | length e == 1 = causes ++ " ~> " ++ eff
@@ -77,7 +76,7 @@ removeCancels (v:vs) whole = removeCancels vs newWhole
     replacements = map (delete var) toBeRemoved
     newWhole = CNF (fromCNF whole ++ replacements)
 
--- Apply cartesian produce to a CNF function to get DNF,
+-- Apply cartesian product to a CNF function to get DNF,
 -- needed to produce STGs and FSMs.
 convertCNFtoDNF :: Ord a => CNF a -> DNF a
 convertCNFtoDNF l = DNF $ map (sort . nub) (sequence (fromCNF l))
