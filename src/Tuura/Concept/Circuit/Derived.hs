@@ -210,5 +210,5 @@ function cause effect = mconcat $ map (toConcept) (toTransitions cnf)
     toTransitions = map (map (\l -> Transition (variable l) (polarity l)))
 
 complexGate :: Eq a => Expr a -> Expr a -> a -> CircuitConcept a
-complexGate set reset sig = function set (Transition sig True)
-                         <> function reset (Transition sig False)
+complexGate set reset sig = function set (rise sig)
+                         <> function reset (fall sig)
