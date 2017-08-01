@@ -17,7 +17,7 @@ newtype CNF a = CNF { fromCNF :: [[Literal a]] }
 
 newtype DNF a = DNF { fromDNF :: [[Literal a]] }
 
-data Literal a = Literal { variable :: a, polarity :: Bool } deriving (Eq, Ord)
+data Literal a = Literal { variable :: a, polarity :: Bool } deriving (Eq, Ord, Show)
 
 convertToCNF :: Eq a => Expr a -> CNF a
 convertToCNF expr = cnf

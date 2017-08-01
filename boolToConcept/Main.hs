@@ -14,6 +14,7 @@ main = do
         set <- getLine
         putStr "reset function: "
         reset <- getLine
+        putStrLn ""
         output (doWork set reset effect) (optOutput options)
     else do
         let set = optSet options

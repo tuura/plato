@@ -36,8 +36,8 @@ createConceptSpec vars set reset effect = modName ++ imp
                                        ++ inInter ++ outInter
                                        ++ initState
     where
-      modName    = "\nmodule Concept where \n\n"
-      imp        = "import Tuura.Concept.STG \n\n"
+      modName    = "module Concept where\n\n"
+      imp        = "import Tuura.Concept.STG\n\n"
       circuit    = "circuit " ++ unwords vars ++ " " ++ effect ++ " = "
       topConcept = "outRise <> outFall <> interface <> initialState\n"
       wh         = "  where\n"
@@ -49,4 +49,4 @@ createConceptSpec vars set reset effect = modName ++ imp
       inInter    = "\n    interface = inputs [" ++ unwords inputVars ++ "]"
       outInter   = " <> outputs [" ++ effect ++ "]"
       initState  = "\n    initialState = "
-                ++ "initialise0 [" ++ unwords inputVars ++ " , " ++ effect ++ "]"
+                ++ "initialise0 [" ++ unwords inputVars ++ " , " ++ effect ++ "]\n"
