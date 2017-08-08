@@ -1,6 +1,4 @@
-{-# LANGUAGE FlexibleInstances #-}
---{-# LANGUAGE UndecidableInstances #-}
---{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}  -- For Show instance of Literal String
 
 module Tuura.Boolean (
   module Tuura.Boolean.Parser,
