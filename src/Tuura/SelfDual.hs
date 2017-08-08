@@ -1,5 +1,5 @@
 module Tuura.SelfDual (
-    isSelfDual, getSelfduals) where
+    isSelfDual, getSelfDuals) where
 
 import Data.List
 import Tuura.Boolean
@@ -14,9 +14,9 @@ isSelfDual func = f == fd
 
 -- List truth tables for all possible self-dual function of n variables
 -- Descending order [2^n - 1 .. 0]
-getSelfduals :: Int -> [[Bool]]
-getSelfduals 0 = [[]]
-getSelfduals n = good
+getSelfDuals :: Int -> [[Bool]]
+getSelfDuals 0 = [[]]
+getSelfDuals n = good
     where cells = 2^n
           halfCells = cells `div` 2
           possibles = map (toBool cells) [0..2^cells - 1]
