@@ -25,7 +25,7 @@ getSelfDuals n = good
           top = take halfCells
           bot = reverse . drop halfCells
           testMutex x = (not . or) (zipWith (&&) (top x) (bot x))
-          good = filter (\x -> (count x == halfCells) && testMutex x) possibles
+          good = [ x | x <- possibles, count x == halfCells, testMutex x]
           count = length . filter (==False)
 
 parseToCNF :: String -> CNF String
