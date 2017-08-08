@@ -1,8 +1,9 @@
-{-# LANGUAGE FlexibleInstances #-}  -- For Show instance of Literal String
+{-# LANGUAGE FlexibleInstances, OverlappingInstances, IncoherentInstances #-}
 
 module Tuura.Boolean (
   module Tuura.Boolean.Parser,
   CNF (..), DNF (..), Literal (..),
+  prettyCNF, prettyDNF,
   convertToCNF, genConcepts,
   simplifyCNF, simplifyDNF, convertCNFtoDNF) where
 
@@ -15,17 +16,17 @@ import Data.Ord
 import Tuura.Boolean.Parser
 import Tuura.Concept.Circuit
 
-newtype CNF a = CNF { fromCNF :: [[Literal a]] }
+newtype CNF a = CNF { fromCNF :: [[Literal a]] } deriving Show
 
-instance Show (CNF String) where
-  show = eqShow "*" " + " ((flip (++) ")") . (++) "(") fromCNF
+prettyCNF :: CNF String -> String
+prettyCNF = equationShow "*" " + " ((flip (++) ")") . (++) "(") fromCNF
 
-newtype DNF a = DNF { fromDNF :: [[Literal a]] }
+newtype DNF a = DNF { fromDNF :: [[Literal a]] } deriving Show
 
-instance Show (DNF String) where
-  show = eqShow " + " "*" id fromDNF
+prettyDNF :: DNF String -> String
+prettyDNF = equationShow " + " "*" id fromDNF
 
-eqShow i1 i2 f1 f2 = intercalate i1 . applyLit . f2
+equationShow i1 i2 f1 f2 = intercalate i1 . applyLit . f2
   where applyLit = map (f1 . intercalate i2 . map show)
 
 data Literal a = Literal { variable :: a, polarity :: Bool } deriving (Eq, Ord)
@@ -33,6 +34,10 @@ data Literal a = Literal { variable :: a, polarity :: Bool } deriving (Eq, Ord)
 instance Show (Literal String) where
   show (Literal var True) = var
   show (Literal var False) = "!" ++ var
+
+instance Show a => Show (Literal a) where
+  show (Literal var True) = show var
+  show (Literal var False) = "!" ++ show var
 
 convertToCNF :: Eq a => Expr a -> CNF a
 convertToCNF expr = cnf
