@@ -25,14 +25,14 @@ newtype DNF a = DNF { fromDNF :: [[Literal a]] }
 instance Show (DNF String) where
   show = eqShow " + " "*" id fromDNF
 
-eqShow i1 i2 f1 f2 x = intercalate i1 $ map (f1 . intercalate i2 . map (tidyString . show)) (f2 x)
-  where tidyString = filter (not . (`elem` "\""))
+eqShow i1 i2 f1 f2 = intercalate i1 . applyLit . f2
+  where applyLit = map (f1 . intercalate i2 . map show)
 
 data Literal a = Literal { variable :: a, polarity :: Bool } deriving (Eq, Ord)
 
 instance Show (Literal String) where
-  show (Literal var True) = show var
-  show (Literal var False) = show ("!" ++ var)
+  show (Literal var True) = var
+  show (Literal var False) = "!" ++ var
 
 convertToCNF :: Eq a => Expr a -> CNF a
 convertToCNF expr = cnf
