@@ -1,7 +1,9 @@
 module Tuura.SelfDual (
     isSelfDual, getSelfDuals) where
 
-import Data.List
+import Data.List (sort)
+import Control.Monad (replicateM)
+
 import Tuura.Boolean
 
 isSelfDual :: String -> Bool
@@ -19,7 +21,7 @@ getSelfDuals 0 = [[]]
 getSelfDuals n = good
     where cells = 2^n
           halfCells = cells `div` 2
-          possibles = map (toBool cells) [0..2^cells - 1]
+          possibles = replicateM cells [True,False]
           top = take halfCells
           bot = reverse . drop halfCells
           testMutex x = (not . or) (zipWith (&&) (top x) (bot x))
@@ -40,10 +42,6 @@ dualDNF = CNF . fromDNF
 showBool :: Bool -> Char
 showBool True = '1'
 showBool False = '0'
-
-toBool :: Int -> Int -> [Bool]
-toBool n x = replicate (n - length l) False ++ l
-    where l = (map intToBool . toBin) x
 
 toBin :: Int -> [Int]
 toBin 0 = [0]
