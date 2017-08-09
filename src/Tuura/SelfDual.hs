@@ -2,6 +2,7 @@ module Tuura.SelfDual (
     isSelfDual, getSelfDuals) where
 
 import Control.Monad (replicateM)
+import Data.Either (isRight)
 import Data.List (sort)
 
 import Tuura.Boolean
@@ -28,9 +29,12 @@ getSelfDuals n = good
           count = length . filter (==False)
 
 parseToCNF :: String -> CNF String
-parseToCNF = simplifyCNF . convertToCNF . right . parseExpr
-    where right (Right x) = x
-          right (Left _) = right (parseExpr "")
+parseToCNF func =
+    if isRight parsed
+       then (simplifyCNF . convertToCNF . right) parsed
+    else error ("Error parsing \"" ++ func ++ "\"")
+  where parsed = parseExpr func
+        right (Right x) = x
 
 parseToDNF :: String -> DNF String
 parseToDNF = simplifyDNF . convertCNFtoDNF . simplifyCNF . parseToCNF
