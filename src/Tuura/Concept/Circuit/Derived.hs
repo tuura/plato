@@ -9,6 +9,7 @@ module Tuura.Concept.Circuit.Derived (
     buffer, inverter, cElement, mutexElement,
     andGate, orGate, xorGate, mutex, never, handshake,
     handshake00, handshake11,
+    cElementN, orGateN, andGateN,
     inputs, outputs, internals, function, complexGate
     ) where
 
@@ -184,6 +185,16 @@ mutex a b = fall a ~> rise b <> fall b ~> rise a <> never [rise a, rise b]
 
 never :: [Transition a] -> CircuitConcept a
 never es = invariantConcept (NeverAll es)
+
+-- Generalized multi-input gates
+cElementN :: [a] -> a -> CircuitConcept a
+cElementN ins out = mconcat $ map (`buffer` out) ins
+
+orGateN :: [a] -> a -> CircuitConcept a
+orGateN ins out = map rise ins ~|~> rise out <> map fall ins ~&~> fall out
+
+andGateN :: [a] -> a -> CircuitConcept a
+andGateN ins out = dual $ orGateN ins out
 
 -- Signal type declaration concepts
 inputs :: Eq a => [a] -> CircuitConcept a
