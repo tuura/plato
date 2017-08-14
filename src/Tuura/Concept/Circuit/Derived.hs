@@ -6,8 +6,9 @@ module Tuura.Concept.Circuit.Derived (
     consistency, initialise,
     initialise0, initialise1,
     (~>), (~|~>), (~&~>),
-    buffer, inverter, cElement, mutexElement,
-    andGate, orGate, xorGate, mutex, never, handshake,
+    buffer, inverter, cElement, meElement,
+    andGate, orGate, xorGate, srLatch,
+    mutex, never, handshake,
     handshake00, handshake11,
     cElementN, orGateN, andGateN,
     inputs, outputs, internals, function, complexGate
@@ -148,27 +149,30 @@ initialise1 as = initialise (head as) True <> initialise1 (tail as)
 
 -- Gate-level concepts
 buffer :: a -> a -> CircuitConcept a
-buffer a z = rise a ~> rise z <> fall a ~> fall z
+buffer i o = rise i ~> rise o <> fall i ~> fall o
 
 inverter :: a -> a -> CircuitConcept a
-inverter a z = rise a ~> fall z <> fall a ~> rise z
+inverter i o = rise i ~> fall o <> fall i ~> rise o
 
 cElement :: a -> a -> a -> CircuitConcept a
-cElement a b z = buffer a z <> buffer b z
+cElement i1 i2 o = buffer i1 o <> buffer i2 o
 
-mutexElement :: a -> a -> a -> a -> CircuitConcept a
-mutexElement r1 r2 g1 g2 = buffer r1 g1 <> buffer r2 g2 <> mutex g1 g2
+meElement :: a -> a -> a -> a -> CircuitConcept a
+meElement r1 r2 g1 g2 = buffer r1 g1 <> buffer r2 g2 <> mutex g1 g2
 
 orGate :: a -> a -> a -> CircuitConcept a
-orGate a b z = [rise a, rise b] ~|~> rise z
-            <> [fall a, fall b] ~&~> fall z
+orGate i1 i2 o = [rise i1, rise i2] ~|~> rise o
+              <> [fall i1, fall i2] ~&~> fall o
 
 andGate :: a -> a -> a -> CircuitConcept a
-andGate a b z = dual $ orGate a b z
+andGate i1 i2 o = dual $ orGate i1 i2 o
 
 xorGate :: a -> a -> a -> CircuitConcept a
-xorGate a b z = [rise a, rise b] ~|~> rise z <> [fall a, fall b] ~|~> rise z
-             <> [rise a, fall b] ~|~> fall z <> [fall a, rise b] ~|~> fall z
+xorGate i1 i2 o = [rise i1, rise i2] ~|~> rise o <> [fall i1, fall i2] ~|~> rise o
+               <> [rise i1, fall i2] ~|~> fall o <> [fall i1, rise i2] ~|~> fall o
+
+srLatch :: Eq a => a -> a -> a -> CircuitConcept a
+srLatch s r q = complexGate ((Var s) `And` (Not (Var r))) ((Var r) `And` (Not (Var s))) q
 
 -- Protocol-level concepts
 handshake :: a -> a -> CircuitConcept a
