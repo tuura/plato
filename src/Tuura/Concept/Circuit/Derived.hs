@@ -7,9 +7,11 @@ module Tuura.Concept.Circuit.Derived (
     initialise0, initialise1,
     (~>), (~|~>), (~&~>),
     buffer, inverter, cElement, meElement,
-    andGate, orGate, xorGate, me, never, handshake,
-    handshake00, handshake11, inputs,
-    outputs, internals, function, complexGate
+    andGate, orGate, xorGate,
+    mutex, never, handshake,
+    handshake00, handshake11,
+    cElementN, orGateN, andGateN,
+    inputs, outputs, internals, function, complexGate
     ) where
 
 import Tuura.Concept.Circuit.Basic
@@ -147,28 +149,27 @@ initialise1 as = initialise (head as) True <> initialise1 (tail as)
 
 -- Gate-level concepts
 buffer :: a -> a -> CircuitConcept a
-buffer a b = rise a ~> rise b <> fall a ~> fall b
+buffer i o = rise i ~> rise o <> fall i ~> fall o
 
 inverter :: a -> a -> CircuitConcept a
-inverter a b = rise a ~> fall b <> fall a ~> rise b
+inverter i o = rise i ~> fall o <> fall i ~> rise o
 
 cElement :: a -> a -> a -> CircuitConcept a
-cElement a b c = buffer a c <> buffer b c
+cElement i1 i2 o = buffer i1 o <> buffer i2 o
 
 meElement :: a -> a -> a -> a -> CircuitConcept a
-meElement r1 r2 g1 g2 = buffer r1 g1 <> buffer r2 g2 <> me g1 g2
-
-andGate :: a -> a -> a -> CircuitConcept a
-andGate a b c = rise a ~> rise c <> rise b ~> rise c
-             <> [fall a, fall b] ~|~> fall c
+meElement r1 r2 g1 g2 = buffer r1 g1 <> buffer r2 g2 <> mutex g1 g2
 
 orGate :: a -> a -> a -> CircuitConcept a
-orGate a b c = [rise a, rise b] ~|~> rise c
-            <> fall a ~> fall c <> fall b ~> fall c
+orGate i1 i2 o = [rise i1, rise i2] ~|~> rise o
+              <> [fall i1, fall i2] ~&~> fall o
+
+andGate :: a -> a -> a -> CircuitConcept a
+andGate i1 i2 o = dual $ orGate i1 i2 o
 
 xorGate :: a -> a -> a -> CircuitConcept a
-xorGate a b c = [rise a, rise b] ~|~> rise c <> [fall a, fall b] ~|~> rise c
-             <> [rise a, fall b] ~|~> fall c <> [fall a, rise b] ~|~> fall c
+xorGate i1 i2 o = [rise i1, rise i2] ~|~> rise o <> [fall i1, fall i2] ~|~> rise o
+               <> [rise i1, fall i2] ~|~> fall o <> [fall i1, rise i2] ~|~> fall o
 
 -- Protocol-level concepts
 handshake :: a -> a -> CircuitConcept a
@@ -180,11 +181,21 @@ handshake00 a b = handshake a b <> initialise a False <> initialise b False
 handshake11 :: Eq a => a -> a -> CircuitConcept a
 handshake11 a b = handshake a b <> initialise a True <> initialise b True
 
-me :: a -> a -> CircuitConcept a
-me a b = fall a ~> rise b <> fall b ~> rise a <> never [rise a, rise b]
+mutex :: a -> a -> CircuitConcept a
+mutex a b = fall a ~> rise b <> fall b ~> rise a <> never [rise a, rise b]
 
 never :: [Transition a] -> CircuitConcept a
 never es = invariantConcept (NeverAll es)
+
+-- Generalized multi-input gates
+cElementN :: [a] -> a -> CircuitConcept a
+cElementN ins out = mconcat $ map (`buffer` out) ins
+
+orGateN :: [a] -> a -> CircuitConcept a
+orGateN ins out = map rise ins ~|~> rise out <> map fall ins ~&~> fall out
+
+andGateN :: [a] -> a -> CircuitConcept a
+andGateN ins out = dual $ orGateN ins out
 
 -- Signal type declaration concepts
 inputs :: Eq a => [a] -> CircuitConcept a
