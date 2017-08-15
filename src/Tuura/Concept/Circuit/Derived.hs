@@ -7,7 +7,7 @@ module Tuura.Concept.Circuit.Derived (
     initialise0, initialise1,
     (~>), (~|~>), (~&~>),
     buffer, inverter, cElement, meElement,
-    andGate, orGate, xorGate, srLatch,
+    andGate, orGate, xorGate, srLatch, srLatch2,
     mutex, never, handshake,
     handshake00, handshake11,
     cElementN, orGateN, andGateN,
@@ -172,7 +172,10 @@ xorGate i1 i2 o = [rise i1, rise i2] ~|~> rise o <> [fall i1, fall i2] ~|~> rise
                <> [rise i1, fall i2] ~|~> fall o <> [fall i1, rise i2] ~|~> fall o
 
 srLatch :: Eq a => a -> a -> a -> CircuitConcept a
-srLatch s r q = complexGate ((Var s) `And` (Not (Var r))) ((Var r) `And` (Not (Var s))) q
+srLatch s r q = complexGate (Var s) (Var r) q
+
+srLatch2 :: Eq a => a -> a -> a -> a -> CircuitConcept a
+srLatch2 s r q nq = srLatch s r q <> bubble nq (srLatch s r nq)
 
 -- Protocol-level concepts
 handshake :: a -> a -> CircuitConcept a
