@@ -172,10 +172,10 @@ xorGate i1 i2 o = [rise i1, rise i2] ~|~> rise o <> [fall i1, fall i2] ~|~> rise
                <> [rise i1, fall i2] ~|~> fall o <> [fall i1, rise i2] ~|~> fall o
 
 srLatch :: Eq a => a -> a -> a -> CircuitConcept a
-srLatch s r q = complexGate (Var s) (Var r) q
+srLatch s r q = complexGate (Var s) (Var r) q <> mutex s r
 
 srLatch2 :: Eq a => a -> a -> a -> a -> CircuitConcept a
-srLatch2 s r q nq = srLatch s r q <> bubble nq (srLatch s r nq)
+srLatch2 s r q nq = srLatch s r q <> bubble nq (srLatch s r nq) <> mutex q nq
 
 -- Protocol-level concepts
 handshake :: a -> a -> CircuitConcept a
