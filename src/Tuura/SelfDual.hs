@@ -7,7 +7,7 @@ import Data.List (sort)
 
 import Tuura.Boolean
 
-isSelfDual :: DNF String -> Bool
+isSelfDual :: Ord a => DNF a -> Bool
 isSelfDual func = f == fd
     where f = final func
           fd = (final . dual) func
