@@ -1,9 +1,8 @@
-{-# LANGUAGE FlexibleInstances, OverlappingInstances, IncoherentInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Tuura.Boolean (
   module Tuura.Boolean.Parser,
   CNF (..), DNF (..), Literal (..),
-  prettyCNF, prettyDNF,
   convertToCNF, genConcepts,
   simplifyCNF, simplifyDNF, convertCNFtoDNF) where
 
@@ -12,32 +11,38 @@ import Data.List.Extra
 import Data.Foldable
 import Data.Maybe
 import Data.Ord
+import Text.PrettyPrint.HughesPJClass
 
 import Tuura.Boolean.Parser
 import Tuura.Concept.Circuit
 
 newtype CNF a = CNF { fromCNF :: [[Literal a]] } deriving Show
 
-prettyCNF :: CNF String -> String
-prettyCNF = equationShow "*" " + " ((flip (++) ")") . (++) "(") fromCNF
-
 newtype DNF a = DNF { fromDNF :: [[Literal a]] } deriving Show
 
-prettyDNF :: DNF String -> String
-prettyDNF = equationShow " + " "*" id fromDNF
+instance {-# OVERLAPPABLE #-} Pretty a => Pretty (DNF a) where
+  pPrint x = (hcat . intersperse plus) ors
+    where ors = map (hcat . intersperse ast) ands
+          ands = (map . map) pPrint (fromDNF x)
+          ast = text "*"
+          plus = text " + "
 
-equationShow i1 i2 f1 f2 = intercalate i1 . applyLit . f2
-  where applyLit = map (f1 . intercalate i2 . map show)
+instance {-# OVERLAPPING #-} Pretty (DNF String) where
+  pPrint x = (hcat . intersperse plus) ors
+    where ors = map (hcat . intersperse ast) ands
+          ands = (map . map) pPrint (fromDNF x)
+          ast = text "*"
+          plus = text " + "
 
-data Literal a = Literal { variable :: a, polarity :: Bool } deriving (Eq, Ord)
+data Literal a = Literal { variable :: a, polarity :: Bool } deriving (Eq, Ord, Show)
 
-instance Show (Literal String) where
-  show (Literal var True) = var
-  show (Literal var False) = "!" ++ var
+instance {-# OVERLAPPABLE #-} Pretty a => Pretty (Literal a) where
+  pPrint (Literal var True) = pPrint var
+  pPrint (Literal var False) = char '!' <> pPrint var
 
-instance Show a => Show (Literal a) where
-  show (Literal var True) = show var
-  show (Literal var False) = "!" ++ show var
+instance {-# OVERLAPPING #-} Pretty (Literal String) where
+  pPrint (Literal var True) = text var
+  pPrint (Literal var False) = char '!' <> text var
 
 convertToCNF :: Eq a => Expr a -> CNF a
 convertToCNF expr = cnf
