@@ -127,11 +127,12 @@ bubbles s c = mempty
        invariant = fmap (bubbleInvariant s) (invariant c)
     }
 
--- Apply enable signal to given concepts
-enable :: Transition a -> CircuitConcept a -> CircuitConcept a
-enable e c = c <> addEnables
+-- Apply enable signal only for transitions of given signals in the concept
+enable :: Eq a => Transition a -> [a] -> CircuitConcept a -> CircuitConcept a
+enable e s c = c <> addEnables
   where
-    addEnables = mconcat $ map (\(Causality _ effect) -> e ~> effect) (arcs c)
+    addEnables = mconcat $ map (\(Causality _ t) -> e ~> t) validArcs
+    validArcs  = filter (\(Causality _ t) -> (signal t) `elem` s) (arcs c)
 
 -- Signal-level concepts
 consistency :: CircuitConcept a
