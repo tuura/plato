@@ -102,15 +102,13 @@ toggleSpecific a t
     | otherwise         = t
 
 -- For the selected signal, toggle the directions of all transitions for this.
-bubbleCausality :: Eq a => [a] -> Causality (Transition a)
-                        -> Causality (Transition a)
+bubbleCausality :: Eq a => [a] -> Causality (Transition a) -> Causality (Transition a)
 bubbleCausality s (Causality f t)
     | signal t `elem` s = Causality (map (toggleSpecific s) f) (toggle t)
     | otherwise         = Causality (map (toggleSpecific s) f) t
 
 -- Invert the invariant transition of the selected signal.
-bubbleInvariant :: Eq a => [a] -> Invariant (Transition a)
-                        -> Invariant (Transition a)
+bubbleInvariant :: Eq a => [a] -> Invariant (Transition a) -> Invariant (Transition a)
 bubbleInvariant s (NeverAll es) = NeverAll (map (toggleSpecific s) es)
 
 -- Invert all initial states, causality transitions and invariant transitions
@@ -183,10 +181,11 @@ xorGate :: a -> a -> a -> CircuitConcept a
 xorGate i1 i2 o = [rise i1, rise i2] ~|~> rise o <> [fall i1, fall i2] ~|~> rise o
                <> [rise i1, fall i2] ~|~> fall o <> [fall i1, rise i2] ~|~> fall o
 
+-- TODO: Generalise by allowing both 01 and 10 as initial states.
 -- Set/reset latch including one non-inverted and one inverted output.
 srLatch :: Eq a => a -> a -> a -> a -> CircuitConcept a
 srLatch s r q nq = never [rise s, rise r]      -- disallow contradictory requests
-    <> initialise0 [q]   <> initialise1 [nq]   -- disallow initial state q=nq=0
+    <> initialise0 [q]   <> initialise1 [nq]   -- set initial state to q=0 and nq=1
     <> rise s  ~> rise q <> rise s  ~> fall nq -- the set behaviour
     <> rise r  ~> fall q <> rise r  ~> rise nq -- the reset behaviour
     <> rise q  ~> fall s <> fall nq ~> fall s  -- disallow premature s-
