@@ -7,7 +7,7 @@ module Tuura.Concept.Circuit.Derived (
     initialise0, initialise1,
     (~>), (~|~>), (~&~>),
     buffer, inverter, cElement, meElement,
-    andGate, orGate, xorGate, srHalfLatch,
+    andGate, orGate, xorGate, srLatch, srHalfLatch,
     mutex, never, handshake,
     handshake00, handshake11,
     cElementN, orGateN, andGateN,
@@ -113,11 +113,13 @@ bubbleInvariant :: Eq a => [a] -> Invariant (Transition a)
                         -> Invariant (Transition a)
 bubbleInvariant s (NeverAll es) = NeverAll (map (toggleSpecific s) es)
 
--- Invert all initial states, transitions and invariant transitions
--- of a single given signal.
+-- Invert all initial states, causality transitions and invariant transitions
+-- of a single given signal in a given concept.
 bubble :: Eq a => a -> CircuitConcept a -> CircuitConcept a
 bubble s c = bubbles [s] c
 
+-- Invert all initial states, causality transitions and invariant transitions
+-- of a list of given signals in a given concept.
 bubbles :: Eq a => [a] -> CircuitConcept a -> CircuitConcept a
 bubbles s c = mempty
     {
@@ -181,6 +183,16 @@ xorGate :: a -> a -> a -> CircuitConcept a
 xorGate i1 i2 o = [rise i1, rise i2] ~|~> rise o <> [fall i1, fall i2] ~|~> rise o
                <> [rise i1, fall i2] ~|~> fall o <> [fall i1, rise i2] ~|~> fall o
 
+-- Set/reset latch including one non-inverted and one inverted output.
+srLatch :: Eq a => a -> a -> a -> a -> CircuitConcept a
+srLatch s r q nq = never [rise s, rise r]      -- disallow contradictory requests
+    <> initialise0 [q]   <> initialise1 [nq]   -- disallow initial state q=nq=0
+    <> rise s  ~> rise q <> rise s  ~> fall nq -- the set behaviour
+    <> rise r  ~> fall q <> rise r  ~> rise nq -- the reset behaviour
+    <> rise q  ~> fall s <> fall nq ~> fall s  -- disallow premature s-
+    <> rise nq ~> fall r <> fall q  ~> fall r  -- disallow premature r-
+
+-- Set/reset latch with a single non-inverted output.
 srHalfLatch :: Eq a => a -> a -> a -> CircuitConcept a
 srHalfLatch s r q = never [rise s, rise r] <> complexGate (Var s) (Var r) q
 
