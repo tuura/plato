@@ -2,7 +2,7 @@ module Tuura.Concept.Circuit.Derived (
     module Tuura.Boolean,
     State (..), Transition (..),
     rise, fall, toggle, oldValue, before, after,
-    CircuitConcept, dual, bubble, enable,
+    CircuitConcept, dual, bubble, bubbles, enable,
     consistency, initialise,
     initialise0, initialise1,
     (~>), (~|~>), (~&~>),
@@ -89,38 +89,43 @@ dual c = mempty
          }
 
 -- Give the opposite initial state for the chosen signal
-bubbleInitialValue :: Eq a => a -> (a -> InitialValue) -> (a -> InitialValue)
-bubbleInitialValue s f y = if y == s then bubbleVal (f y) else f y
+bubbleInitialValue :: Eq a => [a] -> (a -> InitialValue) -> (a -> InitialValue)
+bubbleInitialValue s f y = if y `elem` s then bubbleVal (f y) else f y
   where
     bubbleVal (Defined v) = Defined (not v)
     bubbleVal x = x
 
 -- Perform the inversion for just transitions of the given signal
-toggleSpecific :: Eq a => a -> Transition a -> Transition a
+toggleSpecific :: Eq a => [a] -> Transition a -> Transition a
 toggleSpecific a t
-    | signal t == a = toggle t
-    | otherwise     = t
+    | signal t `elem` a = toggle t
+    | otherwise         = t
 
 -- For the selected signal, toggle the directions of all transitions for this.
-bubbleCausality :: Eq a => a -> Causality (Transition a)
+bubbleCausality :: Eq a => [a] -> Causality (Transition a)
                         -> Causality (Transition a)
 bubbleCausality s (Causality f t)
-    | signal t == s = Causality (map (toggleSpecific s) f) (toggle t)
-    | otherwise     = Causality (map (toggleSpecific s) f) t
+    | signal t `elem` s = Causality (map (toggleSpecific s) f) (toggle t)
+    | otherwise         = Causality (map (toggleSpecific s) f) t
 
 -- Invert the invariant transition of the selected signal.
-bubbleInvariant :: Eq a => a -> Invariant (Transition a)
+bubbleInvariant :: Eq a => [a] -> Invariant (Transition a)
                         -> Invariant (Transition a)
 bubbleInvariant s (NeverAll es) = NeverAll (map (toggleSpecific s) es)
 
+-- Invert all initial states, transitions and invariant transitions
+-- of a single given signal.
 bubble :: Eq a => a -> CircuitConcept a -> CircuitConcept a
-bubble s c = mempty
-             {
-                initial = bubbleInitialValue s (initial c),
-                arcs = fmap (bubbleCausality s) (arcs c),
-                interface = interface c,
-                invariant = fmap (bubbleInvariant s) (invariant c)
-             }
+bubble s c = bubbles [s] c
+
+bubbles :: Eq a => [a] -> CircuitConcept a -> CircuitConcept a
+bubbles s c = mempty
+    {
+       initial = bubbleInitialValue s (initial c),
+       arcs = fmap (bubbleCausality s) (arcs c),
+       interface = interface c,
+       invariant = fmap (bubbleInvariant s) (invariant c)
+    }
 
 -- Apply enable signal to given concepts
 enable :: Transition a -> CircuitConcept a -> CircuitConcept a
