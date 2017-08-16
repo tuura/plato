@@ -7,7 +7,7 @@ module Tuura.Concept.Circuit.Derived (
     initialise0, initialise1,
     (~>), (~|~>), (~&~>),
     buffer, inverter, cElement, meElement,
-    andGate, orGate, xorGate,
+    andGate, orGate, xorGate, srHalfLatch,
     mutex, never, handshake,
     handshake00, handshake11,
     cElementN, orGateN, andGateN,
@@ -175,6 +175,9 @@ andGate i1 i2 o = dual $ orGate i1 i2 o
 xorGate :: a -> a -> a -> CircuitConcept a
 xorGate i1 i2 o = [rise i1, rise i2] ~|~> rise o <> [fall i1, fall i2] ~|~> rise o
                <> [rise i1, fall i2] ~|~> fall o <> [fall i1, rise i2] ~|~> fall o
+
+srHalfLatch :: Eq a => a -> a -> a -> CircuitConcept a
+srHalfLatch s r q = never [rise s, rise r] <> complexGate (Var s) (Var r) q
 
 -- Protocol-level concepts
 handshake :: a -> a -> CircuitConcept a
