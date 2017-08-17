@@ -190,10 +190,9 @@ xorGate i1 i2 o = [rise i1, rise i2] ~|~> rise o <> [fall i1, fall i2] ~|~> rise
 -- TODO: Generalise by allowing both 01 and 10 as initial states.
 -- Set/reset latch including one non-inverted and one inverted output.
 srLatch :: Eq a => a -> a -> a -> a -> CircuitConcept a
-srLatch s r q nq = never [rise s, rise r]      -- disallow contradictory requests
+srLatch s r q nq = srHalfLatch s r q           -- behaviour of output q
+    <> srHalfLatch r s nq                      -- behaviour of output nq
     <> initialise0 [q]   <> initialise1 [nq]   -- set initial state to q=0 and nq=1
-    <> rise s  ~> rise q <> rise s  ~> fall nq -- the set behaviour
-    <> rise r  ~> fall q <> rise r  ~> rise nq -- the reset behaviour
     <> rise q  ~> fall s <> fall nq ~> fall s  -- disallow premature s-
     <> rise nq ~> fall r <> fall q  ~> fall r  -- disallow premature r-
 
