@@ -199,7 +199,7 @@ srHalfLatch :: Eq a => a -> a -> a -> CircuitConcept a
 srHalfLatch s r q = never [rise s, rise r] -- dissalow contradictory requests
     <> complexGate (Var s) (Var r) q       -- Set/Reset behaviour
     <> rise q ~> fall s                    -- disallow premature s-
-    <> rise q ~> fall r                    -- disallow prematire r-
+    <> fall q ~> fall r                    -- disallow premature r-
 
 -- Protocol-level concepts
 handshake :: a -> a -> CircuitConcept a
