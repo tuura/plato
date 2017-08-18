@@ -193,12 +193,13 @@ srLatch :: Eq a => a -> a -> a -> a -> CircuitConcept a
 srLatch s r q nq = srHalfLatch s r q           -- behaviour of output q
     <> srHalfLatch r s nq                      -- behaviour of output nq
     <> initialise0 [q]   <> initialise1 [nq]   -- set initial state to q=0 and nq=1
-    <> rise q  ~> fall s <> fall nq ~> fall s  -- disallow premature s-
-    <> rise nq ~> fall r <> fall q  ~> fall r  -- disallow premature r-
 
 -- Set/reset latch with a single non-inverted output.
 srHalfLatch :: Eq a => a -> a -> a -> CircuitConcept a
-srHalfLatch s r q = never [rise s, rise r] <> complexGate (Var s) (Var r) q
+srHalfLatch s r q = never [rise s, rise r] -- dissalow contradictory requests
+    <> complexGate (Var s) (Var r) q       -- Set/Reset behaviour
+    <> rise q ~> fall s                    -- disallow premature s-
+    <> rise q ~> fall r                    -- disallow prematire r-
 
 -- Protocol-level concepts
 handshake :: a -> a -> CircuitConcept a
