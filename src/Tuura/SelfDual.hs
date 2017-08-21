@@ -30,11 +30,9 @@ getSelfDuals n = good
 
 parseToCNF :: String -> CNF String
 parseToCNF func =
-    if isRight parsed
-       then (simplifyCNF . convertToCNF . right) parsed
-    else error ("Error parsing " ++ show func)
-  where parsed = parseExpr func
-        right (Right x) = x
+  case parseExpr func of
+    Right x -> (simplifyCNF . convertToCNF) x
+    Left _  -> error $ "Error parsing " ++ show func
 
 parseToDNF :: String -> DNF String
 parseToDNF = simplifyDNF . convertCNFtoDNF . simplifyCNF . parseToCNF
