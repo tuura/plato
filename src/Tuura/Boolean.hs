@@ -18,29 +18,28 @@ import Tuura.Concept.Circuit
 
 newtype CNF a = CNF { fromCNF :: [[Literal a]] } deriving Show
 
+instance Pretty (CNF String) where
+  pPrint = equationDoc plus star parens . fromCNF
+
 newtype DNF a = DNF { fromDNF :: [[Literal a]] } deriving Show
 
-instance {-# OVERLAPPABLE #-} Pretty a => Pretty (DNF a) where
-  pPrint x = (hcat . intersperse plus) ors
-    where ors = map (hcat . intersperse ast) ands
-          ands = (map . map) pPrint (fromDNF x)
-          ast = text "*"
-          plus = text " + "
+instance Pretty (DNF String) where
+  pPrint = equationDoc star plus id . fromDNF
 
-instance {-# OVERLAPPING #-} Pretty (DNF String) where
-  pPrint x = (hcat . intersperse plus) ors
-    where ors = map (hcat . intersperse ast) ands
-          ands = (map . map) pPrint (fromDNF x)
-          ast = text "*"
-          plus = text " + "
+equationDoc :: Doc -> Doc -> (Doc -> Doc) -> [[Literal String]] -> Doc
+equationDoc delim1 delim2 f1 eq = (hcat . intersperse delim2) ors
+  where ors = map (f1 . hcat . intersperse delim1) ands
+        ands = (map . map) pPrint eq
+
+star :: Doc
+star = text "*"
+
+plus :: Doc
+plus = text " + "
 
 data Literal a = Literal { variable :: a, polarity :: Bool } deriving (Eq, Ord, Show)
 
-instance {-# OVERLAPPABLE #-} Pretty a => Pretty (Literal a) where
-  pPrint (Literal var True) = pPrint var
-  pPrint (Literal var False) = char '!' <> pPrint var
-
-instance {-# OVERLAPPING #-} Pretty (Literal String) where
+instance Pretty (Literal String) where
   pPrint (Literal var True) = text var
   pPrint (Literal var False) = char '!' <> text var
 
