@@ -32,7 +32,7 @@ parseToCNF :: String -> CNF String
 parseToCNF func =
     if isRight parsed
        then (simplifyCNF . convertToCNF . right) parsed
-    else error ("Error parsing \"" ++ func ++ "\"")
+    else error ("Error parsing " ++ show func)
   where parsed = parseExpr func
         right (Right x) = x
 
