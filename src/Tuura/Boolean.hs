@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleInstances #-}
+
 module Tuura.Boolean (
   module Tuura.Boolean.Parser,
   CNF (..), DNF (..), Literal (..),
@@ -9,15 +11,37 @@ import Data.List.Extra
 import Data.Foldable
 import Data.Maybe
 import Data.Ord
+import Text.PrettyPrint.HughesPJClass
 
 import Tuura.Boolean.Parser
 import Tuura.Concept.Circuit
 
-newtype CNF a = CNF { fromCNF :: [[Literal a]] }
+newtype CNF a = CNF { fromCNF :: [[Literal a]] } deriving Show
 
-newtype DNF a = DNF { fromDNF :: [[Literal a]] }
+instance Pretty (CNF String) where
+  pPrint = equationDoc plus star parens . fromCNF
+
+newtype DNF a = DNF { fromDNF :: [[Literal a]] } deriving Show
+
+instance Pretty (DNF String) where
+  pPrint = equationDoc star plus id . fromDNF
+
+equationDoc :: Doc -> Doc -> (Doc -> Doc) -> [[Literal String]] -> Doc
+equationDoc delim1 delim2 f1 eq = (hcat . intersperse delim2) ors
+  where ors = map (f1 . hcat . intersperse delim1) ands
+        ands = (map . map) pPrint eq
+
+star :: Doc
+star = text "*"
+
+plus :: Doc
+plus = text " + "
 
 data Literal a = Literal { variable :: a, polarity :: Bool } deriving (Eq, Ord, Show)
+
+instance Pretty (Literal String) where
+  pPrint (Literal var True) = text var
+  pPrint (Literal var False) = char '!' <> text var
 
 convertToCNF :: Eq a => Expr a -> CNF a
 convertToCNF expr = cnf
