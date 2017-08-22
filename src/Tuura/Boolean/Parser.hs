@@ -6,7 +6,7 @@ module Tuura.Boolean.Parser (
 
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Expr
-import Control.Applicative hiding ((<|>))
+import Control.Applicative hiding ((<|>), many)
 import Control.Monad
 import Prelude hiding (not, or, and)
 
@@ -27,6 +27,7 @@ parseExpr = parse expr ""
                     , [binary "AND" And, binary "*" And, binary "&" And],
                       [binary "OR" Or, binary "|" Or, binary "+" Or] ]
           where binary n c = Infix (string n *> spaces *> pure c) AssocLeft
-        variable = Var <$> (many1 letter <* spaces) <?> "variable"
+        variable = Var <$> (varParser <* spaces) <?> "variable"
         parens p = SubExpr <$> (char '(' *> spaces *> p <* char ')' <* spaces)
                            <?> "parens"
+        varParser = liftM2 (++) (many1 letter) (many alphaNum)
