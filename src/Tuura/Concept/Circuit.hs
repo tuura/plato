@@ -1,15 +1,19 @@
 module Tuura.Concept.Circuit (
+    module Tuura.Boolean,
     State (..), Transition (..),
     rise, fall, toggle, oldValue, before, after,
     CircuitConcept,
     consistency, initialise, causality, andCausalities, orCausalities,
     (~>), (~&~>), (~|~>),
     buffer, inverter, cElement, meElement, andGate, orGate,
-    silent, me, handshake, handshake00, handshake11
+    silent, me, handshake, handshake00, handshake11,
+    genConcepts
     ) where
 
+import Tuura.Boolean
 import Tuura.Concept.Abstract
 import Data.Monoid
+import Data.List
 
 -- Circuit primitives
 -- Parameter a stands for the alphabet of signals
@@ -127,3 +131,14 @@ me :: Eq a => a -> a -> CircuitConcept a
 me a b = fall a ~> rise b <> fall b ~> rise a
       <> initialise a False <> initialise b False
       <> never [(a, True), (b, True)]
+
+-- Generates a concept based on the effect transition, rise/fall as appropriate
+genConcepts :: Transition String -> [Literal String] -> String
+genConcepts effect e
+    | length e == 1 = causes ++ " ~> " ++ eff
+    | otherwise       = "[" ++ causes ++ "]" ++ " ~|~> " ++ eff
+  where
+    causes = unwords $ intersperse "," $ map direction e
+    direction (Literal a True)  = "rise " ++ a
+    direction (Literal a False) = "fall " ++ a
+    eff   = (if newValue effect then "rise " else "fall ") ++ signal effect

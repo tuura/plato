@@ -1,3 +1,7 @@
 packages:
-- '.'
+- location: .
+- location:
+    git: https://github.com/tuura/boolean.git
+    commit: c0d4268f42c0e383a050b9457fe04415158c8f5c
+  extra-dep: true
 resolver: lts-7.5

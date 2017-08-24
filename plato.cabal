@@ -26,8 +26,6 @@ library
                       Tuura.Concept.FSM,
                       Tuura.Concept.FSM.Simulation,
                       Tuura.Concept.FSM.Translation,
-                      Tuura.Boolean.Parser,
-                      Tuura.Boolean,
                       Tuura.Plato.Translate.Options,
                       Tuura.Plato.Translate.Translation,
                       Tuura.Plato.BoolToConcept,
@@ -47,7 +45,8 @@ library
                       text >= 1.2.2,
                       directory >= 1.2.2,
                       parsec,
-                      pretty
+                      pretty,
+                      tuura-boolean
     default-language: Haskell2010
     other-extensions: TypeFamilies
     GHC-options:      -Wall -fwarn-tabs
@@ -72,6 +71,7 @@ test-suite bool-to-concept-test
     type:             exitcode-stdio-1.0
     main-is:          BoolTest.hs
     build-depends:    base >= 4.8 && < 5,
-                      plato
+                      plato,
+                      tuura-boolean
     default-language: Haskell2010
     GHC-options:      -Wall -fwarn-tabs
