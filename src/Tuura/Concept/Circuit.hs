@@ -6,12 +6,14 @@ module Tuura.Concept.Circuit (
     consistency, initialise, causality, andCausalities, orCausalities,
     (~>), (~&~>), (~|~>),
     buffer, inverter, cElement, meElement, andGate, orGate,
-    silent, me, handshake, handshake00, handshake11
+    silent, me, handshake, handshake00, handshake11,
+    genConcepts
     ) where
 
 import Tuura.Boolean
 import Tuura.Concept.Abstract
 import Data.Monoid
+import Data.List
 
 -- Circuit primitives
 -- Parameter a stands for the alphabet of signals
