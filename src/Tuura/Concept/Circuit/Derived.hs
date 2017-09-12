@@ -6,6 +6,7 @@ module Tuura.Concept.Circuit.Derived (
     dual, bubble, bubbles, enable, enables, sync,
     consistency, initialise,
     initialise0, initialise1,
+    initialize, initialize1, initialize0,
     (~>), (~|~>), (~&~>),
     buffer, inverter, cElement, meElement,
     andGate, orGate, xorGate, srLatch, srHalfLatch,
@@ -153,6 +154,17 @@ initialise0 as = initialise (head as) False <> initialise0 (tail as)
 initialise1 :: Eq a => [a] -> CircuitConcept a
 initialise1 [] = mempty
 initialise1 as = initialise (head as) True <> initialise1 (tail as)
+
+--Allow US spellings
+--TODO: Find a neater way of including multiple spellings of functions
+initialize :: Eq a => a -> Bool -> CircuitConcept a
+initialize = initialise
+
+initialize0 :: Eq a => [a] -> CircuitConcept a
+initialize0 = initialise0
+
+initialize1 :: Eq a => [a] -> CircuitConcept a
+initialize1 = initialise1
 
 (~>) :: Transition a -> Transition a -> CircuitConcept a
 (~>) = arcConcept
