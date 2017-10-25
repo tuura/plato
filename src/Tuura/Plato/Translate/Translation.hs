@@ -97,14 +97,14 @@ arcLists xs = [ (f, t) | Causality f t <- xs ]
 convert :: Enum a => CircuitConcept a -> CircuitConcept Signal
 convert c = mempty
          {
-           initial = convertInitsInterface (initial c),
+           initial = convertFunction (initial c),
            arcs = fmap convertCausality (arcs c),
-           interface = convertInitsInterface (interface c),
+           interface = convertFunction (interface c),
            invariant = fmap convertInvariant (invariant c)
          }
 
-convertInitsInterface :: Enum a => (a -> b) -> (Signal -> b)
-convertInitsInterface f (Signal i) = f $ toEnum i
+convertFunction :: Enum a => (a -> b) -> (Signal -> b)
+convertFunction f (Signal i) = f $ toEnum i
 
 convertCausality :: Enum a => Causality (Transition a) -> Causality (Transition Signal)
 convertCausality (Causality f t) = Causality (map convertTrans f) (convertTrans t)
