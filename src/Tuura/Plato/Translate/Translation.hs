@@ -93,3 +93,27 @@ toTransitions = map (\l -> Transition (variable l) (polarity l))
 --Create a tuple containing a list of possible causes, for each effect.
 arcLists :: [Causality (Transition a)] -> [([Transition a], Transition a)]
 arcLists xs = [ (f, t) | Causality f t <- xs ]
+
+convert :: Enum a => CircuitConcept a -> CircuitConcept Signal
+convert c = mempty
+         {
+           initial = convertInitialValue (initial c),
+           arcs = fmap convertCausality (arcs c),
+           interface = convertInterface (interface c),
+           invariant = fmap convertInvariant (invariant c)
+         }
+
+convertInitialValue :: Enum a => (a -> InitialValue) -> (Signal -> InitialValue)
+convertInitialValue f (Signal i) = f $ toEnum i
+
+convertCausality :: Enum a => Causality (Transition a) -> Causality (Transition Signal)
+convertCausality (Causality f t) = Causality (map convertTrans f) (convertTrans t)
+
+convertInterface :: Enum a => (a -> Interface) -> (Signal -> Interface)
+convertInterface f (Signal i) = f $ toEnum i
+
+convertInvariant :: Enum a => Invariant (Transition a) -> Invariant (Transition Signal)
+convertInvariant (NeverAll es) = NeverAll (map convertTrans es)
+
+convertTrans :: Enum a => Transition a -> Transition Signal
+convertTrans t = Transition (Signal $ fromEnum $ signal t) (newValue t)

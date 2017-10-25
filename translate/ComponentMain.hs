@@ -69,7 +69,7 @@ removeIfExists fileName = removeFile fileName `catch` handleExists
 
 {- Exported names in the user's haskell module (file) -}
 circuitName, tmpModuleFile :: String
-circuitName   = "circuit"
+circuitName   = "component"
 tmpModuleFile = ".Helper.hs"
 
 {- Helper functions because we deal with String, not Text. -}
