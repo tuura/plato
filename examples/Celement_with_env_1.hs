@@ -3,16 +3,19 @@ module Concept where
 import Tuura.Concept.STG
 
 -- C-element with environment circuit described using signal-level concepts
-circuit a b c = interface <> outputRise <> inputFall <> outputFall <> inputRise <> initialState
+
+data Signal = A | B | C deriving (Eq, Enum, Bounded)
+
+system = interface <> outputRise <> inputFall <> outputFall <> inputRise <> initialState
   where
-    interface = inputs [a, b] <> outputs [c]
+    interface = inputs [A, B] <> outputs [C]
 
-    outputRise = rise a ~> rise c <> rise b ~> rise c
+    outputRise = rise A ~> rise C <> rise B ~> rise C
 
-    inputFall = rise c ~> fall a <> rise c ~> fall b
+    inputFall = rise C ~> fall A <> rise C ~> fall B
 
-    outputFall = fall a ~> fall c <> fall b ~> fall c
+    outputFall = fall A ~> fall C <> fall B ~> fall C
 
-    inputRise = fall c ~> rise a <> fall c ~> rise b
+    inputRise = fall C ~> rise A <> fall C ~> rise B
 
-    initialState = initialise a False <> initialise b False <> initialise c False
+    initialState = initialise A False <> initialise B False <> initialise C False
