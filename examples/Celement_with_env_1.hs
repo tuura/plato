@@ -4,9 +4,9 @@ import Tuura.Concept.STG
 
 -- C-element with environment circuit described using signal-level concepts
 
-data Sign = A | B | C deriving (Eq, Enum, Bounded)
+data Signal = A | B | C deriving (Eq, Enum, Bounded)
 
-circuit = interface <> outputRise <> inputFall <> outputFall <> inputRise <> initialState
+system = interface <> outputRise <> inputFall <> outputFall <> inputRise <> initialState
   where
     interface = inputs [A, B] <> outputs [C]
 
