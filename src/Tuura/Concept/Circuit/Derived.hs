@@ -13,7 +13,8 @@ module Tuura.Concept.Circuit.Derived (
     mutex, never, handshake,
     handshake00, handshake11,
     cElementN, orGateN, andGateN,
-    inputs, outputs, internals, function, complexGate
+    inputs, outputs, internals,
+    function, complexGate, combinationalGate
     ) where
 
 import Tuura.Concept.Circuit.Basic
@@ -268,3 +269,6 @@ function cause effect = mconcat $ map (toConcept) (toTransitions cnf)
 complexGate :: Eq a => Expr a -> Expr a -> a -> CircuitConcept a
 complexGate set reset sig = function set (rise sig)
                          <> function reset (fall sig)
+
+combinationalGate :: Eq a => Expr a -> a -> CircuitConcept a
+combinationalGate set sig = complexGate set (Not set) sig
