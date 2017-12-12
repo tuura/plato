@@ -14,6 +14,7 @@ main = do
     testOrGateConcept
     testTwoAndGates
     testTwoDifferentCElements
+    testBooleanFunctionConcepts
 
 testDotGOutput :: IO ()
 testDotGOutput = do
@@ -94,6 +95,16 @@ testTwoDifferentCElements = do
                               <> initialise0 [a, b, c] <> buffer a c
                               <> buffer b c
     [a, b, c] = map Signal [0..2]
+
+testBooleanFunctionConcepts :: IO ()
+testBooleanFunctionConcepts = do
+    putStrLn "===testBooleanFunctionConcepts"
+    assertEq (sort (arcs andGateFunction))
+             (sort (arcs andGateConcept))
+  where
+    andGateFunction = combinationalGate (And (Var x) (Var y)) z
+    andGateConcept = andGate x y z
+    [x, y, z] = map Signal [0..2]
 
 assertEq :: (Eq a, Show a) => a -> a -> IO ()
 assertEq have need
